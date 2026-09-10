@@ -15,6 +15,28 @@ jobs:
   ci:
     name: Install, Lint, Type Check, Test, Security Scan, Build
     runs-on: ubuntu-latest
+    # Ephemeral Postgres for the DB-dependent tests - docs/database/
+    # MIGRATION_STRATEGY.md and docs/backend/BACKEND_TESTING.md both
+    # intended live migration/query validation; this is where it actually
+    # runs, since it couldn't be verified in the sandboxed dev session
+    # that produced those documents (a local Docker-permission issue, not
+    # a CI limitation - CI gets a clean environment with full Docker access).
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: zgate
+          POSTGRES_PASSWORD: zgate_ci
+          POSTGRES_DB: zgate_ci
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    env:
+      DATABASE_URL: postgres://zgate:zgate_ci@localhost:5432/zgate_ci
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -38,6 +60,16 @@ jobs:
       # --- Type Check ---
       - name: Type check
         run: npm run typecheck
+
+      # Apply the schema (db/migrations/*.sql is the source of truth -
+      # docs/database/MIGRATION_STRATEGY.md) before running tests that
+      # touch the database.
+      - name: Apply database migrations
+        run: |
+          for f in db/migrations/*.sql; do
+            echo "Applying $f"
+            PGPASSWORD=zgate_ci psql -h localhost -U zgate -d zgate_ci -v ON_ERROR_STOP=1 -f "$f"
+          done
 
       # --- Test ---
       - name: Test
