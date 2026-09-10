@@ -1,0 +1,63 @@
+name: CI
+
+# Install -> Lint -> Type Check -> Test -> Security Scan -> Build.
+# No deploy job exists here on purpose - see
+# docs/architecture/DEPLOYMENT_ARCHITECTURE.md and this phase's own
+# instruction not to deploy production yet.
+
+on:
+  push:
+    branches: [develop, main]
+  pull_request:
+    branches: [develop, main]
+
+jobs:
+  ci:
+    name: Install, Lint, Type Check, Test, Security Scan, Build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # gitleaks needs history to scan commits, not just the working tree
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: "npm"
+
+      # --- Install ---
+      - name: Install dependencies (from lockfile, no drift allowed)
+        run: npm ci
+
+      # --- Lint ---
+      - name: Lint
+        run: npm run lint
+
+      # --- Type Check ---
+      - name: Type check
+        run: npm run typecheck
+
+      # --- Test ---
+      - name: Test
+        run: npm test
+
+      # --- Security Scan ---
+      # Dependency vulnerability scan (SCA) - docs/security/SECURITY_TESTING_STRATEGY.md
+      - name: Dependency vulnerability scan
+        run: npm audit --audit-level=high
+
+      # Secrets scan - "Never commit secrets" is a repeated, binding rule
+      # across every phase of this engagement (Data Privacy Policy Annex C,
+      # docs/security/SECURITY_REQUIREMENTS.md V14). Free/open-source tool,
+      # proportionate to this project's budget
+      # (docs/architecture/DEPLOYMENT_ARCHITECTURE.md's cost baseline).
+      - name: Secrets scan
+        uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      # --- Build ---
+      - name: Build
+        run: npm run build
