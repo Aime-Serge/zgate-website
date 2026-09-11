@@ -37,6 +37,17 @@ jobs:
           --health-retries 5
     env:
       DATABASE_URL: postgres://zgate:zgate_ci@localhost:5432/zgate_ci
+      # Every DB-dependent test file gates its real assertions behind
+      # `DATABASE_URL && SESSION_SECRET && SESSION_SALT` all being set
+      # (docs/backend/BACKEND_TESTING.md's skip-cleanly-without-env
+      # pattern) - without these two, that guard was false even here,
+      # and the entire suite's IDOR/privilege-escalation/auth tests were
+      # silently skipping in CI too, not just in a local sandbox without
+      # Postgres. Fixed as part of SECURITY_TEST_REPORT.md's review
+      # (finding: CI test coverage gap). CI-only, throwaway values - not
+      # a real secret, never used outside this ephemeral job.
+      SESSION_SECRET: ci-only-test-session-secret-not-a-real-secret-32chars
+      SESSION_SALT: ci-only-salt-16c
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -91,5 +102,47 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       # --- Build ---
+      - name: Build
+        run: npm run build
+
+  # apps/web is a separate package with its own lockfile, deliberately
+  # not an npm workspace with the root backend
+  # (docs/frontend/FRONTEND_ARCHITECTURE.md) - it needs its own,
+  # independent CI coverage rather than being silently uncovered.
+  # Finding from SECURITY_TEST_REPORT.md's review: this job didn't exist
+  # at all before - every frontend lint/typecheck/test/build check this
+  # engagement ran was manual, never enforced on a push or PR.
+  web-ci:
+    name: Web - Install, Lint, Type Check, Test, Security Scan, Build
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: apps/web
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: "npm"
+          cache-dependency-path: apps/web/package-lock.json
+
+      - name: Install dependencies (from lockfile, no drift allowed)
+        run: npm ci
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Type check
+        run: npm run typecheck
+
+      - name: Test
+        run: npm test
+
+      - name: Dependency vulnerability scan
+        run: npm audit --audit-level=high
+
       - name: Build
         run: npm run build
