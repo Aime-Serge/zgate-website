@@ -1,9 +1,13 @@
 name: CI
 
-# Install -> Lint -> Type Check -> Test -> Security Scan -> Build.
-# No deploy job exists here on purpose - see
-# docs/architecture/DEPLOYMENT_ARCHITECTURE.md and this phase's own
-# instruction not to deploy production yet.
+# Install -> Lint -> Type Check -> Test -> Security Scan -> Build, on
+# every push/PR to develop or main. On main specifically, a third job
+# additionally publishes tagged production images (see publish-images
+# below) - that is artifact preparation, not a deployment. No job in
+# this workflow deploys anything to staging or production - see
+# docs/devops/PRODUCTION_ARCHITECTURE.md and docs/devops/
+# DEPLOYMENT_RUNBOOK.md for why that stays a deliberate, manual,
+# approval-gated step rather than something this file automates.
 
 on:
   push:
@@ -72,15 +76,14 @@ jobs:
       - name: Type check
         run: npm run typecheck
 
-      # Apply the schema (db/migrations/*.sql is the source of truth -
-      # docs/database/MIGRATION_STRATEGY.md) before running tests that
-      # touch the database.
+      # Apply the schema via the same script staging/production use
+      # (scripts/migrate.mjs, docs/devops/PRODUCTION_ARCHITECTURE.md) -
+      # not a separate CI-only shell loop. CI exercising the exact
+      # tooling a real deploy runs is the actual point: a green CI run
+      # is now real evidence the migration runner itself works, not just
+      # that the raw SQL is syntactically valid.
       - name: Apply database migrations
-        run: |
-          for f in db/migrations/*.sql; do
-            echo "Applying $f"
-            PGPASSWORD=zgate_ci psql -h localhost -U zgate -d zgate_ci -v ON_ERROR_STOP=1 -f "$f"
-          done
+        run: node scripts/migrate.mjs
 
       # --- Test ---
       - name: Test
@@ -146,3 +149,72 @@ jobs:
 
       - name: Build
         run: npm run build
+
+  # Builds and pushes tagged, immutable production images once ci and
+  # web-ci both pass - main only (docs/devops/DEPLOYMENT_ARCHITECTURE's
+  # "every deployment to production is preceded by a staging deployment"
+  # rule already implies main is the release branch, not develop). This
+  # is *artifact publishing*, not deployment: nothing here runs the
+  # image anywhere, touches staging, or touches production - it makes a
+  # reviewed, versioned image available for a human to deploy per
+  # docs/devops/DEPLOYMENT_RUNBOOK.md, gated on the release approval
+  # that runbook requires. Pushes to GitHub Container Registry (GHCR),
+  # not a separate cloud registry - no new vendor, no new credential to
+  # provision: GHCR authenticates with the GITHUB_TOKEN every workflow
+  # run already gets for free, consistent with this project's cost
+  # baseline (docs/architecture/DEPLOYMENT_ARCHITECTURE.md).
+  publish-images:
+    name: Publish production images (GHCR)
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    needs: [ci, web-ci]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Log in to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      # GHCR/Docker image names must be lowercase, but github.repository
+      # isn't guaranteed to be (this repo's own owner has a capital
+      # letter) - lowercased once here, in a real shell step, since the
+      # expression syntax `${{ }}` has no built-in lower() function.
+      - name: Compute lowercase image name prefix
+        id: image
+        run: echo "prefix=ghcr.io/$(echo '${{ github.repository }}' | tr '[:upper:]' '[:lower:]')" >> "$GITHUB_OUTPUT"
+
+      # Tagged with the release commit's SHA (immutable, traceable to an
+      # exact reviewed commit - docs/devops/ROLLBACK_RUNBOOK.md rolls
+      # back by redeploying a prior SHA tag, never by rebuilding) and
+      # `latest` (convenience only, never what a real deploy pins to).
+      - name: Build and push API image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: Dockerfile
+          target: prod
+          push: true
+          tags: |
+            ${{ steps.image.outputs.prefix }}-api:${{ github.sha }}
+            ${{ steps.image.outputs.prefix }}-api:latest
+
+      - name: Build and push web image
+        uses: docker/build-push-action@v6
+        with:
+          context: apps/web
+          file: apps/web/Dockerfile
+          target: prod
+          push: true
+          tags: |
+            ${{ steps.image.outputs.prefix }}-web:${{ github.sha }}
+            ${{ steps.image.outputs.prefix }}-web:latest
