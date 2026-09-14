@@ -19,6 +19,9 @@ jobs:
   ci:
     name: Install, Lint, Type Check, Test, Security Scan, Build
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: backend
     # Ephemeral Postgres for the DB-dependent tests - docs/database/
     # MIGRATION_STRATEGY.md and docs/backend/BACKEND_TESTING.md both
     # intended live migration/query validation; this is where it actually
@@ -63,6 +66,7 @@ jobs:
         with:
           node-version: "22"
           cache: "npm"
+          cache-dependency-path: backend/package-lock.json
 
       # --- Install ---
       - name: Install dependencies (from lockfile, no drift allowed)
@@ -108,8 +112,8 @@ jobs:
       - name: Build
         run: npm run build
 
-  # apps/web is a separate package with its own lockfile, deliberately
-  # not an npm workspace with the root backend
+  # frontend/ is a separate package with its own lockfile, deliberately
+  # not an npm workspace with backend/
   # (docs/frontend/FRONTEND_ARCHITECTURE.md) - it needs its own,
   # independent CI coverage rather than being silently uncovered.
   # Finding from SECURITY_TEST_REPORT.md's review: this job didn't exist
@@ -120,7 +124,7 @@ jobs:
     runs-on: ubuntu-latest
     defaults:
       run:
-        working-directory: apps/web
+        working-directory: frontend
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -130,7 +134,7 @@ jobs:
         with:
           node-version: "22"
           cache: "npm"
-          cache-dependency-path: apps/web/package-lock.json
+          cache-dependency-path: frontend/package-lock.json
 
       - name: Install dependencies (from lockfile, no drift allowed)
         run: npm ci
@@ -200,8 +204,8 @@ jobs:
       - name: Build and push API image
         uses: docker/build-push-action@v6
         with:
-          context: .
-          file: Dockerfile
+          context: backend
+          file: backend/Dockerfile
           target: prod
           push: true
           tags: |
@@ -211,8 +215,8 @@ jobs:
       - name: Build and push web image
         uses: docker/build-push-action@v6
         with:
-          context: apps/web
-          file: apps/web/Dockerfile
+          context: frontend
+          file: frontend/Dockerfile
           target: prod
           push: true
           tags: |
