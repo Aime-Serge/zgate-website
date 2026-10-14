@@ -1,28 +1,51 @@
-name: CI
+name: Website
 
-# Every push/PR to develop or main: verify the whole pnpm workspace, then
-# build and scan every production image. On main only, the scanned
-# images are also pushed to GHCR. That is artifact publishing, not
-# deployment - production deploys stay a manual, approval-gated step
-# (docs/devops/DEPLOYMENT_RUNBOOK.md).
+# The corporate website (website/app) and the shared code it may use.
+# Runs only when something the website depends on changes - an
+# e-learning-only change never triggers it (ADR-007 product separation).
 #
-# Third-party actions are pinned to full commit SHAs (tag in the trailing
-# comment) so a moved or compromised tag can't change what runs here
-# (docs/platform-v2/05-SECURITY-COMPLIANCE.md §5).
+# Actions are pinned to full commit SHAs (tag in the trailing comment)
+# so a moved or compromised tag can't change what runs here
+# (docs/platform-v2/05-SECURITY-COMPLIANCE.md §5). Images are pushed to
+# GHCR from main only; deploying stays a manual step
+# (docs/runbooks/WEBSITE_DEPLOY.md).
 
 on:
   push:
     branches: [develop, main]
+    paths:
+      - "website/**"
+      - "shared/**"
+      - "infra/proxy/**"
+      - "infra/compose/**"
+      - "package.json"
+      - "pnpm-lock.yaml"
+      - "pnpm-workspace.yaml"
+      - "turbo.json"
+      - ".prettierrc.json"
+      - ".dependency-cruiser.cjs"
+      - ".github/workflows/website.yml"
   pull_request:
     branches: [develop, main]
+    paths:
+      - "website/**"
+      - "shared/**"
+      - "infra/proxy/**"
+      - "infra/compose/**"
+      - "package.json"
+      - "pnpm-lock.yaml"
+      - "pnpm-workspace.yaml"
+      - "turbo.json"
+      - ".prettierrc.json"
+      - ".dependency-cruiser.cjs"
+      - ".github/workflows/website.yml"
 
-# Least privilege by default; jobs widen only what they need
-# (docs/SECURITY_GUIDE.md F-6).
+# Least privilege by default; jobs widen only what they need (F-6).
 permissions:
   contents: read
 
 concurrency:
-  group: ci-${{ github.ref }}
+  group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
@@ -30,12 +53,13 @@ jobs:
     name: Lint, typecheck, test, build, scan
     runs-on: ubuntu-latest
     services:
+      # The website's own database (ADR-007) - never the e-learning one.
       postgres:
         image: postgres:16-alpine
         env:
           POSTGRES_USER: zgate
           POSTGRES_PASSWORD: zgate_ci
-          POSTGRES_DB: zgate_ci
+          POSTGRES_DB: zgate_website_ci
         ports:
           - 5432:5432
         options: >-
@@ -44,11 +68,10 @@ jobs:
           --health-timeout 5s
           --health-retries 5
     env:
-      DATABASE_URL: postgres://zgate:zgate_ci@localhost:5432/zgate_ci
-      # DB-dependent tests only run when all three are set
-      # (docs/backend/BACKEND_TESTING.md). CI-only throwaway values.
-      SESSION_SECRET: ci-only-test-session-secret-not-a-real-secret-32chars
-      SESSION_SALT: ci-only-salt-16c
+      DATABASE_URL: postgres://zgate:zgate_ci@localhost:5432/zgate_website_ci
+      # CI-only throwaway values; DB-dependent tests run only when set.
+      PAYLOAD_SECRET: ci-only-payload-secret-not-a-real-secret-0123456789
+      SITE_URL: http://localhost:3002
       NEXT_TELEMETRY_DISABLED: "1"
     steps:
       - name: Checkout
@@ -68,34 +91,14 @@ jobs:
       - name: Install dependencies (lockfile only, no drift)
         run: pnpm install --frozen-lockfile
 
-      # Same runner staging and production use, against a real database.
-      - name: Apply database migrations (e-learning API)
-        run: pnpm db:migrate
+      - name: Product boundaries
+        run: pnpm lint:boundaries
 
-      # The website owns a separate database (ADR-007) - both apps have a
-      # `users` table, so they must never share one.
-      - name: Create and migrate the website database
-        env:
-          PGPASSWORD: zgate_ci
-          DATABASE_URL: postgres://zgate:zgate_ci@localhost:5432/zgate_website_ci
-          PAYLOAD_SECRET: ci-only-payload-secret-not-a-real-secret-0123456789
-          SITE_URL: http://localhost:3002
-        run: |
-          psql -h localhost -U zgate -d zgate_ci -c "CREATE DATABASE zgate_website_ci"
-          pnpm --filter @zgate/website migrate
+      - name: Migrate the website database
+        run: pnpm --filter @zgate/website migrate
 
-      - name: Lint, typecheck, build
-        run: pnpm turbo run lint typecheck build
-
-      - name: Test (e-learning API, ops)
-        run: pnpm turbo run test --filter=!@zgate/website
-
-      - name: Test (website, against its own database)
-        env:
-          DATABASE_URL: postgres://zgate:zgate_ci@localhost:5432/zgate_website_ci
-          PAYLOAD_SECRET: ci-only-payload-secret-not-a-real-secret-0123456789
-          SITE_URL: http://localhost:3002
-        run: pnpm --filter @zgate/website test
+      - name: Lint, typecheck, build, test (website + shared)
+        run: pnpm turbo run lint typecheck build test --filter=@zgate/website --filter='./shared/*'
 
       - name: Dependency vulnerability scan
         run: pnpm audit --audit-level high
@@ -105,10 +108,10 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-  # Real-browser checks of the website's production build: WCAG A/AA via
-  # axe, host separation + CSP, forms, and the JavaScript budget.
-  website-e2e:
-    name: Website - browser checks
+  # Real-browser checks of the production build: WCAG A/AA via axe, host
+  # separation + CSP, forms, and the JavaScript budget.
+  e2e:
+    name: Browser checks
     needs: verify
     runs-on: ubuntu-latest
     services:
@@ -193,7 +196,7 @@ jobs:
 
   images:
     name: Image - ${{ matrix.app }}
-    needs: [verify, website-e2e]
+    needs: [verify, e2e]
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -201,13 +204,11 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        # `app` names the image (ghcr.io/<repo>-<app>); `dir` is the app
-        # folder holding the Dockerfile; `target` is the stage to build.
+        # `app` names the image (ghcr.io/<repo>-<app>); `dir` holds the
+        # Dockerfile; `target` is the stage to build.
         include:
-          - { app: elearning-backend, dir: elearning/backend, target: prod }
-          - { app: ops, dir: legacy/ops, target: prod }
           - { app: website, dir: website/app, target: prod }
-          # One-off migration job image, run before each website rollout.
+          # One-off migration job, run before each rollout.
           - { app: website-migrate, dir: website/app, target: migrate }
     env:
       PUBLISH: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
@@ -220,39 +221,11 @@ jobs:
         id: image
         run: echo "name=ghcr.io/$(echo '${{ github.repository }}' | tr '[:upper:]' '[:lower:]')-${{ matrix.app }}" >> "$GITHUB_OUTPUT"
 
-      # legacy/ops inlines its public URLs at build time (N-2). Published
-      # images must get real values from repository variables; PR builds
-      # only prove the Dockerfile works, so placeholders are fine there.
-      - name: Resolve build arguments
-        id: args
-        env:
-          OPS_PUBLIC_API_URL: ${{ vars.OPS_PUBLIC_API_URL }}
-          OPS_PUBLIC_SITE_URL: ${{ vars.OPS_PUBLIC_SITE_URL }}
-        run: |
-          if [ "${{ matrix.app }}" != "ops" ]; then
-            echo "list=" >> "$GITHUB_OUTPUT"; exit 0
-          fi
-          if [ "$PUBLISH" = "true" ]; then
-            if [ -z "$OPS_PUBLIC_API_URL" ] || [ -z "$OPS_PUBLIC_SITE_URL" ]; then
-              echo "::error::Set repository variables OPS_PUBLIC_API_URL and OPS_PUBLIC_SITE_URL before publishing the ops image."
-              exit 1
-            fi
-          else
-            OPS_PUBLIC_API_URL="https://api.ci.invalid"
-            OPS_PUBLIC_SITE_URL="https://ops.ci.invalid"
-          fi
-          {
-            echo "list<<EOF"
-            echo "NEXT_PUBLIC_API_URL=$OPS_PUBLIC_API_URL"
-            echo "NEXT_PUBLIC_SITE_URL=$OPS_PUBLIC_SITE_URL"
-            echo "EOF"
-          } >> "$GITHUB_OUTPUT"
-
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@8d2750c68a42422c14e847fe6c8ac0403b4cbd6f # v3
 
-      # Built once and loaded locally, so the exact image that gets
-      # scanned is the one that gets pushed.
+      # Built once and loaded locally, so the image that gets scanned is
+      # the one that gets pushed. No build args: runtime config only.
       - name: Build image
         uses: docker/build-push-action@10e90e3645eae34f1e60eeb005ba3a3d33f178e8 # v6
         with:
@@ -260,7 +233,6 @@ jobs:
           file: ${{ matrix.dir }}/Dockerfile
           target: ${{ matrix.target }}
           load: true
-          build-args: ${{ steps.args.outputs.list }}
           tags: |
             ${{ steps.image.outputs.name }}:${{ github.sha }}
             ${{ steps.image.outputs.name }}:latest
@@ -268,7 +240,6 @@ jobs:
           cache-to: type=gha,mode=max,scope=${{ matrix.app }}
 
       # Fails on HIGH/CRITICAL vulnerabilities that have a fix available.
-      # Unfixed base-image CVEs are reported but don't block.
       - name: Scan image (Trivy)
         uses: aquasecurity/trivy-action@57a97c7e7821a5776cebc9bb87c984fa69cba8f1 # 0.35.0
         with:
@@ -285,8 +256,7 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      # SHA tag is what deploys and rollbacks pin to; `latest` is a
-      # convenience only (docs/devops/ROLLBACK_RUNBOOK.md).
+      # The SHA tag is what deploys and rollbacks pin to.
       - name: Push image
         if: env.PUBLISH == 'true'
         run: docker push --all-tags "${{ steps.image.outputs.name }}"
