@@ -138,7 +138,7 @@ jobs:
       NEXT_TELEMETRY_DISABLED: "1"
     defaults:
       run:
-        working-directory: apps/website
+        working-directory: website/app
     steps:
       - name: Checkout
         uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
@@ -187,7 +187,7 @@ jobs:
         with:
           name: website-e2e-report
           path: |
-            apps/website/playwright-report
+            website/app/playwright-report
             /tmp/website.log
           retention-days: 7
 
@@ -204,11 +204,11 @@ jobs:
         # `app` names the image (ghcr.io/<repo>-<app>); `dir` is the app
         # folder holding the Dockerfile; `target` is the stage to build.
         include:
-          - { app: learn-api, dir: learn-api, target: prod }
-          - { app: ops, dir: ops, target: prod }
-          - { app: website, dir: website, target: prod }
+          - { app: elearning-backend, dir: elearning/backend, target: prod }
+          - { app: ops, dir: legacy/ops, target: prod }
+          - { app: website, dir: website/app, target: prod }
           # One-off migration job image, run before each website rollout.
-          - { app: website-migrate, dir: website, target: migrate }
+          - { app: website-migrate, dir: website/app, target: migrate }
     env:
       PUBLISH: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
     steps:
@@ -220,7 +220,7 @@ jobs:
         id: image
         run: echo "name=ghcr.io/$(echo '${{ github.repository }}' | tr '[:upper:]' '[:lower:]')-${{ matrix.app }}" >> "$GITHUB_OUTPUT"
 
-      # apps/ops inlines its public URLs at build time (N-2). Published
+      # legacy/ops inlines its public URLs at build time (N-2). Published
       # images must get real values from repository variables; PR builds
       # only prove the Dockerfile works, so placeholders are fine there.
       - name: Resolve build arguments
@@ -257,7 +257,7 @@ jobs:
         uses: docker/build-push-action@10e90e3645eae34f1e60eeb005ba3a3d33f178e8 # v6
         with:
           context: .
-          file: apps/${{ matrix.dir }}/Dockerfile
+          file: ${{ matrix.dir }}/Dockerfile
           target: ${{ matrix.target }}
           load: true
           build-args: ${{ steps.args.outputs.list }}

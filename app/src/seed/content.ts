@@ -1,6 +1,6 @@
 /**
  * Approved copy imported into the CMS on first run. Moved verbatim from
- * the v1 site (apps/ops/src/lib/content.ts), which sourced every string
+ * the v1 site (legacy/ops/src/lib/content.ts), which sourced every string
  * from the approved business documents - nothing here is written
  * freehand. After seeding, the CMS is the source of truth; edit content
  * there, not here.
@@ -162,7 +162,7 @@ export const divisions: DivisionSeed[] = [
   },
 ];
 
-// Academy Course Curriculum (also seeded in apps/learn-api migration 010).
+// Academy Course Curriculum (also seeded in elearning/backend migration 010).
 // Outcomes, syllabus and intake dates are left empty on purpose: they
 // aren't in the approved source available here, so they're not invented.
 export const courses = [

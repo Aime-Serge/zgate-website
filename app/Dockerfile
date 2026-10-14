@@ -1,8 +1,8 @@
 # Z-GATE corporate website (Next.js + Payload CMS).
 #
 # Build context is the REPOSITORY ROOT:
-#   docker build -f apps/website/Dockerfile --target prod    -t zgate-website .
-#   docker build -f apps/website/Dockerfile --target migrate -t zgate-website-migrate .
+#   docker build -f website/app/Dockerfile --target prod    -t zgate-website .
+#   docker build -f website/app/Dockerfile --target migrate -t zgate-website-migrate .
 #
 # One image for every environment: no build arguments, no database at
 # build time. DATABASE_URL, PAYLOAD_SECRET, SITE_URL and MEDIA_DIR are read
@@ -28,7 +28,7 @@ RUN pnpm --filter @zgate/website run build
 
 # ---- migrate: Payload CLI + migration files, run once per deploy ----
 FROM build AS migrate
-WORKDIR /repo/apps/website
+WORKDIR /repo/website/app
 RUN groupadd --gid 1001 zgate && useradd --uid 1001 --gid zgate --shell /bin/false zgate
 USER zgate
 # Payload's CLI directly, not `pnpm run`: corepack would try to download
@@ -44,8 +44,8 @@ WORKDIR /app
 ENV NODE_ENV=production
 ENV NEXT_TELEMETRY_DISABLED=1
 RUN groupadd --gid 1001 zgate && useradd --uid 1001 --gid zgate --shell /bin/false zgate
-COPY --from=build --chown=zgate:zgate /repo/apps/website/.next/standalone ./
-COPY --from=build --chown=zgate:zgate /repo/apps/website/.next/static ./apps/website/.next/static
+COPY --from=build --chown=zgate:zgate /repo/website/app/.next/standalone ./
+COPY --from=build --chown=zgate:zgate /repo/website/app/.next/static ./website/app/.next/static
 # Uploaded media lives on a mounted volume until object storage (ADR-P7).
 RUN mkdir -p /data/media && chown zgate:zgate /data/media
 ENV MEDIA_DIR=/data/media
@@ -58,4 +58,4 @@ EXPOSE 3002
 HEALTHCHECK --interval=30s --timeout=5s --start-period=20s --retries=3 \
   CMD node -e "fetch('http://localhost:3002/api/health').then(r => process.exit(r.ok ? 0 : 1)).catch(() => process.exit(1))"
 
-CMD ["node", "apps/website/server.js"]
+CMD ["node", "website/app/server.js"]

@@ -3,7 +3,7 @@
  * as real users (overrideAccess: false) against a real database.
  *
  * Skips cleanly without DATABASE_URL / PAYLOAD_SECRET / SITE_URL - the
- * same pattern as apps/learn-api's DB-dependent tests. CI provides all
+ * same pattern as elearning/backend's DB-dependent tests. CI provides all
  * three and applies migrations first.
  */
 import type { Payload } from "payload";
