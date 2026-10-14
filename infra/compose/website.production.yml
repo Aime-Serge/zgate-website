@@ -39,10 +39,11 @@ services:
       SITE_HOST: ${SITE_HOST:?set SITE_HOST}
       ADMIN_HOST: ${ADMIN_HOST:?set ADMIN_HOST}
       APEX_HOST: ${APEX_HOST:?set APEX_HOST}
+      LEARN_HOST: ${LEARN_HOST:?set LEARN_HOST}
       ADMIN_ALLOWED_IPS: ${ADMIN_ALLOWED_IPS:?set ADMIN_ALLOWED_IPS}
       ACME_EMAIL: ${ACME_EMAIL:?set ACME_EMAIL}
     volumes:
-      - ../caddy/Caddyfile:/etc/caddy/Caddyfile:ro
+      - ../proxy/Caddyfile:/etc/caddy/Caddyfile:ro
       - caddy_data:/data
       - caddy_config:/config
     depends_on:
