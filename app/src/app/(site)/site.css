@@ -1,5 +1,5 @@
 /* Interim public-site styles on top of the brand tokens in globals.css.
-   Replaced by packages/ui components in step 3. Mobile-first. */
+   Replaced by shared/ui components in step 3. Mobile-first. */
 
 .site-header {
   border-bottom: 1px solid var(--line);

@@ -1,6 +1,6 @@
 # Runbook: Deploying the Z-GATE website
 
-**Applies to:** `apps/website` (Next.js + Payload CMS).
+**Applies to:** `website/app` (Next.js + Payload CMS).
 **Files:** `infra/compose/website.production.yml`, `infra/proxy/Caddyfile`, `infra/compose/*.env.example`.
 **Audience:** whoever deploys or operates the website. Read it once end to end before the first deployment.
 
