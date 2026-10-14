@@ -1,13 +1,14 @@
 name: CI
 
-# Install -> Lint -> Type Check -> Test -> Security Scan -> Build, on
-# every push/PR to develop or main. On main specifically, a third job
-# additionally publishes tagged production images (see publish-images
-# below) - that is artifact preparation, not a deployment. No job in
-# this workflow deploys anything to staging or production - see
-# docs/devops/PRODUCTION_ARCHITECTURE.md and docs/devops/
-# DEPLOYMENT_RUNBOOK.md for why that stays a deliberate, manual,
-# approval-gated step rather than something this file automates.
+# Every push/PR to develop or main: verify the whole pnpm workspace, then
+# build and scan every production image. On main only, the scanned
+# images are also pushed to GHCR. That is artifact publishing, not
+# deployment - production deploys stay a manual, approval-gated step
+# (docs/devops/DEPLOYMENT_RUNBOOK.md).
+#
+# Third-party actions are pinned to full commit SHAs (tag in the trailing
+# comment) so a moved or compromised tag can't change what runs here
+# (docs/platform-v2/05-SECURITY-COMPLIANCE.md §5).
 
 on:
   push:
@@ -15,19 +16,19 @@ on:
   pull_request:
     branches: [develop, main]
 
+# Least privilege by default; jobs widen only what they need
+# (docs/SECURITY_GUIDE.md F-6).
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
 jobs:
-  ci:
-    name: Install, Lint, Type Check, Test, Security Scan, Build
+  verify:
+    name: Lint, typecheck, test, build, scan
     runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: backend
-    # Ephemeral Postgres for the DB-dependent tests - docs/database/
-    # MIGRATION_STRATEGY.md and docs/backend/BACKEND_TESTING.md both
-    # intended live migration/query validation; this is where it actually
-    # runs, since it couldn't be verified in the sandboxed dev session
-    # that produced those documents (a local Docker-permission issue, not
-    # a CI limitation - CI gets a clean environment with full Docker access).
     services:
       postgres:
         image: postgres:16-alpine
@@ -44,181 +45,248 @@ jobs:
           --health-retries 5
     env:
       DATABASE_URL: postgres://zgate:zgate_ci@localhost:5432/zgate_ci
-      # Every DB-dependent test file gates its real assertions behind
-      # `DATABASE_URL && SESSION_SECRET && SESSION_SALT` all being set
-      # (docs/backend/BACKEND_TESTING.md's skip-cleanly-without-env
-      # pattern) - without these two, that guard was false even here,
-      # and the entire suite's IDOR/privilege-escalation/auth tests were
-      # silently skipping in CI too, not just in a local sandbox without
-      # Postgres. Fixed as part of SECURITY_TEST_REPORT.md's review
-      # (finding: CI test coverage gap). CI-only, throwaway values - not
-      # a real secret, never used outside this ephemeral job.
+      # DB-dependent tests only run when all three are set
+      # (docs/backend/BACKEND_TESTING.md). CI-only throwaway values.
       SESSION_SECRET: ci-only-test-session-secret-not-a-real-secret-32chars
       SESSION_SALT: ci-only-salt-16c
+      NEXT_TELEMETRY_DISABLED: "1"
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
         with:
-          fetch-depth: 0 # gitleaks needs history to scan commits, not just the working tree
+          fetch-depth: 0 # gitleaks scans full history
+
+      - name: Set up pnpm (version from package.json "packageManager")
+        uses: pnpm/action-setup@b906affcce14559ad1aafd4ab0e942779e9f58b1 # v4
 
       - name: Set up Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
         with:
           node-version: "22"
-          cache: "npm"
-          cache-dependency-path: backend/package-lock.json
+          cache: pnpm
 
-      # --- Install ---
-      - name: Install dependencies (from lockfile, no drift allowed)
-        run: npm ci
+      - name: Install dependencies (lockfile only, no drift)
+        run: pnpm install --frozen-lockfile
 
-      # --- Lint ---
-      - name: Lint
-        run: npm run lint
+      # Same runner staging and production use, against a real database.
+      - name: Apply database migrations (e-learning API)
+        run: pnpm db:migrate
 
-      # --- Type Check ---
-      - name: Type check
-        run: npm run typecheck
+      # The website owns a separate database (ADR-007) - both apps have a
+      # `users` table, so they must never share one.
+      - name: Create and migrate the website database
+        env:
+          PGPASSWORD: zgate_ci
+          DATABASE_URL: postgres://zgate:zgate_ci@localhost:5432/zgate_website_ci
+          PAYLOAD_SECRET: ci-only-payload-secret-not-a-real-secret-0123456789
+          SITE_URL: http://localhost:3002
+        run: |
+          psql -h localhost -U zgate -d zgate_ci -c "CREATE DATABASE zgate_website_ci"
+          pnpm --filter @zgate/website migrate
 
-      # Apply the schema via the same script staging/production use
-      # (scripts/migrate.mjs, docs/devops/PRODUCTION_ARCHITECTURE.md) -
-      # not a separate CI-only shell loop. CI exercising the exact
-      # tooling a real deploy runs is the actual point: a green CI run
-      # is now real evidence the migration runner itself works, not just
-      # that the raw SQL is syntactically valid.
-      - name: Apply database migrations
-        run: node scripts/migrate.mjs
+      - name: Lint, typecheck, build
+        run: pnpm turbo run lint typecheck build
 
-      # --- Test ---
-      - name: Test
-        run: npm test
+      - name: Test (e-learning API, ops)
+        run: pnpm turbo run test --filter=!@zgate/website
 
-      # --- Security Scan ---
-      # Dependency vulnerability scan (SCA) - docs/security/SECURITY_TESTING_STRATEGY.md
+      - name: Test (website, against its own database)
+        env:
+          DATABASE_URL: postgres://zgate:zgate_ci@localhost:5432/zgate_website_ci
+          PAYLOAD_SECRET: ci-only-payload-secret-not-a-real-secret-0123456789
+          SITE_URL: http://localhost:3002
+        run: pnpm --filter @zgate/website test
+
       - name: Dependency vulnerability scan
-        run: npm audit --audit-level=high
+        run: pnpm audit --audit-level high
 
-      # Secrets scan - "Never commit secrets" is a repeated, binding rule
-      # across every phase of this engagement (Data Privacy Policy Annex C,
-      # docs/security/SECURITY_REQUIREMENTS.md V14). Free/open-source tool,
-      # proportionate to this project's budget
-      # (docs/architecture/DEPLOYMENT_ARCHITECTURE.md's cost baseline).
       - name: Secrets scan
-        uses: gitleaks/gitleaks-action@v2
+        uses: gitleaks/gitleaks-action@ff98106e4c7b2bc287b24eaf42907196329070c7 # v2
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      # --- Build ---
-      - name: Build
-        run: npm run build
-
-  # frontend/ is a separate package with its own lockfile, deliberately
-  # not an npm workspace with backend/
-  # (docs/frontend/FRONTEND_ARCHITECTURE.md) - it needs its own,
-  # independent CI coverage rather than being silently uncovered.
-  # Finding from SECURITY_TEST_REPORT.md's review: this job didn't exist
-  # at all before - every frontend lint/typecheck/test/build check this
-  # engagement ran was manual, never enforced on a push or PR.
-  web-ci:
-    name: Web - Install, Lint, Type Check, Test, Security Scan, Build
+  # Real-browser checks of the website's production build: WCAG A/AA via
+  # axe, host separation + CSP, forms, and the JavaScript budget.
+  website-e2e:
+    name: Website - browser checks
+    needs: verify
     runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: zgate
+          POSTGRES_PASSWORD: zgate_ci
+          POSTGRES_DB: zgate_website_ci
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    env:
+      NODE_ENV: production
+      DATABASE_URL: postgres://zgate:zgate_ci@localhost:5432/zgate_website_ci
+      PAYLOAD_SECRET: ci-only-payload-secret-not-a-real-secret-0123456789
+      # Two hostnames, one server - the production public/admin split.
+      SITE_URL: http://localhost:3002
+      ADMIN_URL: http://127.0.0.1:3002
+      E2E_SITE_URL: http://localhost:3002
+      E2E_ADMIN_URL: http://127.0.0.1:3002
+      TRUSTED_PROXIES: "1"
+      NEXT_TELEMETRY_DISABLED: "1"
     defaults:
       run:
-        working-directory: frontend
+        working-directory: apps/website
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+
+      - name: Set up pnpm
+        uses: pnpm/action-setup@b906affcce14559ad1aafd4ab0e942779e9f58b1 # v4
 
       - name: Set up Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
         with:
           node-version: "22"
-          cache: "npm"
-          cache-dependency-path: frontend/package-lock.json
+          cache: pnpm
 
-      - name: Install dependencies (from lockfile, no drift allowed)
-        run: npm ci
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile --filter "@zgate/website..."
 
-      - name: Lint
-        run: npm run lint
+      - name: Migrate and seed the website database
+        run: |
+          pnpm migrate
+          pnpm seed
 
-      - name: Type check
-        run: npm run typecheck
-
-      - name: Test
-        run: npm test
-
-      - name: Dependency vulnerability scan
-        run: npm audit --audit-level=high
-
+      # Built with no database or site settings, exactly like the image.
       - name: Build
-        run: npm run build
+        env:
+          DATABASE_URL: ""
+          PAYLOAD_SECRET: ""
+          SITE_URL: ""
+          ADMIN_URL: ""
+        run: pnpm build
 
-  # Builds and pushes tagged, immutable production images once ci and
-  # web-ci both pass - main only (docs/devops/DEPLOYMENT_ARCHITECTURE's
-  # "every deployment to production is preceded by a staging deployment"
-  # rule already implies main is the release branch, not develop). This
-  # is *artifact publishing*, not deployment: nothing here runs the
-  # image anywhere, touches staging, or touches production - it makes a
-  # reviewed, versioned image available for a human to deploy per
-  # docs/devops/DEPLOYMENT_RUNBOOK.md, gated on the release approval
-  # that runbook requires. Pushes to GitHub Container Registry (GHCR),
-  # not a separate cloud registry - no new vendor, no new credential to
-  # provision: GHCR authenticates with the GITHUB_TOKEN every workflow
-  # run already gets for free, consistent with this project's cost
-  # baseline (docs/architecture/DEPLOYMENT_ARCHITECTURE.md).
-  publish-images:
-    name: Publish production images (GHCR)
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-    needs: [ci, web-ci]
+      - name: Start the site
+        run: |
+          nohup pnpm start > /tmp/website.log 2>&1 &
+          for i in $(seq 1 60); do curl -sf http://localhost:3002/api/health && exit 0; sleep 2; done
+          cat /tmp/website.log; exit 1
+
+      - name: Install Chromium
+        run: pnpm exec playwright install --with-deps chromium
+
+      - name: Browser checks
+        run: pnpm e2e
+
+      - name: Upload report and server log on failure
+        if: failure()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: website-e2e-report
+          path: |
+            apps/website/playwright-report
+            /tmp/website.log
+          retention-days: 7
+
+  images:
+    name: Image - ${{ matrix.app }}
+    needs: [verify, website-e2e]
     runs-on: ubuntu-latest
     permissions:
       contents: read
       packages: write
+    strategy:
+      fail-fast: false
+      matrix:
+        # `app` names the image (ghcr.io/<repo>-<app>); `dir` is the app
+        # folder holding the Dockerfile; `target` is the stage to build.
+        include:
+          - { app: learn-api, dir: learn-api, target: prod }
+          - { app: ops, dir: ops, target: prod }
+          - { app: website, dir: website, target: prod }
+          # One-off migration job image, run before each website rollout.
+          - { app: website-migrate, dir: website, target: migrate }
+    env:
+      PUBLISH: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+
+      # GHCR names must be lowercase; github.repository may not be.
+      - name: Compute image name
+        id: image
+        run: echo "name=ghcr.io/$(echo '${{ github.repository }}' | tr '[:upper:]' '[:lower:]')-${{ matrix.app }}" >> "$GITHUB_OUTPUT"
+
+      # apps/ops inlines its public URLs at build time (N-2). Published
+      # images must get real values from repository variables; PR builds
+      # only prove the Dockerfile works, so placeholders are fine there.
+      - name: Resolve build arguments
+        id: args
+        env:
+          OPS_PUBLIC_API_URL: ${{ vars.OPS_PUBLIC_API_URL }}
+          OPS_PUBLIC_SITE_URL: ${{ vars.OPS_PUBLIC_SITE_URL }}
+        run: |
+          if [ "${{ matrix.app }}" != "ops" ]; then
+            echo "list=" >> "$GITHUB_OUTPUT"; exit 0
+          fi
+          if [ "$PUBLISH" = "true" ]; then
+            if [ -z "$OPS_PUBLIC_API_URL" ] || [ -z "$OPS_PUBLIC_SITE_URL" ]; then
+              echo "::error::Set repository variables OPS_PUBLIC_API_URL and OPS_PUBLIC_SITE_URL before publishing the ops image."
+              exit 1
+            fi
+          else
+            OPS_PUBLIC_API_URL="https://api.ci.invalid"
+            OPS_PUBLIC_SITE_URL="https://ops.ci.invalid"
+          fi
+          {
+            echo "list<<EOF"
+            echo "NEXT_PUBLIC_API_URL=$OPS_PUBLIC_API_URL"
+            echo "NEXT_PUBLIC_SITE_URL=$OPS_PUBLIC_SITE_URL"
+            echo "EOF"
+          } >> "$GITHUB_OUTPUT"
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@8d2750c68a42422c14e847fe6c8ac0403b4cbd6f # v3
+
+      # Built once and loaded locally, so the exact image that gets
+      # scanned is the one that gets pushed.
+      - name: Build image
+        uses: docker/build-push-action@10e90e3645eae34f1e60eeb005ba3a3d33f178e8 # v6
+        with:
+          context: .
+          file: apps/${{ matrix.dir }}/Dockerfile
+          target: ${{ matrix.target }}
+          load: true
+          build-args: ${{ steps.args.outputs.list }}
+          tags: |
+            ${{ steps.image.outputs.name }}:${{ github.sha }}
+            ${{ steps.image.outputs.name }}:latest
+          cache-from: type=gha,scope=${{ matrix.app }}
+          cache-to: type=gha,mode=max,scope=${{ matrix.app }}
+
+      # Fails on HIGH/CRITICAL vulnerabilities that have a fix available.
+      # Unfixed base-image CVEs are reported but don't block.
+      - name: Scan image (Trivy)
+        uses: aquasecurity/trivy-action@57a97c7e7821a5776cebc9bb87c984fa69cba8f1 # 0.35.0
+        with:
+          image-ref: ${{ steps.image.outputs.name }}:${{ github.sha }}
+          severity: CRITICAL,HIGH
+          ignore-unfixed: true
+          exit-code: "1"
 
       - name: Log in to GHCR
-        uses: docker/login-action@v3
+        if: env.PUBLISH == 'true'
+        uses: docker/login-action@c94ce9fb468520275223c153574b00df6fe4bcc9 # v3
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
-
-      # GHCR/Docker image names must be lowercase, but github.repository
-      # isn't guaranteed to be (this repo's own owner has a capital
-      # letter) - lowercased once here, in a real shell step, since the
-      # expression syntax `${{ }}` has no built-in lower() function.
-      - name: Compute lowercase image name prefix
-        id: image
-        run: echo "prefix=ghcr.io/$(echo '${{ github.repository }}' | tr '[:upper:]' '[:lower:]')" >> "$GITHUB_OUTPUT"
-
-      # Tagged with the release commit's SHA (immutable, traceable to an
-      # exact reviewed commit - docs/devops/ROLLBACK_RUNBOOK.md rolls
-      # back by redeploying a prior SHA tag, never by rebuilding) and
-      # `latest` (convenience only, never what a real deploy pins to).
-      - name: Build and push API image
-        uses: docker/build-push-action@v6
-        with:
-          context: backend
-          file: backend/Dockerfile
-          target: prod
-          push: true
-          tags: |
-            ${{ steps.image.outputs.prefix }}-api:${{ github.sha }}
-            ${{ steps.image.outputs.prefix }}-api:latest
-
-      - name: Build and push web image
-        uses: docker/build-push-action@v6
-        with:
-          context: frontend
-          file: frontend/Dockerfile
-          target: prod
-          push: true
-          tags: |
-            ${{ steps.image.outputs.prefix }}-web:${{ github.sha }}
-            ${{ steps.image.outputs.prefix }}-web:latest
+      # SHA tag is what deploys and rollbacks pin to; `latest` is a
+      # convenience only (docs/devops/ROLLBACK_RUNBOOK.md).
+      - name: Push image
+        if: env.PUBLISH == 'true'
+        run: docker push --all-tags "${{ steps.image.outputs.name }}"

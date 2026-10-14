@@ -1,0 +1,76 @@
+# Z-GATE website - production stack for a single Rwanda-resident VM
+# (docs/platform-v2/06-DEVOPS-RELIABILITY.md §2). Runbook:
+# docs/runbooks/WEBSITE_DEPLOY.md.
+#
+#   cp infra/compose/website.env.example /etc/zgate/website.env   # fill in
+#   WEBSITE_TAG=<git sha> docker compose -f infra/compose/website.production.yml \
+#     --env-file /etc/zgate/edge.env run --rm website-migrate
+#   WEBSITE_TAG=<git sha> docker compose -f infra/compose/website.production.yml \
+#     --env-file /etc/zgate/edge.env up -d --wait
+#
+# PostgreSQL is NOT in this file: it runs on the separate data host (or a
+# managed in-country service) with its own backups - see the runbook.
+
+x-hardening: &hardening
+  restart: unless-stopped
+  security_opt:
+    - no-new-privileges:true
+  cap_drop:
+    - ALL
+  logging:
+    driver: json-file
+    options:
+      max-size: "20m"
+      max-file: "5"
+
+services:
+  caddy:
+    <<: *hardening
+    # Pinned by release age (>= 14 days, docs/DEVELOPER_GUIDE.md). Move to
+    # 2.11.7 after 2026-10-17.
+    image: caddy:2.11.4-alpine
+    cap_add:
+      - NET_BIND_SERVICE
+    ports:
+      - "80:80"
+      - "443:443"
+      - "443:443/udp"
+    environment:
+      SITE_HOST: ${SITE_HOST:?set SITE_HOST}
+      ADMIN_HOST: ${ADMIN_HOST:?set ADMIN_HOST}
+      APEX_HOST: ${APEX_HOST:?set APEX_HOST}
+      ADMIN_ALLOWED_IPS: ${ADMIN_ALLOWED_IPS:?set ADMIN_ALLOWED_IPS}
+      ACME_EMAIL: ${ACME_EMAIL:?set ACME_EMAIL}
+    volumes:
+      - ../caddy/Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    depends_on:
+      website:
+        condition: service_healthy
+
+  website:
+    <<: *hardening
+    image: ghcr.io/aime-serge/z-gate-website:${WEBSITE_TAG:?set WEBSITE_TAG to a git SHA}
+    env_file: /etc/zgate/website.env
+    # Only Caddy reaches the app; no host port is published.
+    expose:
+      - "3002"
+    volumes:
+      - website_media:/data/media
+
+  # One-off: `docker compose ... run --rm website-migrate` before each
+  # rollout. Same SHA as the website image.
+  website-migrate:
+    image: ghcr.io/aime-serge/z-gate-website-migrate:${WEBSITE_TAG:?set WEBSITE_TAG to a git SHA}
+    env_file: /etc/zgate/website.env
+    profiles: ["migrate"]
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+
+volumes:
+  caddy_data:
+  caddy_config:
+  website_media:

@@ -1,0 +1,57 @@
+# Z-GATE website edge proxy (docs/platform-v2/06-DEVOPS-RELIABILITY.md).
+#
+# Two hostnames, one app (src/lib/hosts.ts):
+#   SITE_HOST   public site, e.g. www.example.rw
+#   ADMIN_HOST  CMS, e.g. cms.example.rw - reachable only from
+#               ADMIN_ALLOWED_IPS, since the CMS has no built-in second
+#               factor (docs/platform-v2/04-WEBSITE.md §4)
+#
+# Caddy obtains and renews TLS certificates automatically (ACME_EMAIL).
+#
+# X-Forwarded-For: Caddy doesn't trust client-supplied forwarding headers
+# (no trusted_proxies configured), so the app receives exactly one entry -
+# the visitor's real address. That matches TRUSTED_PROXIES=1 in the
+# website's environment. If a CDN is ever put in front of Caddy, add it to
+# trusted_proxies below AND set TRUSTED_PROXIES=2.
+
+{
+	email {$ACME_EMAIL}
+}
+
+(common) {
+	encode zstd gzip
+	header {
+		# Browsers must only ever use HTTPS for these hosts. Add "preload"
+		# only once the production domain is final (decision D4).
+		Strict-Transport-Security "max-age=31536000; includeSubDomains"
+		-Server
+	}
+}
+
+{$SITE_HOST} {
+	import common
+
+	# Next.js build assets are content-hashed: safe to cache for a year.
+	@immutable path /_next/static/*
+	header @immutable Cache-Control "public, max-age=31536000, immutable"
+
+	reverse_proxy website:3002
+}
+
+{$ADMIN_HOST} {
+	import common
+
+	@allowed remote_ip {$ADMIN_ALLOWED_IPS}
+	handle @allowed {
+		reverse_proxy website:3002
+	}
+	# Everyone else learns nothing about what's here.
+	handle {
+		respond "Not found" 404
+	}
+}
+
+# Bare domain -> canonical public host.
+{$APEX_HOST} {
+	redir https://{$SITE_HOST}{uri} permanent
+}
