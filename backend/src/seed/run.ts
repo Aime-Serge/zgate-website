@@ -1,5 +1,5 @@
 /**
- * Imports the approved v1 copy into the CMS.   pnpm --filter @zgate/website seed
+ * Imports the approved v1 copy into the CMS.   pnpm --filter @zgate/website-backend seed
  *
  * Safe to re-run: it only creates what's missing and never overwrites a
  * document that already exists, so editors' changes in the CMS are never
