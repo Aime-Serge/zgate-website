@@ -1,7 +1,7 @@
 # Runbook: Deploying the Z-GATE website
 
 **Applies to:** `website/app` (Next.js + Payload CMS).
-**Files:** `infra/compose/website.production.yml`, `infra/proxy/Caddyfile`, `infra/compose/*.env.example`.
+**Files:** `infra/proxy/compose.production.yml`, `infra/proxy/Caddyfile`, `infra/proxy/*.env.example`.
 **Audience:** whoever deploys or operates the website. Read it once end to end before the first deployment.
 
 ## 1. What runs where
@@ -35,7 +35,7 @@ The app refuses to start in production unless `ADMIN_URL` is set to a different 
 5. **Migrate, seed once, start:**
    ```bash
    export WEBSITE_TAG=<git sha from CI>
-   C="docker compose -f infra/compose/website.production.yml --env-file /etc/zgate/edge.env"
+   C="docker compose -f infra/proxy/compose.production.yml --env-file /etc/zgate/edge.env"
    $C run --rm website-migrate
    $C run --rm website-migrate node_modules/.bin/payload run src/seed/run.ts   # first deployment only
    $C up -d --wait

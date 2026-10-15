@@ -10,7 +10,7 @@ The Z-GATE corporate website. It presents the four divisions and the Academy cat
 
 ```bash
 cp website/.env.example website/app/.env
-docker compose -f infra/compose/base.yml -f infra/compose/website.yml up
+docker compose -f infra/compose/website.yml up
 # -> http://localhost:3002 (CMS at /admin)
 ```
 
