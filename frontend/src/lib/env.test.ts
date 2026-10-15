@@ -45,7 +45,7 @@ describe("parseEnv", () => {
 
   it("accepts the documented .env.example as-is", () => {
     const text = readFileSync(
-      fileURLToPath(new URL("../../../.env.example", import.meta.url)),
+      fileURLToPath(new URL("../../../deploy/env/dev.env.example", import.meta.url)),
       "utf8",
     );
     const fromFile = Object.fromEntries(
