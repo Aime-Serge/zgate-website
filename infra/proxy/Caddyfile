@@ -1,8 +1,8 @@
 # Z-GATE edge proxy (docs/platform-v2/06-DEVOPS-RELIABILITY.md).
 #
-# Website - two hostnames, one app (website/app/src/lib/hosts.ts):
-#   SITE_HOST   public site, e.g. www.example.rw
-#   ADMIN_HOST  CMS, e.g. cms.example.rw - reachable only from
+# Website - two hostnames, two apps:
+#   SITE_HOST   public site (website/frontend), e.g. www.example.rw
+#   ADMIN_HOST  CMS (website/backend), e.g. cms.example.rw - reachable only from
 #               ADMIN_ALLOWED_IPS, since the CMS has no built-in second
 #               factor (docs/platform-v2/04-WEBSITE.md §4)
 # E-learning:
@@ -39,7 +39,15 @@
 	@immutable path /_next/static/*
 	header @immutable Cache-Control "public, max-age=31536000, immutable"
 
-	reverse_proxy website:3002
+	# The CMS's cache-clearing webhook arrives on the internal network
+	# (website-backend -> website-frontend:3002), never through here. It is
+	# signed anyway; this just keeps it off the internet.
+	handle /api/revalidate {
+		respond "Not found" 404
+	}
+	handle {
+		reverse_proxy website-frontend:3002
+	}
 }
 
 {$ADMIN_HOST} {
@@ -47,7 +55,7 @@
 
 	@allowed remote_ip {$ADMIN_ALLOWED_IPS}
 	handle @allowed {
-		reverse_proxy website:3002
+		reverse_proxy website-backend:3004
 	}
 	# Everyone else learns nothing about what's here.
 	handle {

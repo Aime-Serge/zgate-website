@@ -2,7 +2,8 @@
 # (docs/platform-v2/06-DEVOPS-RELIABILITY.md §2). Runbook:
 # docs/runbooks/WEBSITE_DEPLOY.md.
 #
-#   cp infra/proxy/website.env.example /etc/zgate/website.env   # fill in
+#   cp infra/proxy/website-backend.env.example  /etc/zgate/website-backend.env   # fill in
+#   cp infra/proxy/website-frontend.env.example /etc/zgate/website-frontend.env  # fill in
 #   WEBSITE_TAG=<git sha> docker compose -f infra/proxy/compose.production.yml \
 #     --env-file /etc/zgate/edge.env run --rm website-migrate
 #   WEBSITE_TAG=<git sha> docker compose -f infra/proxy/compose.production.yml \
@@ -47,24 +48,40 @@ services:
       - caddy_data:/data
       - caddy_config:/config
     depends_on:
-      website:
+      website-frontend:
+        condition: service_healthy
+      website-backend:
         condition: service_healthy
 
-  website:
+  # The public site. Talks to the CMS on this internal network
+  # (CMS_URL=http://website-backend:3004); needs no database.
+  website-frontend:
     <<: *hardening
-    image: ghcr.io/aime-serge/z-gate-website:${WEBSITE_TAG:?set WEBSITE_TAG to a git SHA}
-    env_file: /etc/zgate/website.env
-    # Only Caddy reaches the app; no host port is published.
+    image: ghcr.io/aime-serge/z-gate-website-frontend:${WEBSITE_TAG:?set WEBSITE_TAG to a git SHA}
+    env_file: /etc/zgate/website-frontend.env
+    # Only Caddy reaches the apps; no host port is published.
     expose:
       - "3002"
+    depends_on:
+      website-backend:
+        condition: service_healthy
+
+  # The CMS (admin, REST API, lead intake). Reached by Caddy on the CMS
+  # host only, and by the frontend internally.
+  website-backend:
+    <<: *hardening
+    image: ghcr.io/aime-serge/z-gate-website-backend:${WEBSITE_TAG:?set WEBSITE_TAG to a git SHA}
+    env_file: /etc/zgate/website-backend.env
+    expose:
+      - "3004"
     volumes:
       - website_media:/data/media
 
   # One-off: `docker compose ... run --rm website-migrate` before each
-  # rollout. Same SHA as the website image.
+  # rollout. Same SHA as the other website images.
   website-migrate:
     image: ghcr.io/aime-serge/z-gate-website-migrate:${WEBSITE_TAG:?set WEBSITE_TAG to a git SHA}
-    env_file: /etc/zgate/website.env
+    env_file: /etc/zgate/website-backend.env
     profiles: ["migrate"]
     security_opt:
       - no-new-privileges:true
