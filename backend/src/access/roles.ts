@@ -1,5 +1,5 @@
 /**
- * Staff roles for the website CMS (docs/platform-v2/04-WEBSITE.md §4).
+ * Staff roles for the website CMS (website/docs/04-WEBSITE.md §4).
  *
  *  - editor:    drafts content; cannot publish, cannot see leads
  *  - publisher: everything an editor can do, plus publish and work leads

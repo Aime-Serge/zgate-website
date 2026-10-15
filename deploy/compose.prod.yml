@@ -1,6 +1,6 @@
 # Z-GATE website - production stack for a single Rwanda-resident VM
 # (docs/platform-v2/06-DEVOPS-RELIABILITY.md §2). Runbook:
-# docs/runbooks/WEBSITE_DEPLOY.md.
+# website/docs/WEBSITE_DEPLOY.md.
 #
 #   cp website/deploy/env/prod.backend.env.example  /etc/zgate/website-backend.env   # fill in
 #   cp website/deploy/env/prod.frontend.env.example /etc/zgate/website-frontend.env  # fill in

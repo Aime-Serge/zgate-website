@@ -42,5 +42,5 @@ pnpm --filter @zgate/website-frontend dev   # http://localhost:3002
 ## More
 
 - Working on it day to day: `docs/DEVELOPER_GUIDE.md` (section "Website").
-- Deploying: `docs/runbooks/WEBSITE_DEPLOY.md`.
-- Design and scope: `docs/platform-v2/04-WEBSITE.md`; why two apps: ADR-007, second amendment.
+- Deploying: `website/docs/WEBSITE_DEPLOY.md`.
+- Design and scope: `website/docs/04-WEBSITE.md`; why two apps: ADR-007, second amendment.

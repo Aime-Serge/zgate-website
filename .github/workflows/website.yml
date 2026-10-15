@@ -9,7 +9,7 @@ name: Website
 # so a moved or compromised tag can't change what runs here
 # (docs/platform-v2/05-SECURITY-COMPLIANCE.md §5). Images are pushed to
 # GHCR from main only; deploying stays a manual step
-# (docs/runbooks/WEBSITE_DEPLOY.md).
+# (website/docs/WEBSITE_DEPLOY.md).
 
 on:
   push:

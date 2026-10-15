@@ -1,5 +1,5 @@
 /**
- * WCAG 2.2 AA (docs/platform-v2/04-WEBSITE.md §10) via axe-core, on every
+ * WCAG 2.2 AA (website/docs/04-WEBSITE.md §10) via axe-core, on every
  * kind of public page. axe catches roughly a third to a half of real
  * accessibility issues - this is a floor, not a substitute for manual
  * keyboard and screen-reader checks.

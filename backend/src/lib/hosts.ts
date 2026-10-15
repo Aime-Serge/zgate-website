@@ -7,7 +7,7 @@
  * admin UI, the REST API the website frontend reads, and lead intake.
  * Public pages are a separate app (website/frontend) on the public host,
  * so the CMS login cookie never reaches the public pages' origin, where
- * cached HTML needs 'unsafe-inline' scripts (docs/platform-v2/04-WEBSITE.md §9).
+ * cached HTML needs 'unsafe-inline' scripts (website/docs/04-WEBSITE.md §9).
  */
 
 export type RouteDecision = { outcome: "next" } | { outcome: "not-found" };
