@@ -1,89 +1,80 @@
 /**
- * Every string of approved copy on this site lives here, sourced
- * verbatim (or near-verbatim, noted where trimmed for length) from the
- * approved business documents. Pages import from this file rather than
- * hand-writing marketing copy — this is what "use approved content, do
- * not invent" means in practice. Source doc for each field is cited in
- * a comment; nothing here is written freehand.
+ * Approved copy imported into the CMS on first run. Moved verbatim from
+ * the v1 site (legacy/ops/src/lib/content.ts), which sourced every string
+ * from the approved business documents - nothing here is written
+ * freehand. After seeding, the CMS is the source of truth; edit content
+ * there, not here.
  */
 
 export const company = {
   legalName: "Z-GATE LTD",
   tradingName: "Z-GATE Solution",
   motto: "Where Business Meets Technology",
-  // docs/business/BUSINESS_ALIGNMENT.md — confirmed correct, NOT the
-  // brand guide's "Kigali Heights" mockup address.
-  registeredAddress: "Inyarurembo, Kiyovu, Nyarugenge, Kigali, Rwanda",
-  // Business Project Development Report — the real registered contact,
-  // not the brand guide's zgate.co mockup.
+  // docs/business/BUSINESS_ALIGNMENT.md - confirmed address.
+  address: "Inyarurembo, Kiyovu, Nyarugenge, Kigali, Rwanda",
+  // Business Project Development Report - the registered contact.
   email: "info@zgaterw.com",
   phone: "+250 792 957 513",
 } as const;
 
-// Mission/Vision doc, "Elevator Pitch (short paragraph)" — verbatim.
+// Mission/Vision doc, "Elevator Pitch (short paragraph)".
 export const elevatorPitch =
   "Most businesses hire a tax consultant, a trainer, a developer, and a data analyst separately — and spend half their time translating between them. Z-GATE Solution puts all four under one roof. Advisory keeps the business compliant and financially sound. Academy builds the skills the team needs to run it. Tech builds the systems it runs on. Data tells you, in numbers, whether any of it is working. One gate, four rooms, no translation lost between them.";
 
-// Mission/Vision doc, "About Z-GATE Solution (long form)" — verbatim.
+// Mission/Vision doc, "About Z-GATE Solution (long form)".
 export const aboutLongForm = [
   "Z-GATE Solution was built on a simple observation: the businesses that struggle most aren't the ones with bad ideas — they're the ones whose finances, people, technology, and data all live in different places, run by different vendors, none of whom talk to each other.",
   "A gate is the one point where two different worlds agree to meet. That's the idea the company is named for. On one side sits the discipline of business — tax law, compliance, financial planning, professional skill. On the other sits technology — software, systems, data, automation. Most companies make a client walk back and forth between the two. Z-GATE puts both sides of that gate under one roof, as four divisions that already speak to each other.",
   "A client doesn't hire four vendors and manage the seams themselves. They come through one gate, and the four rooms on the other side already know why they're there.",
-] as const;
+];
 
-// Mission/Vision doc, "Mission" and "Vision" — verbatim.
+// Mission/Vision doc, "Mission" and "Vision".
 export const mission =
   "To be the single point of entry where a business's financial discipline, its people's skills, its technology, and its data stop operating as separate projects and start operating as one system.";
 export const vision =
   'A future where a growing business never has to choose between "get good advice," "train our people," "build the technology," and "understand our numbers" — because all four are one relationship, one standard of quality, and one team that already knows the business.';
 
-// Mission/Vision doc, "Values" — verbatim.
+// Mission/Vision doc, "Values".
 export const values = [
   {
-    name: "Threshold, not silo",
+    title: "Threshold, not silo",
     body: "A client is never handed off and forgotten. Advisory, Academy, Tech, and Data share context, so a recommendation made in one room is already understood in the other three.",
   },
   {
-    name: "Precision over polish",
+    title: "Precision over polish",
     body: "In tax, in code, in a training curriculum, in a dashboard — a number that's wrong or a fact that's rounded off is a bigger failure than a page that isn't pretty. Get it right before making it look good.",
   },
   {
-    name: "Warm engineering",
+    title: "Warm engineering",
     body: "Technical work done for a person, not around them. Every deliverable — a filing, a course, a build, a report — is written and explained so the person receiving it actually understands what changed and why.",
   },
-] as const;
+];
 
-// Mission/Vision doc, "Boilerplate" — verbatim.
-export const boilerplate =
-  "Z-GATE Solution is a business group built around one idea: a company's finances, people, technology, and data shouldn't be run by four separate vendors. Through its four divisions — Advisory, Academy, Tech, and Data — Z-GATE gives businesses one point of entry for tax and consulting, professional training, technology solutions, and data analytics. Where Business Meets Technology.";
+export const homeHowItWorks =
+  "A client doesn't hire four vendors and manage the seams themselves. Advisory, Academy, Tech, and Data share context, so a recommendation made in one room is already understood in the other three — they come through one gate, and the four rooms on the other side already know why they're there.";
 
-export type DivisionSlug = "advisory" | "academy" | "tech" | "data";
+export const primaryCta = { label: "Start a conversation", href: "/contact" } as const;
 
-export interface Division {
-  slug: DivisionSlug;
+export type DivisionSeed = {
+  slug: "advisory" | "academy" | "tech" | "data";
+  order: number;
   name: string;
   shortName: string;
-  colorVar: string;
   mission: string;
   about: string;
-  // "What's included" — from each division's SLA Service Schedule scope
-  // list (Client SLA Template, Part 2), not invented.
   included: string[];
-  // docs/marketing/MESSAGING_FRAMEWORK.md's per-page Proof/Objection
-  // fields — only real, sourced commitments, never a fabricated result
-  // (docs/marketing/MARKETING_STRATEGY.md's proof strategy).
   proof: string;
   objection: { question: string; answer: string };
-}
+};
 
-// Mission/Vision doc, "Division Copy" (mission + about) + Client SLA
-// Template Part 2 (scope of services per Schedule) for "included".
-export const divisions: Division[] = [
+// Mission/Vision doc "Division Copy" + Client SLA Template Part 2 scope;
+// proof/objection from docs/marketing/MESSAGING_FRAMEWORK.md.
+export const divisions: DivisionSeed[] = [
   {
     slug: "advisory",
+    order: 1,
     name: "Z-GATE Advisory",
     shortName: "Advisory",
-    colorVar: "var(--advisory)",
     mission:
       "To keep a business compliant, tax-efficient, and financially sound, so leadership can make decisions on solid ground instead of guesswork.",
     about:
@@ -105,9 +96,9 @@ export const divisions: Division[] = [
   },
   {
     slug: "academy",
+    order: 2,
     name: "Z-GATE Academy",
     shortName: "Academy",
-    colorVar: "var(--academy)",
     mission:
       "To build the specific, usable skills a team needs to do the job in front of them — not a certificate for the wall, but a capability the business can point to.",
     about:
@@ -127,9 +118,9 @@ export const divisions: Division[] = [
   },
   {
     slug: "tech",
+    order: 3,
     name: "Z-GATE Tech",
     shortName: "Tech",
-    colorVar: "var(--tech)",
     mission:
       "To build the systems a business runs on — reliable, maintainable, and built for the business it's actually serving, not a generic template.",
     about:
@@ -149,9 +140,9 @@ export const divisions: Division[] = [
   },
   {
     slug: "data",
+    order: 4,
     name: "Z-GATE Data",
     shortName: "Data",
-    colorVar: "var(--data)",
     mission:
       'To turn what a business already has — transactions, operations, training records, systems logs — into a clear, honest answer to "is this working."',
     about:
@@ -171,27 +162,57 @@ export const divisions: Division[] = [
   },
 ];
 
-export function getDivision(slug: DivisionSlug): Division {
-  const division = divisions.find((d) => d.slug === slug);
-  if (!division) {
-    throw new Error(`Unknown division: ${slug}`);
-  }
-  return division;
-}
-
-// Academy Course Curriculum — real, approved course details (not
-// invented pricing/scheduling).
-export const academyCourses = [
+// Academy Course Curriculum (also seeded in elearning/backend migration 010).
+// Outcomes, syllabus and intake dates are left empty on purpose: they
+// aren't in the approved source available here, so they're not invented.
+export const courses = [
   {
-    name: "Tax & Bookkeeping Fundamentals for Small Business Owners",
+    slug: "tax-bookkeeping-fundamentals",
+    title: "Tax & Bookkeeping Fundamentals for Small Business Owners",
     audience: "SME owners and staff; no prior accounting background required",
     duration: "4 weeks — 8 sessions, 1.5 hrs each",
-    fee: "RWF 40,000 per learner",
+    priceAmount: 40000,
+    priceNote: "per learner",
   },
   {
-    name: "EBM & Digital Invoicing Mastery",
+    slug: "ebm-digital-invoicing",
+    title: "EBM & Digital Invoicing Mastery",
     audience: "SME owners and staff who issue or are required to issue EBM receipts",
     duration: "2 weeks — 4 sessions, 1.5 hrs each",
-    fee: "RWF 40,000 per learner",
+    priceAmount: 40000,
+    priceNote: "per learner",
   },
 ] as const;
+
+/**
+ * Privacy notice skeleton. Seeded as a DRAFT and never published by the
+ * seed: the wording must come from the DPO / legal counsel (Law N°
+ * 058/2021). The headings list what the notice has to cover; the
+ * bracketed lines are deliberately unfinished.
+ */
+export const privacySkeleton = [
+  {
+    heading: "Who we are",
+    body: "[Controller identity and contact details - to be completed by the DPO / legal counsel.]",
+  },
+  {
+    heading: "What we collect and why",
+    body: "[Each purpose and its lawful basis - to be completed.]",
+  },
+  {
+    heading: "How long we keep it",
+    body: "[Retention periods - to be confirmed by legal counsel.]",
+  },
+  {
+    heading: "Who we share it with",
+    body: "[Sub-processors and any cross-border transfer - to be completed.]",
+  },
+  {
+    heading: "Your rights",
+    body: "[Access, correction, deletion, objection, and how to exercise them - to be completed.]",
+  },
+  {
+    heading: "Contact and complaints",
+    body: "[DPO contact and the supervisory authority (NCSA) - to be completed.]",
+  },
+];

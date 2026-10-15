@@ -1,0 +1,93 @@
+# Z-GATE edge proxy (docs/platform-v2/06-DEVOPS-RELIABILITY.md).
+#
+# Website - two hostnames, two apps:
+#   SITE_HOST   public site (website/frontend), e.g. www.example.rw
+#   ADMIN_HOST  CMS (website/backend), e.g. cms.example.rw - reachable only from
+#               ADMIN_ALLOWED_IPS, since the CMS has no built-in second
+#               factor (website/docs/04-WEBSITE.md §4)
+# E-learning:
+#   LEARN_HOST  e.g. learn.example.rw - frontend, with the API mounted
+#               under /api/* on the same origin (no CORS, no cross-site
+#               cookies - docs/platform-v2/02-TARGET-ARCHITECTURE.md §3)
+#
+# Caddy obtains and renews TLS certificates automatically (ACME_EMAIL).
+#
+# X-Forwarded-For: Caddy doesn't trust client-supplied forwarding headers
+# (no trusted_proxies configured), so the app receives exactly one entry -
+# the visitor's real address. That matches TRUSTED_PROXIES=1 in the
+# website's environment. If a CDN is ever put in front of Caddy, add it to
+# trusted_proxies below AND set TRUSTED_PROXIES=2.
+
+{
+	email {$ACME_EMAIL}
+}
+
+(common) {
+	encode zstd gzip
+	header {
+		# Browsers must only ever use HTTPS for these hosts. Add "preload"
+		# only once the production domain is final (decision D4).
+		Strict-Transport-Security "max-age=31536000; includeSubDomains"
+		-Server
+	}
+}
+
+{$SITE_HOST} {
+	import common
+
+	# Next.js build assets are content-hashed: safe to cache for a year.
+	@immutable path /_next/static/*
+	header @immutable Cache-Control "public, max-age=31536000, immutable"
+
+	# The CMS's cache-clearing webhook arrives on the internal network
+	# (website-backend -> website-frontend:3002), never through here. It is
+	# signed anyway; this just keeps it off the internet.
+	handle /api/revalidate {
+		respond "Not found" 404
+	}
+	handle {
+		reverse_proxy website-frontend:3002
+	}
+}
+
+{$ADMIN_HOST} {
+	import common
+
+	@allowed remote_ip {$ADMIN_ALLOWED_IPS}
+	handle @allowed {
+		reverse_proxy website-backend:3004
+	}
+	# Everyone else learns nothing about what's here.
+	handle {
+		respond "Not found" 404
+	}
+}
+
+{$LEARN_HOST} {
+	import common
+
+	@immutable path /_next/static/*
+	header @immutable Cache-Control "public, max-age=31536000, immutable"
+
+	# BEFORE deploying the e-learning API behind this proxy, fix finding N-1:
+	# it must trust exactly this one proxy hop (Fastify `trustProxy`), or its
+	# rate limits apply to all visitors at once
+	# (docs/platform-v2/01-CURRENT-STATE-ASSESSMENT.md).
+	handle /api/* {
+		reverse_proxy elearning-backend:3000
+	}
+	handle {
+		reverse_proxy elearning-frontend:3003
+	}
+
+	# Until the e-learning services are deployed, a clear holding answer
+	# instead of a bare proxy error.
+	handle_errors 502 503 {
+		respond "Z-GATE Academy Online is coming soon." 503
+	}
+}
+
+# Bare domain -> canonical public host.
+{$APEX_HOST} {
+	redir https://{$SITE_HOST}{uri} permanent
+}
