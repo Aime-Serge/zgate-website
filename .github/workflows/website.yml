@@ -1,6 +1,7 @@
 name: Website
 
-# The corporate website (website/app) and the shared code it may use.
+# The corporate website - website/frontend (public site) and
+# website/backend (Payload CMS) - and the shared code it may use.
 # Runs only when something the website depends on changes - an
 # e-learning-only change never triggers it (ADR-007 product separation).
 #
@@ -69,9 +70,8 @@ jobs:
           --health-retries 5
     env:
       DATABASE_URL: postgres://zgate:zgate_ci@localhost:5432/zgate_website_ci
-      # CI-only throwaway values; DB-dependent tests run only when set.
+      # CI-only throwaway value; DB-dependent tests run only when set.
       PAYLOAD_SECRET: ci-only-payload-secret-not-a-real-secret-0123456789
-      SITE_URL: http://localhost:3002
       NEXT_TELEMETRY_DISABLED: "1"
     steps:
       - name: Checkout
@@ -95,10 +95,10 @@ jobs:
         run: pnpm lint:boundaries
 
       - name: Migrate the website database
-        run: pnpm --filter @zgate/website migrate
+        run: pnpm --filter @zgate/website-backend migrate
 
       - name: Lint, typecheck, build, test (website + shared)
-        run: pnpm turbo run lint typecheck build test --filter=@zgate/website --filter='./shared/*'
+        run: pnpm turbo run lint typecheck build test --filter='./website/*' --filter='./shared/*'
 
       - name: Dependency vulnerability scan
         run: pnpm audit --audit-level high
@@ -108,8 +108,9 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-  # Real-browser checks of the production build: WCAG A/AA via axe, host
-  # separation + CSP, forms, and the JavaScript budget.
+  # Real-browser checks of both production builds running side by side:
+  # WCAG A/AA via axe, public site / CMS separation + CSP, forms through
+  # lead intake, and the JavaScript budget.
   e2e:
     name: Browser checks
     needs: verify
@@ -128,20 +129,24 @@ jobs:
           --health-interval 10s
           --health-timeout 5s
           --health-retries 5
+    # One job environment for both apps; each reads only its own variables.
+    # CI-only throwaway values throughout.
     env:
       NODE_ENV: production
+      NEXT_TELEMETRY_DISABLED: "1"
+      LEAD_INTAKE_TOKEN: ci-only-lead-intake-token-not-a-real-secret
+      REVALIDATE_SECRET: ci-only-revalidate-secret-not-a-real-secret
+      # website/backend (CMS)
       DATABASE_URL: postgres://zgate:zgate_ci@localhost:5432/zgate_website_ci
       PAYLOAD_SECRET: ci-only-payload-secret-not-a-real-secret-0123456789
-      # Two hostnames, one server - the production public/admin split.
+      ADMIN_URL: http://localhost:3004
+      REVALIDATE_URL: http://localhost:3002/api/revalidate
+      # website/frontend (public site)
       SITE_URL: http://localhost:3002
-      ADMIN_URL: http://127.0.0.1:3002
-      E2E_SITE_URL: http://localhost:3002
-      E2E_ADMIN_URL: http://127.0.0.1:3002
+      CMS_URL: http://localhost:3004
       TRUSTED_PROXIES: "1"
-      NEXT_TELEMETRY_DISABLED: "1"
-    defaults:
-      run:
-        working-directory: website/app
+      E2E_SITE_URL: http://localhost:3002
+      E2E_ADMIN_URL: http://localhost:3004
     steps:
       - name: Checkout
         uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
@@ -156,33 +161,44 @@ jobs:
           cache: pnpm
 
       - name: Install dependencies
-        run: pnpm install --frozen-lockfile --filter "@zgate/website..."
+        run: pnpm install --frozen-lockfile --filter "@zgate/website-frontend..."
 
       - name: Migrate and seed the website database
         run: |
-          pnpm migrate
-          pnpm seed
+          pnpm --filter @zgate/website-backend migrate
+          pnpm --filter @zgate/website-backend seed
 
-      # Built with no database or site settings, exactly like the image.
+      # Built with no database, CMS or secrets, exactly like the images.
       - name: Build
         env:
           DATABASE_URL: ""
           PAYLOAD_SECRET: ""
-          SITE_URL: ""
           ADMIN_URL: ""
-        run: pnpm build
-
-      - name: Start the site
+          SITE_URL: ""
+          CMS_URL: ""
+          LEAD_INTAKE_TOKEN: ""
+          REVALIDATE_SECRET: ""
+          REVALIDATE_URL: ""
         run: |
-          nohup pnpm start > /tmp/website.log 2>&1 &
-          for i in $(seq 1 60); do curl -sf http://localhost:3002/api/health && exit 0; sleep 2; done
-          cat /tmp/website.log; exit 1
+          pnpm --filter @zgate/website-backend build
+          pnpm --filter @zgate/website-frontend build
+
+      # Only /api/health is polled before the e2e setup publishes the
+      # privacy notice: a page requested earlier would stay cached without it.
+      - name: Start the CMS and the public site
+        run: |
+          nohup pnpm --filter @zgate/website-backend start > /tmp/website-backend.log 2>&1 &
+          nohup pnpm --filter @zgate/website-frontend start > /tmp/website-frontend.log 2>&1 &
+          for port in 3004 3002; do
+            for i in $(seq 1 60); do curl -sf "http://localhost:$port/api/health" && break; sleep 2; done
+            curl -sf "http://localhost:$port/api/health" || { cat /tmp/website-*.log; exit 1; }
+          done
 
       - name: Install Chromium
-        run: pnpm exec playwright install --with-deps chromium
+        run: pnpm --filter @zgate/website-frontend exec playwright install --with-deps chromium
 
       - name: Browser checks
-        run: pnpm e2e
+        run: pnpm --filter @zgate/website-frontend e2e
 
       - name: Upload report and server log on failure
         if: failure()
@@ -190,8 +206,8 @@ jobs:
         with:
           name: website-e2e-report
           path: |
-            website/app/playwright-report
-            /tmp/website.log
+            website/frontend/playwright-report
+            /tmp/website-*.log
           retention-days: 7
 
   images:
@@ -207,9 +223,10 @@ jobs:
         # `app` names the image (ghcr.io/<repo>-<app>); `dir` holds the
         # Dockerfile; `target` is the stage to build.
         include:
-          - { app: website, dir: website/app, target: prod }
+          - { app: website-frontend, dir: website/frontend, target: prod }
+          - { app: website-backend, dir: website/backend, target: prod }
           # One-off migration job, run before each rollout.
-          - { app: website-migrate, dir: website/app, target: migrate }
+          - { app: website-migrate, dir: website/backend, target: migrate }
     env:
       PUBLISH: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
     steps:
