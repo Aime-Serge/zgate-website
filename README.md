@@ -14,29 +14,32 @@ How they talk (server to server only; the browser never calls the CMS):
 - **Cache:** on publish, the CMS sends an HMAC-signed webhook (`REVALIDATE_SECRET`) to the frontend's `/api/revalidate`, which marks every page stale.
 - **Code:** the frontend may import only `@zgate/website-backend/contracts` (types, schemas, webhook signing). `pnpm lint:boundaries` enforces this and keeps Payload's runtime out of the frontend.
 
-## Run it
+## Folders
+
+| Folder      | What it holds                                                                                                                 |
+| ----------- | ----------------------------------------------------------------------------------------------------------------------------- |
+| `database/` | Roles SQL (migration owner + least-privilege app role), Postgres configs, `backup.sh` / `restore.sh`, backup target (nightly) |
+| `deploy/`   | `compose.yml` (local), `compose.prod.yml` (production stack, with the edge proxy), `env/` templates (dev, staging, prod)      |
+| `docs/`     | Design and scope (`04-WEBSITE.md`), deploy runbook (`WEBSITE_DEPLOY.md`)                                                      |
+
+## Run it (hybrid mode: Postgres in Docker, apps native)
 
 ```bash
-docker compose -f infra/compose/website.yml up
-# -> public site http://localhost:3002, CMS http://localhost:3004/admin
+docker compose -f website/deploy/compose.yml up -d     # Postgres on localhost:5432
+cp website/deploy/env/dev.env.example website/backend/.env
+cp website/deploy/env/dev.env.example website/frontend/.env
+pnpm db:migrate:website                                # as the owner role
+pnpm --filter @zgate/website-backend seed              # approved copy; never overwrites CMS edits
+pnpm dev:website                                       # CMS http://localhost:3004/admin, site http://localhost:3002
 ```
 
-Or on the host, with a Postgres you provide in `DATABASE_URL`:
-
-```bash
-cp website/.env.example website/backend/.env
-cp website/.env.example website/frontend/.env
-pnpm --filter @zgate/website-backend migrate
-pnpm --filter @zgate/website-backend seed   # approved copy; never overwrites CMS edits
-pnpm --filter @zgate/website-backend dev    # http://localhost:3004/admin
-pnpm --filter @zgate/website-frontend dev   # http://localhost:3002
-```
+Everything in containers instead: `docker compose -f website/deploy/compose.yml --profile full up`. On the first page load after starting, the CMS may still be compiling; reload if you get a 500 (`docs/DEVELOPMENT_LOW_MEMORY.md`).
 
 ## Boundaries
 
 - Imports only from `shared/`. Never from `elearning/` or `legacy/` (`pnpm lint:boundaries`).
-- Its own database (`zgate_website`) and DB user, used by the CMS only. Integration with the LMS goes through `@zgate/contracts`.
-- CI: `.github/workflows/website.yml`, triggered by changes under `website/`, `shared/` or root config. Its browser checks run against both apps.
+- Its own Postgres and database (`zgate_website`), used by the CMS only. Integration with the LMS goes through `@zgate/contracts`.
+- CI: `.github/workflows/website.yml`, triggered by changes under `website/`, `shared/`, `platform/` or root config. Its browser checks run against both apps.
 - Images, built from the repository root: `docker build -f website/frontend/Dockerfile .` and `docker build -f website/backend/Dockerfile --target prod .` (the `migrate` target builds the one-shot migration image).
 
 ## More
