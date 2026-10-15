@@ -9,6 +9,9 @@ export default defineConfig({
     },
   },
   test: {
+    // Low-memory development: at most 2 test workers locally
+    // (docs/DEVELOPMENT_LOW_MEMORY.md). CI keeps Vitest's default.
+    ...(process.env["CI"] ? {} : { maxWorkers: 2 }),
     environment: "node",
     include: ["src/**/*.test.ts", "tests/**/*.test.ts"],
     // Integration tests boot Payload against a real database (skipped
