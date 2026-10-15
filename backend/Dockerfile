@@ -30,6 +30,16 @@ RUN pnpm --filter @zgate/website-backend run build
 
 # ---- migrate: Payload CLI + migration files, run once per deploy ----
 FROM build AS migrate
+# Base-image hardening: Debian security updates, and no package managers
+# in the image - it runs with `node` only. (Trivy flagged outdated Debian
+# packages and the dependencies of the npm that node:22-slim bundles.)
+RUN apt-get update \
+ && apt-get upgrade -y --no-install-recommends \
+ && rm -rf /var/lib/apt/lists/* \
+ && rm -rf /usr/local/lib/node_modules/npm /usr/local/lib/node_modules/corepack \
+      /usr/local/bin/npm /usr/local/bin/npx /usr/local/bin/corepack \
+      /usr/local/bin/yarn /usr/local/bin/yarnpkg /usr/local/bin/pnpm \
+      /usr/local/bin/pnpx /opt/yarn-v*
 WORKDIR /repo/website/backend
 RUN groupadd --gid 1001 zgate && useradd --uid 1001 --gid zgate --shell /bin/false zgate
 USER zgate
@@ -42,6 +52,16 @@ CMD ["node_modules/.bin/payload", "migrate"]
 
 # ---- prod: Next.js standalone output ----
 FROM node:22-slim AS prod
+# Base-image hardening: Debian security updates, and no package managers
+# in the image - it runs with `node` only. (Trivy flagged outdated Debian
+# packages and the dependencies of the npm that node:22-slim bundles.)
+RUN apt-get update \
+ && apt-get upgrade -y --no-install-recommends \
+ && rm -rf /var/lib/apt/lists/* \
+ && rm -rf /usr/local/lib/node_modules/npm /usr/local/lib/node_modules/corepack \
+      /usr/local/bin/npm /usr/local/bin/npx /usr/local/bin/corepack \
+      /usr/local/bin/yarn /usr/local/bin/yarnpkg /usr/local/bin/pnpm \
+      /usr/local/bin/pnpx /opt/yarn-v*
 WORKDIR /app
 ENV NODE_ENV=production
 ENV NEXT_TELEMETRY_DISABLED=1
