@@ -1,12 +1,13 @@
 # Z-GATE website - production stack for a single Rwanda-resident VM
 # (docs/platform-v2/06-DEVOPS-RELIABILITY.md §2). Runbook:
-# docs/runbooks/WEBSITE_DEPLOY.md.
+# website/docs/WEBSITE_DEPLOY.md.
 #
-#   cp infra/proxy/website-backend.env.example  /etc/zgate/website-backend.env   # fill in
-#   cp infra/proxy/website-frontend.env.example /etc/zgate/website-frontend.env  # fill in
-#   WEBSITE_TAG=<git sha> docker compose -f infra/proxy/compose.production.yml \
+#   cp website/deploy/env/prod.backend.env.example  /etc/zgate/website-backend.env   # fill in
+#   cp website/deploy/env/prod.frontend.env.example /etc/zgate/website-frontend.env  # fill in
+#   cp platform/edge/edge.env.example               /etc/zgate/edge.env              # fill in
+#   WEBSITE_TAG=<git sha> docker compose -f website/deploy/compose.prod.yml \
 #     --env-file /etc/zgate/edge.env run --rm website-migrate
-#   WEBSITE_TAG=<git sha> docker compose -f infra/proxy/compose.production.yml \
+#   WEBSITE_TAG=<git sha> docker compose -f website/deploy/compose.prod.yml \
 #     --env-file /etc/zgate/edge.env up -d --wait
 #
 # PostgreSQL is NOT in this file: it runs on the separate data host (or a
@@ -44,7 +45,7 @@ services:
       ADMIN_ALLOWED_IPS: ${ADMIN_ALLOWED_IPS:?set ADMIN_ALLOWED_IPS}
       ACME_EMAIL: ${ACME_EMAIL:?set ACME_EMAIL}
     volumes:
-      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - ../../platform/edge/Caddyfile:/etc/caddy/Caddyfile:ro
       - caddy_data:/data
       - caddy_config:/config
     depends_on:

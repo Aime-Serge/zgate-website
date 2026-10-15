@@ -5,7 +5,7 @@
  *
  * Only the CMS knows REVALIDATE_SECRET; an unsigned, wrongly signed or
  * replayed request is refused. The public proxy doesn't route this path
- * either (infra/proxy/Caddyfile) - the CMS calls it on the internal network.
+ * either (platform/edge/Caddyfile) - the CMS calls it on the internal network.
  */
 import { revalidatePath } from "next/cache";
 import { REVALIDATE_SIGNATURE_HEADER, verifyRevalidation } from "@zgate/website-backend/contracts";

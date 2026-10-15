@@ -1,7 +1,7 @@
 # Runbook: Deploying the Z-GATE website
 
 **Applies to:** `website/frontend` (public site, Next.js) and `website/backend` (CMS, Payload).
-**Files:** `infra/proxy/compose.production.yml`, `infra/proxy/Caddyfile`, `infra/proxy/*.env.example`.
+**Files:** `website/deploy/compose.prod.yml`, `website/deploy/env/prod.*.env.example`, `platform/edge/Caddyfile`, `platform/edge/edge.env.example`, `website/database/`.
 **Audience:** whoever deploys or operates the website. Read it once end to end before the first deployment.
 
 ## 1. What runs where
@@ -29,14 +29,15 @@ The two containers share two secrets: `LEAD_INTAKE_TOKEN` (the public site hands
    CREATE DATABASE zgate_website OWNER zgate_website;
    ```
    Require TLS for remote connections (`sslmode=require` in `DATABASE_URL`).
+   Planned, not yet adopted in production: the separate migration-owner and least-privilege app roles in `website/database/init/01-roles.sql`, with the server settings in `website/database/postgresql.conf` and backups via `website/database/backup.sh` (see `website/database/README.md`).
 3. **Configuration on the web VM:**
-   - Copy `website-backend.env.example` to `/etc/zgate/website-backend.env`, `website-frontend.env.example` to `/etc/zgate/website-frontend.env`, and `edge.env.example` to `/etc/zgate/edge.env`. All owned by root, mode `600`.
+   - Copy `website/deploy/env/prod.backend.env.example` to `/etc/zgate/website-backend.env`, `website/deploy/env/prod.frontend.env.example` to `/etc/zgate/website-frontend.env`, and `platform/edge/edge.env.example` to `/etc/zgate/edge.env`. All owned by root, mode `600`.
    - Fill in real values. Generate `PAYLOAD_SECRET`, `LEAD_INTAKE_TOKEN` and `REVALIDATE_SECRET` with `openssl rand -base64 48`. The last two must be identical in both app files.
 4. **Firewall:** allow 80/443 inbound from anywhere. Allow 22 (SSH) only from the admin network. Nothing else.
 5. **Migrate, seed once, start:**
    ```bash
    export WEBSITE_TAG=<git sha from CI>
-   C="docker compose -f infra/proxy/compose.production.yml --env-file /etc/zgate/edge.env"
+   C="docker compose -f website/deploy/compose.prod.yml --env-file /etc/zgate/edge.env"
    $C run --rm website-migrate
    $C run --rm website-migrate node_modules/.bin/payload run src/seed/run.ts   # first deployment only
    $C up -d --wait

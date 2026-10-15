@@ -2,7 +2,7 @@
  * Page-building blocks. Deliberately absent: testimonial, rating, client
  * logo and statistic blocks. Z-GATE has no real, consented social proof
  * yet, and the brand rule is never to fabricate it
- * (docs/platform-v2/04-WEBSITE.md §4). Adding one is a reviewed schema
+ * (website/docs/04-WEBSITE.md §4). Adding one is a reviewed schema
  * change, not an editor's choice.
  */
 import type { Block } from "payload";

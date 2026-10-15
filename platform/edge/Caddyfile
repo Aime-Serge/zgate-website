@@ -4,7 +4,7 @@
 #   SITE_HOST   public site (website/frontend), e.g. www.example.rw
 #   ADMIN_HOST  CMS (website/backend), e.g. cms.example.rw - reachable only from
 #               ADMIN_ALLOWED_IPS, since the CMS has no built-in second
-#               factor (docs/platform-v2/04-WEBSITE.md §4)
+#               factor (website/docs/04-WEBSITE.md §4)
 # E-learning:
 #   LEARN_HOST  e.g. learn.example.rw - frontend, with the API mounted
 #               under /api/* on the same origin (no CORS, no cross-site
