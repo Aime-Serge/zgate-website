@@ -1,5 +1,5 @@
 import Link from "next/link";
-import type { Division, SiteSetting } from "@zgate/website-backend/contracts";
+import type { Division, SiteSetting } from "@zgate/cms-contracts";
 import { HeaderNav, type NavLink } from "./HeaderNav";
 
 type Props = { settings: SiteSetting; divisions: Division[]; showInsights: boolean };

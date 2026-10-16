@@ -8,7 +8,7 @@
  * either (platform/edge/Caddyfile) - the CMS calls it on the internal network.
  */
 import { revalidatePath } from "next/cache";
-import { REVALIDATE_SIGNATURE_HEADER, verifyRevalidation } from "@zgate/website-backend/contracts";
+import { REVALIDATE_SIGNATURE_HEADER, verifyRevalidation } from "@zgate/cms-contracts";
 import { env } from "@/lib/env";
 
 export const dynamic = "force-dynamic";

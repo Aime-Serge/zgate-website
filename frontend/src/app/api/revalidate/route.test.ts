@@ -1,4 +1,4 @@
-import { signRevalidation } from "@zgate/website-backend/contracts";
+import { signRevalidation } from "@zgate/cms-contracts";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const { revalidatePath } = vi.hoisted(() => ({ revalidatePath: vi.fn() }));

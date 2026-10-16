@@ -15,7 +15,7 @@ import {
   listDivisions,
 } from "@/lib/cms";
 import { pathFor, resolveRoute, type Route } from "@/lib/routes";
-import type { SiteSetting } from "@zgate/website-backend/contracts";
+import type { SiteSetting } from "@zgate/cms-contracts";
 
 /*
  * Rendering model: no page is built at `next build` (no CMS at build time -

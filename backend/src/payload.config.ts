@@ -71,6 +71,8 @@ export default buildConfig({
   csrf: [config.ADMIN_URL],
   telemetry: false,
   typescript: {
-    outputFile: path.resolve(dirname, "payload-types.ts"),
+    // Generated into the contracts package the frontend imports, so the
+    // frontend never imports this app (packages/cms-contracts).
+    outputFile: path.resolve(dirname, "../../packages/cms-contracts/src/payload-types.ts"),
   },
 });

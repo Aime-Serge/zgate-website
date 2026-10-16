@@ -1,0 +1,14 @@
+# Image-scan findings reviewed and accepted (Trivy). Same policy as
+# auditConfig.ignoreGhsas in pnpm-workspace.yaml: each entry has a reason
+# and a removal condition, and is deleted the moment a fix ships.
+
+# nodemailer 9.x DoS on crafted email input. Fixed only in nodemailer 10,
+# which @payloadcms/email-nodemailer 3.90.2 doesn't support yet - the same
+# exception pnpm audit already carries (GHSA-v53p-9fqp-m79j,
+# GHSA-prgh-xp8r-p3m5). Present in the website migrate image (full
+# workspace); the CMS sends only staff notifications to a configured
+# address. Remove once the Payload adapter supports nodemailer >= 10.0.5.
+CVE-2026-90776
+# The same nodemailer advisories by their GHSA IDs (Trivy reports either).
+GHSA-v53p-9fqp-m79j
+GHSA-prgh-xp8r-p3m5

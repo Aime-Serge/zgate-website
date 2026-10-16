@@ -5,12 +5,12 @@
 --                        migrations (deploy-time only).
 --   zgate_website_app    what the running CMS connects as: read and write
 --                        rows, nothing else - no DDL, no TRUNCATE.
--- The public site (website/frontend) has no database role at all.
+-- The public site (frontend/) has no database role at all.
 --
 -- Local development: Postgres runs this once, when the data volume is first
 -- created (deploy/compose.yml). The passwords below are dev-only throwaway
 -- values. Production: a DBA runs the same statements on the data host with
--- generated passwords (website/docs/WEBSITE_DEPLOY.md).
+-- generated passwords (docs/WEBSITE_DEPLOY.md).
 
 CREATE ROLE zgate_website_owner WITH LOGIN PASSWORD 'zgate_website_owner_dev';
 CREATE ROLE zgate_website_app WITH LOGIN PASSWORD 'zgate_website_app_dev';

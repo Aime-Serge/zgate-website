@@ -1,6 +1,6 @@
 # Website database
 
-PostgreSQL for the website, used by the CMS (`website/backend`) only. The public site has no database access. Separate from the e-learning database in every environment (ADR-007, ADR-008). The schema lives in `website/backend/src/migrations/` (Payload migrations), never here.
+PostgreSQL for the website, used by the CMS (`backend/`) only. The public site has no database access. Separate from the e-learning database in every environment (ADR-007, ADR-008). The schema lives in `backend/src/migrations/` (Payload migrations), never here.
 
 | File                  | What it is                                                                                                                  |
 | --------------------- | --------------------------------------------------------------------------------------------------------------------------- |
@@ -21,7 +21,7 @@ PostgreSQL for the website, used by the CMS (`website/backend`) only. The public
 | What           | Target                                                                                                                   |
 | -------------- | ------------------------------------------------------------------------------------------------------------------------ |
 | Database       | **Nightly** logical backup (`backup.sh`), encrypted, copied off the host; keep 30 days. Data-loss window: up to 24 hours |
-| Uploaded media | Nightly archive of the media volume, alongside the dump (`website/docs/WEBSITE_DEPLOY.md`)                               |
+| Uploaded media | Nightly archive of the media volume, alongside the dump (`docs/WEBSITE_DEPLOY.md`)                                       |
 | Restore test   | Every quarter, into a scratch database. A backup that was never restored doesn't count                                   |
 
 The website holds leads and consent records (personal data), so dumps are encrypted (`BACKUP_AGE_RECIPIENT`) and stay in Rwanda (ADR-004).

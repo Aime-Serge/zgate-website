@@ -19,7 +19,7 @@ import {
   type Page,
   type Redirect,
   type SiteSetting,
-} from "@zgate/website-backend/contracts";
+} from "@zgate/cms-contracts";
 import { env } from "@/lib/env";
 
 type Query = Record<string, unknown>;

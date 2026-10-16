@@ -1,5 +1,5 @@
 import Link from "next/link";
-import type { SiteSetting } from "@zgate/website-backend/contracts";
+import type { SiteSetting } from "@zgate/cms-contracts";
 import { telHref, whatsappHref } from "./ContactChannels";
 
 type Props = { settings: SiteSetting; showPrivacyLink: boolean };

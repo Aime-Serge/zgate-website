@@ -8,7 +8,7 @@ import {
   REVALIDATE_SIGNATURE_HEADER,
   type RevalidationEvent,
   signRevalidation,
-} from "@/contracts/webhook";
+} from "@zgate/cms-contracts";
 import { env } from "@/lib/env";
 
 /**

@@ -14,7 +14,7 @@ import {
   listArticles,
   listCourses,
 } from "@/lib/cms";
-import type { Article, Course, Division, Page } from "@zgate/website-backend/contracts";
+import type { Article, Course, Division, Page } from "@zgate/cms-contracts";
 
 export type Route =
   | { kind: "page"; page: Page }

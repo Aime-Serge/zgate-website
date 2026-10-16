@@ -3,7 +3,7 @@ import Link from "next/link";
 import { LeadForm } from "@/components/forms/LeadForm";
 import { ContactChannels } from "@/components/site/ContactChannels";
 import { CourseCard } from "@/components/site/CourseCard";
-import type { Course, Division, Page, SiteSetting } from "@zgate/website-backend/contracts";
+import type { Course, Division, Page, SiteSetting } from "@zgate/cms-contracts";
 
 type Block = Page["layout"][number];
 

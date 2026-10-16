@@ -4,8 +4,8 @@
  * can be created (the collection refuses creates over the REST API).
  */
 import type { Payload } from "payload";
-import type { Lead } from "@/payload-types";
-import type { Attribution, LeadFormInput } from "@/contracts/leads/schema";
+import type { Lead } from "@zgate/cms-contracts/payload-types";
+import type { Attribution, LeadFormInput } from "@zgate/website-contracts";
 
 export type CreateLeadResult =
   { ok: true; lead: Lead } | { ok: false; reason: "course-unavailable" | "privacy-unpublished" };

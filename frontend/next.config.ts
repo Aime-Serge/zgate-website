@@ -4,7 +4,7 @@ import type { NextConfig } from "next";
 
 // pnpm workspace root: dependencies live in the root node_modules/.pnpm
 // store, so module resolution and standalone tracing start there.
-const monorepoRoot = path.join(path.dirname(fileURLToPath(import.meta.url)), "..", "..");
+const monorepoRoot = path.join(path.dirname(fileURLToPath(import.meta.url)), "..");
 
 const nextConfig: NextConfig = {
   output: "standalone",

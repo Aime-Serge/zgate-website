@@ -9,13 +9,13 @@
  */
 import { timingSafeEqual } from "node:crypto";
 import type { Endpoint, Payload } from "payload";
-import type { LeadIntakeResponse } from "@/contracts/leadIntake";
+import type { LeadIntakeResponse } from "@zgate/website-contracts";
 import {
   ATTRIBUTION_FIELDS,
   attributionSchema,
   fieldErrorsFrom,
   leadFormSchema,
-} from "@/contracts/leads/schema";
+} from "@zgate/website-contracts";
 import { env } from "@/lib/env";
 import { createLead } from "@/lib/leads/createLead";
 

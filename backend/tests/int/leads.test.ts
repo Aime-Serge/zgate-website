@@ -6,8 +6,8 @@
  */
 import type { Payload } from "payload";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
-import type { Attribution, LeadFormInput } from "@/contracts/leads/schema";
-import type { Course, Page } from "@/payload-types";
+import type { Attribution, LeadFormInput } from "@zgate/website-contracts";
+import type { Course, Page } from "@zgate/cms-contracts/payload-types";
 
 const canRun = Boolean(process.env["DATABASE_URL"] && process.env["PAYLOAD_SECRET"]);
 const run = `t${Date.now()}`;
