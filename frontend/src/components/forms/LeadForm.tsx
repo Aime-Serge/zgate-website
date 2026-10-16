@@ -8,7 +8,7 @@ import {
   ATTRIBUTION_FIELDS,
   INTERESTS,
   type LeadFormState,
-} from "@zgate/website-backend/contracts/constants";
+} from "@zgate/website-contracts/constants";
 
 type CourseOption = { id: number; title: string };
 

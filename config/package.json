@@ -14,7 +14,8 @@
     "./tsconfig/library.json": "./tsconfig/library.json",
     "./tsconfig/nextjs.json": "./tsconfig/nextjs.json",
     "./eslint/library": "./eslint/library.js",
-    "./eslint/next": "./eslint/next.js"
+    "./eslint/next": "./eslint/next.js",
+    "./schema-compat": "./src/schemaCompat.ts"
   },
   "scripts": {
     "build": "tsc -p tsconfig.build.json",

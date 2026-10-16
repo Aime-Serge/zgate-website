@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { LeadForm } from "@/components/forms/LeadForm";
-import type { Course, SiteSetting } from "@zgate/website-backend/contracts";
+import type { Course, SiteSetting } from "@zgate/cms-contracts";
 import { ContactChannels } from "./ContactChannels";
 import { CourseCard, coursePath, formatPrice } from "./CourseCard";
 

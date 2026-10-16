@@ -1,12 +1,12 @@
 # Website - local development (docs/DEVELOPMENT_LOW_MEMORY.md).
 #
 # Hybrid mode (default): only the website's Postgres runs in Docker; the
-# apps run natively with `pnpm dev:website`.
-#   docker compose -f website/deploy/compose.yml up -d
+# apps run natively with `pnpm dev`.
+#   docker compose -f deploy/compose.yml up -d
 #     -> Postgres: localhost:5432 (database zgate_website)
 #
 # Everything in containers (heavier):
-#   docker compose -f website/deploy/compose.yml --profile full up
+#   docker compose -f deploy/compose.yml --profile full up
 #     -> public site: http://localhost:3002
 #     -> CMS:         http://localhost:3004/admin
 #
@@ -18,19 +18,19 @@
 x-node: &node
   profiles: ["full"]
   build:
-    context: ../..
-    dockerfile: platform/scripts/dev.Dockerfile
+    context: ..
+    dockerfile: scripts/dev.Dockerfile
   # Linux dependencies stay in named volumes, never on the host mount. Only
   # the website's packages are installed (website-install), and exactly
   # their node_modules folders are masked here.
   volumes:
-    - ../..:/repo
+    - ..:/repo
     - website_root_node_modules:/repo/node_modules
     - website_pnpm_store:/pnpm/store
-    - website_backend_node_modules:/repo/website/backend/node_modules
-    - website_backend_next:/repo/website/backend/.next
-    - website_frontend_node_modules:/repo/website/frontend/node_modules
-    - website_frontend_next:/repo/website/frontend/.next
+    - website_backend_node_modules:/repo/backend/node_modules
+    - website_backend_next:/repo/backend/.next
+    - website_frontend_node_modules:/repo/frontend/node_modules
+    - website_frontend_next:/repo/frontend/.next
 
 # Dev-only throwaway values, like the database passwords. The two apps
 # share the lead-intake token and the webhook secret.
@@ -47,7 +47,7 @@ x-backend-env: &backend-env
   ADMIN_URL: http://localhost:3004
   # Container to container: the frontend's service name, not localhost.
   REVALIDATE_URL: http://website-frontend:3002/api/revalidate
-  MEDIA_DIR: /repo/website/backend/media
+  MEDIA_DIR: /repo/backend/media
 
 services:
   website-postgres:

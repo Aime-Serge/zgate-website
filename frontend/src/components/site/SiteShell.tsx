@@ -1,6 +1,6 @@
 import type React from "react";
 import { listArticles, listDivisions } from "@/lib/cms";
-import type { Division, SiteSetting } from "@zgate/website-backend/contracts";
+import type { Division, SiteSetting } from "@zgate/cms-contracts";
 import { AttributionCapture } from "./AttributionCapture";
 import { SiteFooter } from "./SiteFooter";
 import { SiteHeader } from "./SiteHeader";

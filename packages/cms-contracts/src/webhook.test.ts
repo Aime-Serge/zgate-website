@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { REVALIDATE_MAX_AGE_SECONDS, signRevalidation, verifyRevalidation } from "./webhook";
+import { REVALIDATE_MAX_AGE_SECONDS, signRevalidation, verifyRevalidation } from "./webhook.ts";
 
 const secret = "s".repeat(32);
 const body = JSON.stringify({ event: "content-changed", source: "pages" });

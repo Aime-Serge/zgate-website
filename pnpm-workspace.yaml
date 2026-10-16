@@ -1,0 +1,60 @@
+# The Z-GATE website: the public site, its CMS, the packages it owns and
+# its contract tests. Only folders with a package.json are packages, so
+# database/, deploy/ and docs/ are not.
+packages:
+  - "frontend"
+  - "backend"
+  - "packages/*"
+  - "config"
+  - "tests/*"
+
+# Supply-chain guard (docs/platform-v2/05-SECURITY-COMPLIANCE.md §5): never resolve a package
+# version published less than 14 days ago. Most malicious releases are
+# caught and pulled within that window.
+minimumReleaseAge: 20160
+
+# Forced versions of transitive dependencies, for security fixes the
+# direct dependency hasn't picked up yet. Each entry: reason, and when to
+# remove it.
+overrides:
+  # payload 3.90.2 pins undici 7.29.0, affected by GHSA-rfgv-xxqx-mfg5
+  # (WebSocket subprotocol DoS) and GHSA-w293-vg96-wgc3 (TLS validation
+  # bypass in BalancedPool). 7.29.1 (2026-09-04) is a patch release on the
+  # same line. Remove once Payload depends on undici >= 7.29.1.
+  undici: 7.29.1
+  # drizzle-kit (via Payload's Postgres adapter) brings esbuild 0.25.12 and,
+  # through @esbuild-kit, 0.18.20: Go binaries built with Go 1.23 / 1.20,
+  # whose standard library has HIGH/CRITICAL CVEs (Trivy, website images).
+  # 0.28.2 (2026-08-08, built with Go 1.26.5) is already in the lockfile via
+  # Vite and tsx. Remove once drizzle-kit depends on esbuild >= 0.28.
+  "drizzle-kit>esbuild": 0.28.2
+  "@esbuild-kit/core-utils>esbuild": 0.28.2
+
+# Advisories with no patched release usable here, reviewed and accepted.
+# Re-check on every dependency update; delete the entry the moment a fix
+# ships.
+auditConfig:
+  ignoreGhsas:
+    # braces <=3.0.3 stack-exhaustion DoS via deeply nested patterns. No
+    # fixed version exists. Reached only through lint tooling
+    # (eslint-config-next > fast-glob > micromatch) on the repo's own
+    # trusted glob patterns - never on user input, never in a runtime image.
+    - GHSA-vfj7-8cjw-p6xm
+    # nodemailer 9.x address-parser DoS (quadratic backtracking / O(n^2) on
+    # crafted address strings). Fixed only in nodemailer 10, but
+    # @payloadcms/email-nodemailer 3.90.2 (latest) requires ^9.1.1, so the
+    # fix would mean running the adapter on an unsupported major version.
+    # Exposure here is low: the website only sends to staff-configured
+    # addresses and existing account emails, never parses visitor-supplied
+    # address lists, and email is off entirely unless SMTP_HOST is set.
+    # Accepted 2026-10-15; remove when the Payload adapter supports
+    # nodemailer >= 10.0.6.
+    - GHSA-v53p-9fqp-m79j
+    - GHSA-prgh-xp8r-p3m5
+
+# pnpm does not run dependency install scripts unless they are listed
+# here. Only packages that genuinely need a native build or binary download.
+onlyBuiltDependencies:
+  - esbuild
+  - sharp
+  - unrs-resolver

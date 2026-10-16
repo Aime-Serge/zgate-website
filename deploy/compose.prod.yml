@@ -4,7 +4,7 @@
 #
 #   cp website/deploy/env/prod.backend.env.example  /etc/zgate/website-backend.env   # fill in
 #   cp website/deploy/env/prod.frontend.env.example /etc/zgate/website-frontend.env  # fill in
-#   cp platform/edge/edge.env.example               /etc/zgate/edge.env              # fill in
+#   cp website/deploy/edge/edge.env.example /etc/zgate/edge.env              # fill in
 #   WEBSITE_TAG=<git sha> docker compose -f website/deploy/compose.prod.yml \
 #     --env-file /etc/zgate/edge.env run --rm website-migrate
 #   WEBSITE_TAG=<git sha> docker compose -f website/deploy/compose.prod.yml \
@@ -45,7 +45,7 @@ services:
       ADMIN_ALLOWED_IPS: ${ADMIN_ALLOWED_IPS:?set ADMIN_ALLOWED_IPS}
       ACME_EMAIL: ${ACME_EMAIL:?set ACME_EMAIL}
     volumes:
-      - ../../platform/edge/Caddyfile:/etc/caddy/Caddyfile:ro
+      - ./edge/Caddyfile:/etc/caddy/Caddyfile:ro
       - caddy_data:/data
       - caddy_config:/config
     depends_on:

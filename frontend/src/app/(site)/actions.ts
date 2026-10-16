@@ -18,7 +18,7 @@ import {
   type LeadFormState,
   leadFormSchema,
   type LeadIntakeResponse,
-} from "@zgate/website-backend/contracts";
+} from "@zgate/cms-contracts";
 import { getSiteSettings } from "@/lib/cms";
 import { env } from "@/lib/env";
 import { clientIp } from "@/lib/leads/clientIp";

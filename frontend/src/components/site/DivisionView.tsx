@@ -1,5 +1,5 @@
 import Link from "next/link";
-import type { Course, Division } from "@zgate/website-backend/contracts";
+import type { Course, Division } from "@zgate/cms-contracts";
 import { CourseCard } from "./CourseCard";
 
 /**

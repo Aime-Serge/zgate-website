@@ -1,0 +1,24 @@
+{
+  // Mirrors frontend/tsconfig.json: these tests render the website's own
+  // components, so they compile them with the frontend's settings.
+  "compilerOptions": {
+    "target": "ES2022",
+    "lib": ["dom", "dom.iterable", "esnext"],
+    "skipLibCheck": true,
+    "strict": true,
+    "noUncheckedIndexedAccess": true,
+    "noEmit": true,
+    "allowImportingTsExtensions": true,
+    "esModuleInterop": true,
+    "module": "esnext",
+    "moduleResolution": "bundler",
+    "resolveJsonModule": true,
+    "isolatedModules": true,
+    "jsx": "react-jsx",
+    "incremental": true,
+    "paths": {
+      "@/*": ["../../frontend/src/*"]
+    }
+  },
+  "include": ["src", "vitest.config.ts"]
+}

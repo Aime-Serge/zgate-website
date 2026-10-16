@@ -7,7 +7,7 @@
  * the visitor submits a form, cleared when the tab closes. Captured on the
  * first page of the visit, so it survives navigating to /contact.
  */
-import type { AttributionField } from "@zgate/website-backend/contracts/constants";
+import type { AttributionField } from "@zgate/website-contracts/constants";
 
 type Attribution = Record<AttributionField, string>;
 

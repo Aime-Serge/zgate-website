@@ -1,5 +1,5 @@
 import Link from "next/link";
-import type { Course } from "@zgate/website-backend/contracts";
+import type { Course } from "@zgate/cms-contracts";
 
 const rwf = new Intl.NumberFormat("en-RW", {
   style: "currency",

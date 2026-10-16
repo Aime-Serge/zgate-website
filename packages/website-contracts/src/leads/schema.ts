@@ -10,9 +10,9 @@
  * (docs/release/COMMERCIAL_READINESS.md §6).
  */
 import { z } from "zod";
-import { INTERESTS, type LeadField } from "./constants";
+import { INTERESTS, type LeadField } from "./constants.ts";
 
-export { ATTRIBUTION_FIELDS, INTERESTS, type LeadFormState } from "./constants";
+export { ATTRIBUTION_FIELDS, INTERESTS, type LeadFormState } from "./constants.ts";
 
 const trimmed = (max: number, required?: string) =>
   z.preprocess(

@@ -1,4 +1,4 @@
-import type { SiteSetting } from "@zgate/website-backend/contracts";
+import type { SiteSetting } from "@zgate/cms-contracts";
 
 export const telHref = (number: string) => `tel:${number.replace(/[^\d+]/g, "")}`;
 export const whatsappHref = (number: string) => `https://wa.me/${number.replace(/\D/g, "")}`;

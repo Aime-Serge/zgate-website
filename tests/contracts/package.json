@@ -1,0 +1,25 @@
+{
+  "name": "@zgate/website-contract-tests",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Proves the website works with the e-learning platform's contract (@zgate/elearning-contracts). Run by website CI and by e-learning CI whenever that package changes",
+  "type": "module",
+  "scripts": {
+    "lint": "eslint --cache .",
+    "typecheck": "tsc --noEmit --incremental --tsBuildInfoFile node_modules/.cache/typecheck.tsbuildinfo",
+    "test": "vitest run"
+  },
+  "devDependencies": {
+    "@types/node": "^22",
+    "@types/react": "^19",
+    "@types/react-dom": "^19",
+    "@zgate/cms-contracts": "workspace:*",
+    "@zgate/config": "workspace:*",
+    "@zgate/elearning-contracts": "file:../../../elearning/packages/elearning-contracts",
+    "eslint": "^9",
+    "react": "19.2.8",
+    "react-dom": "19.2.8",
+    "typescript": "^5",
+    "vitest": "^5.0.0"
+  }
+}

@@ -1,9 +1,9 @@
 import type { CollectionConfig } from "payload";
-import { DIVISION_SLUGS } from "@/contracts/divisions";
+import { DIVISION_SLUGS } from "@zgate/cms-contracts";
 import { linkFields, metaField } from "@/fields/common";
 import { contentDefaults } from "./content";
 
-export { DIVISION_SLUGS, type DivisionSlug, isDivisionSlug } from "@/contracts/divisions";
+export { DIVISION_SLUGS, type DivisionSlug, isDivisionSlug } from "@zgate/cms-contracts";
 
 /**
  * The four divisions. A fixed structure rather than free-form blocks: the

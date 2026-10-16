@@ -1,0 +1,28 @@
+{
+  "name": "@zgate/website-contracts",
+  "version": "0.1.0",
+  "private": true,
+  "description": "What the Z-GATE website sends to other systems: the lead form, lead intake and the lead/waitlist webhook payload (Zod schemas and types). Owned by the website; the e-learning platform links it in its contract tests",
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts",
+    "./constants": "./src/leads/constants.ts"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "lint": "eslint --cache .",
+    "typecheck": "tsc --noEmit --incremental --tsBuildInfoFile node_modules/.cache/typecheck.tsbuildinfo",
+    "test": "vitest run",
+    "compat:update": "vitest run compat --mode update"
+  },
+  "dependencies": {
+    "zod": "^4.6.1"
+  },
+  "devDependencies": {
+    "@types/node": "^22.20.2",
+    "@zgate/config": "workspace:*",
+    "eslint": "^9.39.5",
+    "typescript": "^5.9.3",
+    "vitest": "^5.0.0"
+  }
+}

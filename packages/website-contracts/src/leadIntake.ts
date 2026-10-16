@@ -4,7 +4,7 @@
  * frontend authenticates with `Authorization: Bearer <LEAD_INTAKE_TOKEN>`,
  * and the browser never talks to the CMS.
  */
-import type { LeadField } from "./leads/constants";
+import type { LeadField } from "./leads/constants.ts";
 
 export const LEAD_INTAKE_PATH = "/api/lead-intake";
 

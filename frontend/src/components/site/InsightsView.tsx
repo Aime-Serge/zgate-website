@@ -1,6 +1,6 @@
 import { RichText } from "@payloadcms/richtext-lexical/react";
 import Link from "next/link";
-import type { Article } from "@zgate/website-backend/contracts";
+import type { Article } from "@zgate/cms-contracts";
 
 const dayFormat = new Intl.DateTimeFormat("en-GB", {
   day: "numeric",

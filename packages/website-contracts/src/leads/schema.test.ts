@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { leadFormSchema } from "./schema";
+import { leadFormSchema } from "./schema.ts";
 
 describe("leadFormSchema", () => {
   const base = {

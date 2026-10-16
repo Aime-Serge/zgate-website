@@ -8,7 +8,7 @@
  */
 import config from "@payload-config";
 import { getPayload, type Payload } from "payload";
-import type { Page } from "@/payload-types";
+import type { Page } from "@zgate/cms-contracts/payload-types";
 import {
   aboutLongForm,
   company,
