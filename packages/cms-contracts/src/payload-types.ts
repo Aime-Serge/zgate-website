@@ -565,7 +565,7 @@ export interface User {
   collection: 'users';
 }
 /**
- * Who viewed or changed personal data, and when. Read-only.
+ * Who viewed or changed personal data or staff accounts, who signed in, and when. Read-only.
  *
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "audit-logs".
@@ -574,9 +574,11 @@ export interface AuditLog {
   id: number;
   actorType: 'user' | 'system' | 'anonymous';
   actor?: (number | null) | User;
-  action: 'read' | 'create' | 'update' | 'delete';
+  actorEmail?: string | null;
+  action: 'read' | 'create' | 'update' | 'delete' | 'login';
   targetCollection: string;
   docIds: string[];
+  changedFields?: string[] | null;
   updatedAt: string;
   createdAt: string;
 }
@@ -1048,9 +1050,11 @@ export interface UsersSelect<T extends boolean = true> {
 export interface AuditLogsSelect<T extends boolean = true> {
   actorType?: T;
   actor?: T;
+  actorEmail?: T;
   action?: T;
   targetCollection?: T;
   docIds?: T;
+  changedFields?: T;
   updatedAt?: T;
   createdAt?: T;
 }
@@ -1131,7 +1135,7 @@ export interface SiteSetting {
       }[]
     | null;
   /**
-   * The planned hand-over point to the e-learning platform (ADR-007).
+   * The planned hand-over point to the e-learning platform (ADR-007). Admins only: switch to the platform only after the customer journey has passed on staging (ADR-011).
    */
   enrollmentMode: 'waitlist' | 'lms';
   /**
