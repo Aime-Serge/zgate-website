@@ -123,7 +123,13 @@ const pages: PageSeed[] = [
       {
         blockType: "hero",
         eyebrow: company.motto,
-        headline: "One gate, four rooms — no translation lost between them.",
+        // What Z-GATE does, readable in five seconds by a cold visitor
+        // (commercial-readiness review, stage 1). Each part restates the
+        // approved elevator pitch: compliant (Advisory), skills (Academy),
+        // systems (Tech), numbers (Data), "all four under one roof". The
+        // lede below opens with the problem and still ends on the brand
+        // line, "one gate, four rooms".
+        headline: "Compliance, skills, systems and data — under one roof.",
         lede: elevatorPitch,
         cta: primaryCta,
       },
