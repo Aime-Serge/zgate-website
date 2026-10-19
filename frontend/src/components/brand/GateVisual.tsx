@@ -16,7 +16,7 @@ export function GateVisual({ divisions }: { divisions: Division[] }) {
   return (
     <svg
       viewBox="0 0 560 322"
-      className="gate-visual"
+      className="h-auto w-full"
       xmlns="http://www.w3.org/2000/svg"
       aria-hidden="true"
       focusable="false"
@@ -29,8 +29,8 @@ export function GateVisual({ divisions }: { divisions: Division[] }) {
       </defs>
       {/* The mark at 2.7x: same geometry as GateMark. */}
       <g transform="translate(-8 26) scale(2.7)">
-        <rect x="14" y="14" width="72" height="11" rx="2" fill="var(--paper)" />
-        <rect x="14" y="75" width="72" height="11" rx="2" fill="var(--paper)" />
+        <rect x="14" y="14" width="72" height="11" rx="2" fill="var(--color-paper)" />
+        <rect x="14" y="75" width="72" height="11" rx="2" fill="var(--color-paper)" />
         <line
           x1="22"
           y1="30"
@@ -44,7 +44,7 @@ export function GateVisual({ divisions }: { divisions: Division[] }) {
       {rooms.map((division, index) => {
         const y = ROOM_Y[index] ?? 0;
         const mid = y + ROOM_H / 2;
-        const color = `var(--${division.slug})`;
+        const color = `var(--color-${division.slug})`;
         return (
           <g key={division.id}>
             <path
@@ -53,7 +53,6 @@ export function GateVisual({ divisions }: { divisions: Division[] }) {
               stroke={color}
               strokeWidth="1.5"
               strokeLinecap="round"
-              className="gate-visual__current"
             />
             <rect
               x="334"
@@ -61,15 +60,19 @@ export function GateVisual({ divisions }: { divisions: Division[] }) {
               width="224"
               height={ROOM_H}
               rx="6"
-              fill="var(--ink-2)"
+              fill="var(--color-ink-2)"
               stroke={color}
               strokeOpacity="0.55"
             />
             <circle cx="356" cy={mid} r="5" fill={color} />
-            <text x="372" y={mid - 3} className="gate-visual__name">
+            <text x="372" y={mid - 3} className="fill-paper font-display text-[17px] font-semibold">
               {division.shortName}
             </text>
-            <text x="372" y={mid + 14} className="gate-visual__pillar">
+            <text
+              x="372"
+              y={mid + 14}
+              className="fill-paper-dim font-mono text-[11px] tracking-[0.08em] uppercase"
+            >
               {division.pillar ?? ""}
             </text>
           </g>

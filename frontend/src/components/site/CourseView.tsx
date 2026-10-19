@@ -1,5 +1,28 @@
 import Link from "next/link";
 import { Lockup } from "@/components/brand/GateMark";
+import {
+  button,
+  checkItem,
+  container,
+  courseGrid,
+  ctaBandRoom,
+  ctaRow,
+  cx,
+  formSplit,
+  hairlineGrid,
+  heroLockup,
+  heroRoom,
+  heroSubtitle,
+  label,
+  lede,
+  panel,
+  roomHeading,
+  section,
+  sectionHeading,
+  sectionRule,
+  split,
+} from "@/components/ui/styles";
+import { tone } from "@/components/ui/tone";
 import { LeadForm } from "@/components/forms/LeadForm";
 import type { Course, SiteSetting } from "@zgate/cms-contracts";
 import { ContactChannels } from "./ContactChannels";
@@ -74,7 +97,7 @@ export function CourseView({ course, settings, siteUrl, privacyLive }: Props) {
     },
   ].filter((fact): fact is { term: string; value: string } => Boolean(fact.value));
   return (
-    <>
+    <div className={tone("academy")}>
       <script
         type="application/ld+json"
         // JSON.stringify escaped for "<" so CMS text can't close the script tag.
@@ -82,39 +105,42 @@ export function CourseView({ course, settings, siteUrl, privacyLive }: Props) {
           __html: JSON.stringify(courseJsonLd(course, settings, siteUrl)).replace(/</g, "\\u003c"),
         }}
       />
-      <section className="hero hero--room tone--academy">
-        <div className="max hero__inner">
-          <div className="hero__text">
-            <p className="hero__lockup">
-              <Link href="/academy" className="hero__crumb">
-                <Lockup division="academy" name="Academy" />
-              </Link>
-              <Link href="/academy/courses" className="hero__subtitle">
-                All courses
-              </Link>
-            </p>
-            <h1>{course.title}</h1>
-            {course.summary ? <p className="lede">{course.summary}</p> : null}
-          </div>
+      <section className={heroRoom}>
+        <div className={container}>
+          <p className={heroLockup}>
+            <Link href="/academy" className="no-underline">
+              <Lockup division="academy" name="Academy" size="lg" />
+            </Link>
+            <Link
+              href="/academy/courses"
+              className={cx(heroSubtitle, "underline underline-offset-4")}
+            >
+              All courses
+            </Link>
+          </p>
+          <h1 className={roomHeading}>{course.title}</h1>
+          {course.summary ? <p className={lede}>{course.summary}</p> : null}
         </div>
       </section>
 
-      <section className="block tone--academy">
-        <div className="max split">
-          <dl className="facts">
+      <section className={cx(section, sectionRule)}>
+        <div className={cx(container, split)}>
+          <dl className={cx(hairlineGrid, "w-full")}>
             {facts.map((fact) => (
-              <div key={fact.term}>
-                <dt>{fact.term}</dt>
-                <dd>{fact.value}</dd>
+              <div key={fact.term} className="bg-ink px-6 py-4">
+                <dt className={label}>{fact.term}</dt>
+                <dd className="mt-1">{fact.value}</dd>
               </div>
             ))}
           </dl>
           {course.outcomes && course.outcomes.length > 0 ? (
-            <div className="panel">
-              <h2 className="panel__heading">What you&rsquo;ll be able to do</h2>
-              <ul className="checklist">
+            <div className={panel}>
+              <h2 className="mb-4 text-xl">What you&rsquo;ll be able to do</h2>
+              <ul className="grid list-none gap-3">
                 {course.outcomes.map((entry) => (
-                  <li key={entry.id ?? entry.outcome}>{entry.outcome}</li>
+                  <li key={entry.id ?? entry.outcome} className={checkItem}>
+                    {entry.outcome}
+                  </li>
                 ))}
               </ul>
             </div>
@@ -122,15 +148,17 @@ export function CourseView({ course, settings, siteUrl, privacyLive }: Props) {
         </div>
       </section>
 
-      <section className="block tone--academy" id="enroll">
-        <div className="max form-section">
+      <section className={cx(section, sectionRule)} id="enroll">
+        <div className={cx(container, formSplit)}>
           {lms ? (
-            <div className="cta-band cta-band--left">
-              <h2>Ready to start?</h2>
-              <p>Enrollment, lessons and certificates are on Z-GATE Academy Online.</p>
-              <div className="cta-row">
+            <div className={ctaBandRoom}>
+              <h2 className={sectionHeading}>Ready to start?</h2>
+              <p className="mt-3 text-paper-dim">
+                Enrollment, lessons and certificates are on Z-GATE Academy Online.
+              </p>
+              <div className={ctaRow}>
                 <a
-                  className="button"
+                  className={button}
                   href={`${lms}/courses/${encodeURIComponent(course.slug)}/enroll`}
                 >
                   Enroll on Z-GATE Academy Online
@@ -147,14 +175,14 @@ export function CourseView({ course, settings, siteUrl, privacyLive }: Props) {
             />
           ) : (
             <div>
-              <h2>Interested?</h2>
-              <p>
+              <h2 className={sectionHeading}>Interested?</h2>
+              <p className="mt-3 text-paper-dim">
                 Registration isn&rsquo;t open yet. Message us and we&rsquo;ll let you know as soon
                 as it is.
               </p>
             </div>
           )}
-          <div className="contact-aside">
+          <div className="grid content-start gap-8">
             <ContactChannels
               settings={settings}
               heading={lms || privacyLive ? "Questions first?" : "Message, call or email us"}
@@ -163,47 +191,48 @@ export function CourseView({ course, settings, siteUrl, privacyLive }: Props) {
           </div>
         </div>
       </section>
-    </>
+    </div>
   );
 }
 
 export function CoursesView({ courses, intro }: { courses: Course[]; intro?: string | null }) {
   return (
-    <>
-      <section className="hero hero--room tone--academy">
-        <div className="max hero__inner">
-          <div className="hero__text">
-            <p className="hero__lockup">
-              <Link href="/academy" className="hero__crumb">
-                <Lockup division="academy" name="Academy" />
-              </Link>
-            </p>
-            <h1>Courses</h1>
-            {intro ? <p className="lede">{intro}</p> : null}
-          </div>
+    <div className={tone("academy")}>
+      <section className={heroRoom}>
+        <div className={container}>
+          <p className={heroLockup}>
+            <Link href="/academy" className="no-underline">
+              <Lockup division="academy" name="Academy" size="lg" />
+            </Link>
+          </p>
+          <h1 className={roomHeading}>Courses</h1>
+          {intro ? <p className={lede}>{intro}</p> : null}
         </div>
       </section>
-      <section className="block tone--academy">
-        <div className="max">
+      <section className={cx(section, sectionRule)}>
+        <div className={container}>
           <SectionHead
             eyebrow="Short, practical courses"
             heading="Choose a course"
             intro="Each course page shows who it's for, how long it takes and the fee, then takes you through to registration."
           />
           {courses.length > 0 ? (
-            <div className="course-grid">
+            <div className={courseGrid}>
               {courses.map((course) => (
                 <CourseCard key={course.id} course={course} />
               ))}
             </div>
           ) : (
             <p>
-              No courses are open right now. <Link href="/contact">Contact us</Link> to hear when
-              the next one starts.
+              No courses are open right now.{" "}
+              <Link href="/contact" className="underline underline-offset-2">
+                Contact us
+              </Link>{" "}
+              to hear when the next one starts.
             </p>
           )}
         </div>
       </section>
-    </>
+    </div>
   );
 }

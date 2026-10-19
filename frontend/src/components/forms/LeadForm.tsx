@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { button, cx, sectionHeading } from "@/components/ui/styles";
 import { useActionState, useEffect, useRef } from "react";
 import { submitLead } from "@/app/(site)/actions";
 import { readAttribution } from "@/components/site/attribution";
@@ -31,6 +32,14 @@ const INTEREST_LABELS: Record<(typeof INTERESTS)[number], string> = {
 
 const initialState: LeadFormState = { status: "idle" };
 
+// Form styling. Inputs: 44px touch targets, paper-dim border, red when invalid.
+const result = "rounded-md border-l-4 p-4";
+const fieldBox =
+  "grid gap-2 [&_label]:font-semibold [&_:is(input[type=text],select,textarea)]:min-h-11 [&_:is(input[type=text],select,textarea)]:w-full [&_:is(input[type=text],select,textarea)]:rounded-md [&_:is(input[type=text],select,textarea)]:border [&_:is(input[type=text],select,textarea)]:border-paper-dim [&_:is(input[type=text],select,textarea)]:bg-ink-2 [&_:is(input[type=text],select,textarea)]:p-3 [&_:is(input[type=text],select,textarea)]:text-paper [&_[aria-invalid=true]]:border-error";
+const hint = "text-[0.95rem] text-paper-dim";
+const checkboxBox =
+  "grid grid-cols-[auto_1fr] items-start gap-x-3 gap-y-2 [&_input]:mt-0.5 [&_input]:size-6 [&_input]:accent-gate-1 [&_label]:font-normal [&_label_a]:underline [&_label_a]:underline-offset-2 [&>p]:col-start-2";
+
 /**
  * Works without JavaScript: the form posts to the server action and the
  * page re-renders with the result. With JavaScript it submits in place.
@@ -60,7 +69,7 @@ export function LeadForm({ variant, heading, intro, courses, fixedCourse }: Prop
   if (state.status === "success") {
     return (
       <div
-        className="form-result form-result--success"
+        className={cx(result, "border-success bg-success/8")}
         role="status"
         tabIndex={-1}
         ref={summaryRef}
@@ -76,18 +85,29 @@ export function LeadForm({ variant, heading, intro, courses, fixedCourse }: Prop
     errors[field] ? id(`${field}-error`) : undefined;
   const fieldError = (field: keyof typeof errors) =>
     errors[field] ? (
-      <p className="field-error" id={id(`${field}-error`)}>
+      <p className="font-semibold text-error" id={id(`${field}-error`)}>
         {errors[field]}
       </p>
     ) : null;
 
   return (
-    <form ref={formRef} action={formAction} className="lead-form" noValidate>
-      {heading ? <h2>{heading}</h2> : null}
-      {intro ? <p>{intro}</p> : null}
+    <form
+      ref={formRef}
+      action={formAction}
+      className="grid max-w-[40rem] gap-6"
+      data-lead-form
+      noValidate
+    >
+      {heading ? <h2 className={sectionHeading}>{heading}</h2> : null}
+      {intro ? <p className="text-paper-dim">{intro}</p> : null}
 
       {state.status === "error" ? (
-        <div className="form-result form-result--error" role="alert" tabIndex={-1} ref={summaryRef}>
+        <div
+          className={cx(result, "border-error bg-error/8")}
+          role="alert"
+          tabIndex={-1}
+          ref={summaryRef}
+        >
           <p>{state.message}</p>
         </div>
       ) : null}
@@ -98,12 +118,12 @@ export function LeadForm({ variant, heading, intro, courses, fixedCourse }: Prop
       ))}
 
       {/* Honeypot - hidden from people and assistive technology. */}
-      <div className="visually-hidden" aria-hidden="true">
+      <div className="sr-only" aria-hidden="true">
         <label htmlFor={id("website")}>Leave this field empty</label>
         <input id={id("website")} name="website" type="text" tabIndex={-1} autoComplete="off" />
       </div>
 
-      <div className="field">
+      <div className={fieldBox}>
         <label htmlFor={id("name")}>Your name</label>
         <input
           id={id("name")}
@@ -119,9 +139,9 @@ export function LeadForm({ variant, heading, intro, courses, fixedCourse }: Prop
         {fieldError("name")}
       </div>
 
-      <div className="field">
+      <div className={fieldBox}>
         <label htmlFor={id("contact")}>Phone, WhatsApp or email</label>
-        <p className="field-hint" id={id("contact-hint")}>
+        <p className={hint} id={id("contact-hint")}>
           Whichever is easiest for you to be reached on.
         </p>
         <input
@@ -139,7 +159,7 @@ export function LeadForm({ variant, heading, intro, courses, fixedCourse }: Prop
 
       {variant === "contact" ? (
         <>
-          <div className="field">
+          <div className={fieldBox}>
             <label htmlFor={id("interest")}>What can we help with? (optional)</label>
             <select id={id("interest")} name="interest" defaultValue={values.interest ?? ""}>
               <option value="">Choose one</option>
@@ -150,7 +170,7 @@ export function LeadForm({ variant, heading, intro, courses, fixedCourse }: Prop
               ))}
             </select>
           </div>
-          <div className="field">
+          <div className={fieldBox}>
             <label htmlFor={id("message")}>Tell us a little more (optional)</label>
             <textarea
               id={id("message")}
@@ -167,13 +187,13 @@ export function LeadForm({ variant, heading, intro, courses, fixedCourse }: Prop
       ) : fixedCourse ? (
         <>
           <input type="hidden" name="courseId" value={fixedCourse.id} />
-          <p className="field-hint">
+          <p className={hint}>
             Course: <strong>{fixedCourse.title}</strong>
           </p>
           {fieldError("courseId")}
         </>
       ) : (
-        <div className="field">
+        <div className={fieldBox}>
           <label htmlFor={id("courseId")}>Which course?</label>
           <select
             id={id("courseId")}
@@ -194,7 +214,7 @@ export function LeadForm({ variant, heading, intro, courses, fixedCourse }: Prop
         </div>
       )}
 
-      <div className="field field--checkbox">
+      <div className={checkboxBox}>
         <input
           id={id("consentContact")}
           name="consentContact"
@@ -211,14 +231,19 @@ export function LeadForm({ variant, heading, intro, courses, fixedCourse }: Prop
         {fieldError("consentContact")}
       </div>
 
-      <div className="field field--checkbox">
+      <div className={checkboxBox}>
         <input id={id("consentMarketing")} name="consentMarketing" type="checkbox" />
         <label htmlFor={id("consentMarketing")}>
           Also send me occasional news about Z-GATE courses and services (optional).
         </label>
       </div>
 
-      <button type="submit" className="button" disabled={pending} aria-disabled={pending}>
+      <button
+        type="submit"
+        className={cx(button, "disabled:cursor-progress disabled:opacity-60")}
+        disabled={pending}
+        aria-disabled={pending}
+      >
         {pending ? "Sending…" : variant === "waitlist" ? "Join the waitlist" : "Send message"}
       </button>
     </form>

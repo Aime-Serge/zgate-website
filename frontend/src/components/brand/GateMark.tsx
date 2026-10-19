@@ -1,5 +1,7 @@
 import { useId } from "react";
 import type { DivisionSlug } from "@zgate/cms-contracts";
+import { cx } from "@/components/ui/styles";
+import { tone } from "@/components/ui/tone";
 
 /**
  * The Gate Mark, geometry copied from the Brand Identity Guide: the letter
@@ -10,7 +12,7 @@ import type { DivisionSlug } from "@zgate/cms-contracts";
  */
 export function GateMark({
   division,
-  className = "gate-mark",
+  className = "w-7",
   title,
 }: {
   division?: DivisionSlug;
@@ -19,11 +21,11 @@ export function GateMark({
   title?: string;
 }) {
   const gradientId = `gate-${useId().replace(/[^a-zA-Z0-9-]/g, "")}`;
-  const solid = division ? `var(--${division})` : null;
+  const solid = division ? `var(--color-${division})` : null;
   return (
     <svg
       viewBox="0 0 100 100"
-      className={className}
+      className={cx("inline-block h-auto shrink-0", className)}
       xmlns="http://www.w3.org/2000/svg"
       focusable="false"
       {...(title ? { role: "img", "aria-label": title } : { "aria-hidden": true })}
@@ -36,8 +38,8 @@ export function GateMark({
           </linearGradient>
         </defs>
       )}
-      <rect x="14" y="14" width="72" height="11" rx="2" fill={solid ?? "var(--paper)"} />
-      <rect x="14" y="75" width="72" height="11" rx="2" fill={solid ?? "var(--paper)"} />
+      <rect x="14" y="14" width="72" height="11" rx="2" fill={solid ?? "var(--color-paper)"} />
+      <rect x="14" y="75" width="72" height="11" rx="2" fill={solid ?? "var(--color-paper)"} />
       <line
         x1="22"
         y1="30"
@@ -53,12 +55,28 @@ export function GateMark({
 }
 
 /** Mark + wordmark: "Z-GATE Solution", or "Z-GATE Advisory" for a division. */
-export function Lockup({ division, name }: { division?: DivisionSlug; name: string }) {
+export function Lockup({
+  division,
+  name,
+  size = "md",
+}: {
+  division?: DivisionSlug;
+  name: string;
+  size?: "md" | "lg";
+}) {
   return (
-    <span className={division ? `lockup tone--${division}` : "lockup"}>
-      <GateMark division={division} className="gate-mark lockup__mark" />
-      <span className="lockup__word">
-        Z-GATE <span className="lockup__name">{name}</span>
+    <span
+      className={cx("inline-flex items-center gap-2.5 no-underline", division && tone(division))}
+    >
+      <GateMark division={division} className={size === "lg" ? "w-8" : "w-7"} />
+      <span
+        className={cx(
+          "font-display font-bold tracking-[-0.01em] whitespace-nowrap",
+          size === "lg" ? "text-xl" : "text-lg",
+        )}
+      >
+        Z-GATE {/* Master brand: the lighter "Solution"; a division name stays solid. */}
+        <span className={division ? "font-semibold" : "font-normal opacity-70"}>{name}</span>
       </span>
     </span>
   );

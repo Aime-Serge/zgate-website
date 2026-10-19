@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { Lockup } from "@/components/brand/GateMark";
+import { container, cx } from "@/components/ui/styles";
 import type { Division, SiteSetting } from "@zgate/cms-contracts";
 import { HeaderNav, type NavLink } from "./HeaderNav";
 
@@ -23,9 +24,13 @@ export function SiteHeader({ settings, divisions, showInsights }: Props) {
     ...(lms ? [{ href: `${lms}/login`, label: "Log in", external: true }] : []),
   ];
   return (
-    <header className="site-header">
-      <div className="max site-header__inner">
-        <Link href="/" className="site-header__brand" aria-label={`${settings.tradingName} — home`}>
+    <header className="sticky top-0 z-20 border-b border-line bg-ink">
+      <div className={cx(container, "flex flex-wrap items-center justify-between gap-4 py-3")}>
+        <Link
+          href="/"
+          className="inline-flex min-h-11 items-center no-underline"
+          aria-label={`${settings.tradingName} — home`}
+        >
           <Lockup name="Solution" />
         </Link>
         <HeaderNav links={links} cta={{ href: "/contact", label: "Start a conversation" }} />

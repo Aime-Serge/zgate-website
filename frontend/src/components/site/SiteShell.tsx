@@ -2,6 +2,7 @@ import Link from "next/link";
 import type React from "react";
 import { listArticles, listDivisions } from "@/lib/cms";
 import type { Division, SiteSetting } from "@zgate/cms-contracts";
+import { button, buttonSecondary, container } from "@/components/ui/styles";
 import { AttributionCapture } from "./AttributionCapture";
 import { telHref, whatsappGreeting, whatsappHref } from "./ContactChannels";
 import { SiteFooter } from "./SiteFooter";
@@ -19,13 +20,17 @@ function Announcement({ settings }: { settings: SiteSetting }) {
   const { text, label, href } = settings.announcement ?? {};
   if (!text) return null;
   return (
-    <div className="announcement">
-      <p className="max">
+    <div className="border-b border-line bg-ink-2 text-[0.9375rem]">
+      <p
+        className={`${container} py-2 before:mr-2 before:inline-block before:size-2 before:rounded-full before:bg-gate-2 before:content-['']`}
+      >
         {text}
         {label && href ? (
           <>
             {" "}
-            <Link href={href}>{label}</Link>
+            <Link href={href} className="underline underline-offset-2">
+              {label}
+            </Link>
           </>
         ) : null}
       </p>
@@ -43,11 +48,14 @@ function Announcement({ settings }: { settings: SiteSetting }) {
 function QuickContact({ settings }: { settings: SiteSetting }) {
   const whatsapp = settings.whatsapp || settings.phone;
   return (
-    <aside className="quick-contact" aria-label="Quick contact">
-      <a className="button" href={whatsappHref(whatsapp, whatsappGreeting())}>
+    <aside
+      className="fixed inset-x-0 bottom-0 z-30 grid grid-cols-2 gap-2 border-t border-line bg-ink px-4 pt-2 pb-[calc(0.5rem+env(safe-area-inset-bottom))] sm:hidden print:hidden"
+      aria-label="Quick contact"
+    >
+      <a className={button} href={whatsappHref(whatsapp, whatsappGreeting())}>
         WhatsApp us
       </a>
-      <a className="button button--secondary" href={telHref(settings.phone)}>
+      <a className={buttonSecondary} href={telHref(settings.phone)}>
         Call us
       </a>
     </aside>

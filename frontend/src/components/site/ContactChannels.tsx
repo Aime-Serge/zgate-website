@@ -1,4 +1,5 @@
 import type { SiteSetting } from "@zgate/cms-contracts";
+import { buttonSecondary, channelButton, channelButtonSecondary } from "@/components/ui/styles";
 
 export const telHref = (number: string) => `tel:${number.replace(/[^\d+]/g, "")}`;
 
@@ -21,6 +22,8 @@ export const whatsappGreeting = (topic?: string | null) =>
 
 const whatsappNumber = (settings: SiteSetting) => settings.whatsapp || settings.phone;
 
+const detail = "font-mono text-[0.9rem] font-normal [overflow-wrap:anywhere]";
+
 /**
  * Secondary action beside "Start a conversation": WhatsApp is the primary
  * channel for the core persona (docs/marketing/CONVERSION_FUNNEL.md), so it
@@ -35,7 +38,7 @@ export function WhatsAppButton({
 }) {
   return (
     <a
-      className="button button--secondary"
+      className={buttonSecondary}
       href={whatsappHref(whatsappNumber(settings), whatsappGreeting(topic))}
     >
       Chat on WhatsApp
@@ -60,22 +63,22 @@ export function ContactChannels({
 }) {
   const whatsapp = whatsappNumber(settings);
   return (
-    <div className="contact-channels">
-      {heading ? <h3>{heading}</h3> : null}
-      <ul className="contact-actions">
+    <div>
+      {heading ? <h3 className="mb-3 text-lg">{heading}</h3> : null}
+      <ul className="grid max-w-[28rem] gap-3">
         <li>
-          <a className="button" href={whatsappHref(whatsapp, whatsappGreeting(topic))}>
-            WhatsApp <span className="contact-actions__detail">{whatsapp}</span>
+          <a className={channelButton} href={whatsappHref(whatsapp, whatsappGreeting(topic))}>
+            WhatsApp <span className={detail}>{whatsapp}</span>
           </a>
         </li>
         <li>
-          <a className="button button--secondary" href={telHref(settings.phone)}>
-            Call <span className="contact-actions__detail">{settings.phone}</span>
+          <a className={channelButtonSecondary} href={telHref(settings.phone)}>
+            Call <span className={detail}>{settings.phone}</span>
           </a>
         </li>
         <li>
-          <a className="button button--secondary" href={`mailto:${settings.email}`}>
-            Email <span className="contact-actions__detail">{settings.email}</span>
+          <a className={channelButtonSecondary} href={`mailto:${settings.email}`}>
+            Email <span className={detail}>{settings.email}</span>
           </a>
         </li>
       </ul>

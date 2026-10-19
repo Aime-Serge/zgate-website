@@ -6,7 +6,7 @@ const COURSE = "/academy/courses/tax-bookkeeping-fundamentals";
 
 test("course waitlist: errors are announced, then a valid sign-up succeeds", async ({ page }) => {
   await page.goto(COURSE);
-  const form = page.locator("form.lead-form");
+  const form = page.locator("form[data-lead-form]");
   await expect(form.getByRole("heading", { name: "Join the waitlist" })).toBeVisible();
 
   // Submitting empty: the error summary takes focus, fields are flagged.
@@ -32,7 +32,7 @@ test("course waitlist: errors are announced, then a valid sign-up succeeds", asy
 
 test("the consent text links to the privacy notice", async ({ page }) => {
   await page.goto("/contact");
-  const link = page.locator("form.lead-form").getByRole("link", { name: "privacy notice" });
+  const link = page.locator("form[data-lead-form]").getByRole("link", { name: "privacy notice" });
   await expect(link).toHaveAttribute("href", "/privacy");
   await link.click();
   await expect(page.getByRole("heading", { level: 1, name: "Privacy notice" })).toBeVisible();

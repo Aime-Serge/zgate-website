@@ -77,6 +77,18 @@ Two apps (ADR-007, second amendment): the **public site** (`frontend/`, `@zgate/
 - **Deploying:** see `docs/WEBSITE_DEPLOY.md`.
 - **All public URLs go through `frontend/src/app/(site)/[[...slug]]`** (router: `frontend/src/lib/routes.ts`). Don't add plain routes such as `app/(site)/foo/page.tsx` for CMS content: Next would prerender them at build time, and the build would need the CMS.
 
+## Styling the public site (Tailwind CSS v4)
+
+The public site (`frontend/`) is styled only with Tailwind utility classes. There is no component CSS.
+
+- **Tokens:** `frontend/src/app/(site)/globals.css` is Tailwind's entry. Its `@theme` holds the brand tokens (colours, radii, the extra `xs`/`nav`/`wide` breakpoints), which become utilities such as `bg-ink`, `text-paper-dim` and `border-line`. The base layer only sets heading type, the focus ring and reduced motion. Don't add component CSS there.
+- **Shared class strings:** `frontend/src/components/ui/styles.ts` (buttons, container, section, eyebrow, hero, panel …) and `cx()` to join them.
+- **Division colour:** `tone("advisory")` from `components/ui/tone.ts` on a wrapper sets `--accent` / `--glow`; inside it use `text-accent`, `bg-accent`, `border-accent`, `bg-glow`.
+- **Two rules:**
+  - Write every class out in full, never `` `text-${x}` ``: Tailwind only generates classes it finds in the source.
+  - Never put two utilities for the same property on one element (e.g. `justify-center` and `justify-between`): Tailwind's CSS order decides, not the class order. Add a complete variant in `styles.ts` instead.
+- **Breakpoints:** Tailwind's `sm` 640, `md` 768, `lg` 1024, plus `xs` 480, `nav` 900 (the menu collapses below it) and `wide` 1080. Avoid arbitrary `min-[…px]:` variants. Tailwind orders them before the named breakpoints, so `md:` would override them.
+
 ## Contracts with the e-learning platform
 
 - **What the website owns:** `@zgate/website-contracts` (lead form, lead intake, lead/waitlist webhook) and `@zgate/brand-ui`. Additive changes only; `packages/website-contracts/compat/` fails on a removed or renamed field or a narrowed type. After a change merges, open a pull request in the e-learning repository that runs `node scripts/sync-contracts.mjs --from <website checkout>` there, so its contract tests check the new version.
