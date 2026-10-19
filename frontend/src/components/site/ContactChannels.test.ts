@@ -13,8 +13,10 @@ describe("contact links", () => {
   });
 
   it("names the topic the visitor was reading", () => {
-    expect(whatsappGreeting("Advisory")).toBe("Hello Z-GATE, I'd like to talk about Advisory.");
-    expect(whatsappGreeting(null)).toMatch(/^Hello Z-GATE/);
+    expect(whatsappGreeting("Advisory")).toBe(
+      "Hello Z-GATE, I'd like to talk about Advisory. (Sent from your website.)",
+    );
+    expect(whatsappGreeting(null)).toMatch(/^Hello Z-GATE.*\(Sent from your website\.\)$/);
   });
 
   it("keeps the leading + on tel: links", () => {

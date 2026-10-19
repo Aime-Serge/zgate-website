@@ -15,6 +15,7 @@ import {
   listDivisions,
 } from "@/lib/cms";
 import { pathFor, resolveRoute, type Route } from "@/lib/routes";
+import { shortDescription } from "@/lib/text";
 import type { SiteSetting } from "@zgate/cms-contracts";
 
 /*
@@ -32,8 +33,14 @@ export function generateStaticParams() {
 
 type Props = { params: Promise<{ slug?: string[] }> };
 
+/**
+ * Fallbacks when an editor hasn't filled "Search & sharing". Titles use the
+ * trading name with service words; "Z-GATE LTD" is for legal lines only
+ * (marketing review #4).
+ */
 function describe(route: Route, settings: SiteSetting): { title: string; description: string } {
-  const suffix = settings.legalName;
+  const brand = settings.tradingName || settings.legalName;
+  const fallback = shortDescription(settings.elevatorPitch);
   switch (route.kind) {
     case "page": {
       const { page } = route;
@@ -41,29 +48,43 @@ function describe(route: Route, settings: SiteSetting): { title: string; descrip
       return {
         title:
           page.meta?.title ||
-          (isHome ? `${suffix} — ${settings.motto}` : `${page.title} — ${suffix}`),
-        description: page.meta?.description || settings.elevatorPitch,
+          (isHome ? `${brand} — ${settings.motto}` : `${page.title} — ${brand}`),
+        description: page.meta?.description || fallback,
       };
     }
-    case "division":
+    case "division": {
+      const { division } = route;
       return {
-        title: route.division.meta?.title || `${route.division.name} — ${suffix}`,
-        description: route.division.meta?.description || route.division.mission,
+        title:
+          division.meta?.title ||
+          (division.subtitle
+            ? `${division.name} — ${division.subtitle}`
+            : `${division.name} — ${brand}`),
+        description: division.meta?.description || shortDescription(division.mission),
       };
+    }
     case "courses":
-      return { title: `Courses — ${suffix} Academy`, description: settings.elevatorPitch };
-    case "course":
       return {
-        title: route.course.meta?.title || `${route.course.title} — ${suffix} Academy`,
+        title: "Courses — Z-GATE Academy",
         description:
-          route.course.meta?.description || route.course.summary || route.course.audience,
+          "Short, practical courses in tax, bookkeeping and EBM from Z-GATE Academy, built from real Advisory cases.",
       };
+    case "course": {
+      // Search shows about 60 characters; long course names go without the suffix.
+      const titled = `${route.course.title} — Z-GATE Academy`;
+      return {
+        title: route.course.meta?.title || (titled.length <= 60 ? titled : route.course.title),
+        description: shortDescription(
+          route.course.meta?.description || route.course.summary || route.course.audience,
+        ),
+      };
+    }
     case "insights":
-      return { title: `Insights — ${suffix}`, description: settings.elevatorPitch };
+      return { title: `Insights — ${brand}`, description: fallback };
     case "article":
       return {
-        title: route.article.meta?.title || `${route.article.title} — ${suffix}`,
-        description: route.article.meta?.description || route.article.excerpt,
+        title: route.article.meta?.title || `${route.article.title} — ${brand}`,
+        description: shortDescription(route.article.meta?.description || route.article.excerpt),
       };
   }
 }

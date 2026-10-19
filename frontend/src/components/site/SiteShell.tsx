@@ -3,6 +3,7 @@ import type React from "react";
 import { listArticles, listDivisions } from "@/lib/cms";
 import type { Division, SiteSetting } from "@zgate/cms-contracts";
 import { AttributionCapture } from "./AttributionCapture";
+import { telHref, whatsappGreeting, whatsappHref } from "./ContactChannels";
 import { SiteFooter } from "./SiteFooter";
 import { SiteHeader } from "./SiteHeader";
 
@@ -32,6 +33,27 @@ function Announcement({ settings }: { settings: SiteSetting }) {
   );
 }
 
+/**
+ * On a phone the header's button sits inside the menu, so after the hero a
+ * visitor had no contact action until the page ended. This bar keeps
+ * WhatsApp and a call one tap away (marketing review, "should fix" #3).
+ * Plain links, shown only on narrow screens by CSS; last in reading order
+ * so screen-reader users meet the page first.
+ */
+function QuickContact({ settings }: { settings: SiteSetting }) {
+  const whatsapp = settings.whatsapp || settings.phone;
+  return (
+    <aside className="quick-contact" aria-label="Quick contact">
+      <a className="button" href={whatsappHref(whatsapp, whatsappGreeting())}>
+        WhatsApp us
+      </a>
+      <a className="button button--secondary" href={telHref(settings.phone)}>
+        Call us
+      </a>
+    </aside>
+  );
+}
+
 /** Header, main landmark and footer around every public page. */
 export async function SiteShell({ settings, privacyLive, divisions, children }: Props) {
   const [navDivisions, articles] = await Promise.all([
@@ -45,6 +67,7 @@ export async function SiteShell({ settings, privacyLive, divisions, children }: 
       <SiteHeader settings={settings} divisions={navDivisions} showInsights={articles.length > 0} />
       <main id="main">{children}</main>
       <SiteFooter settings={settings} divisions={navDivisions} showPrivacyLink={privacyLive} />
+      <QuickContact settings={settings} />
     </>
   );
 }

@@ -61,11 +61,16 @@ async function untouched(payload: Payload, collection: SlugCollection, id: numbe
   return totalDocs <= 1;
 }
 
-const isEmpty = (value: unknown) =>
+const isEmpty = (value: unknown): boolean =>
   value === null ||
   value === undefined ||
   value === "" ||
-  (Array.isArray(value) && value.length === 0);
+  (Array.isArray(value) && value.length === 0) ||
+  (typeof value === "object" &&
+    !Array.isArray(value) &&
+    Object.entries(value as Record<string, unknown>).every(
+      ([key, inner]) => key === "id" || isEmpty(inner),
+    ));
 
 /** The seed's values for fields the document doesn't have yet. */
 function missingFields(doc: Record<string, unknown>, seed: Record<string, unknown>) {
@@ -168,7 +173,6 @@ async function seedDivisions(payload: Payload): Promise<void> {
     await seedDocument(payload, "divisions", division.slug, {
       ...division,
       included: included.map((item) => ({ item })),
-      cta: primaryCta,
     });
   }
 }
@@ -183,7 +187,9 @@ async function seedCourses(payload: Payload): Promise<void> {
   }
 }
 
-type PageSeed = Pick<Page, "title" | "slug" | "pageType" | "layout"> & { publish: boolean };
+type PageSeed = Pick<Page, "title" | "slug" | "pageType" | "layout" | "meta"> & {
+  publish: boolean;
+};
 
 /*
  * Page layouts. Copy is approved text (see content.ts) except the interface
@@ -197,6 +203,11 @@ const pages: PageSeed[] = [
     slug: "home",
     pageType: "marketing",
     publish: true,
+    meta: {
+      title: "Z-GATE Solution — Tax, EBM, Training, Tech & Data in Kigali",
+      description:
+        "Stop juggling four vendors: tax and EBM compliance, practical training, systems and data reporting, under one roof in Kigali.",
+    },
     layout: [
       {
         blockType: "hero",
@@ -293,7 +304,7 @@ const pages: PageSeed[] = [
           },
           {
             figure: "2 hrs",
-            label: "First response when a system we run is down",
+            label: "First response when a system we host for you is down",
             division: "tech",
           },
           {
@@ -340,6 +351,11 @@ const pages: PageSeed[] = [
     slug: "about",
     pageType: "marketing",
     publish: true,
+    meta: {
+      title: "About Z-GATE Solution — One gate, four rooms",
+      description:
+        "Why Z-GATE runs Advisory, Academy, Tech and Data as one company: our mission, vision, values and registration details.",
+    },
     layout: [
       {
         blockType: "hero",
@@ -380,6 +396,11 @@ const pages: PageSeed[] = [
     slug: "contact",
     pageType: "marketing",
     publish: true,
+    meta: {
+      title: "Contact Z-GATE — WhatsApp, phone or email",
+      description:
+        "Talk to a person at Z-GATE in Kiyovu, Kigali, by WhatsApp, phone or email. Tell us what you need and we'll find the right division.",
+    },
     layout: [
       {
         blockType: "hero",
@@ -439,17 +460,27 @@ async function seedPages(payload: Payload): Promise<void> {
       payload.logger.info(
         `pages/${page.slug}: created${publish ? "" : " as draft (needs legal wording)"}`,
       );
-    } else if (!publish || !(await untouched(payload, "pages", existing.id))) {
-      payload.logger.info(`pages/${page.slug}: exists (edited in the CMS or a draft), kept`);
+    } else if (!publish || existing._status === "draft") {
+      payload.logger.info(`pages/${page.slug}: exists as a draft, kept`);
     } else {
+      // Empty fields (e.g. search titles) are always safe to fill; the
+      // layout only while nobody has edited the page since seeding.
+      const data: Partial<Page> = {};
+      if (page.meta && isEmpty(existing.meta)) data.meta = page.meta;
+      if (await untouched(payload, "pages", existing.id)) data.layout = page.layout;
+      const changed = Object.keys(data);
+      if (changed.length === 0) {
+        payload.logger.info(`pages/${page.slug}: exists (edited in the CMS), kept`);
+        continue;
+      }
       await payload.update({
         collection: "pages",
         id: existing.id,
         context,
         overrideAccess: true,
-        data: { layout: page.layout, _status: "published" },
+        data: { ...data, _status: "published" },
       });
-      payload.logger.info(`pages/${page.slug}: untouched since seeding, layout upgraded`);
+      payload.logger.info(`pages/${page.slug}: filled ${changed.join(", ")}`);
     }
   }
 }

@@ -85,7 +85,8 @@ export const listDivisions = cache((): Promise<Division[]> =>
 );
 
 export const listCourses = cache((): Promise<Course[]> =>
-  find<Course>("courses", { sort: "title", limit: 50 }),
+  // Oldest first: courses are added in cohort order (Cohort 1 before 2).
+  find<Course>("courses", { sort: "createdAt", limit: 50 }),
 );
 
 export const getCourseBySlug = cache(

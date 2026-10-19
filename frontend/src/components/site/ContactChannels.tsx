@@ -8,12 +8,16 @@ export const whatsappHref = (number: string, text?: string) =>
 
 /**
  * The visitor's opening line, naming what they were reading - so the team
- * answering WhatsApp starts with context instead of "how can we help?".
+ * answering WhatsApp starts with context instead of "how can we help?" -
+ * and marked as coming from the website, so the chat can be logged with
+ * the right channel (marketing review, "should fix" #2).
  */
 export const whatsappGreeting = (topic?: string | null) =>
-  topic
-    ? `Hello Z-GATE, I'd like to talk about ${topic}.`
-    : "Hello Z-GATE, I'd like to talk to someone about my business.";
+  `${
+    topic
+      ? `Hello Z-GATE, I'd like to talk about ${topic}.`
+      : "Hello Z-GATE, I'd like to talk to someone about my business."
+  } (Sent from your website.)`;
 
 const whatsappNumber = (settings: SiteSetting) => settings.whatsapp || settings.phone;
 

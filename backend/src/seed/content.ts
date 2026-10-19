@@ -95,6 +95,9 @@ export type DivisionSeed = {
   commitments: { figure: string; label: string }[];
   objection: { question: string; answer: string };
   faq: { question: string; answer: string }[];
+  /** CONVERSION_FUNNEL.md's action for this division. */
+  cta: { label: string; href: string };
+  meta: { title: string; description: string };
 };
 
 // Mission/Vision doc "Division Copy" + Client SLA Template Part 2 scope;
@@ -110,6 +113,12 @@ export const divisions: DivisionSeed[] = [
     name: "Z-GATE Advisory",
     shortName: "Advisory",
     subtitle: "Tax & Business Consulting",
+    cta: { label: "Request a consultation", href: "/contact" },
+    meta: {
+      title: "Z-GATE Advisory — Tax, VAT & EBM compliance, Kigali",
+      description:
+        "Tax representation before the RRA, VAT and EBM filing, and monthly bookkeeping for businesses in Kigali — direct answers, filed on time.",
+    },
     pillar: "Compliance certainty",
     headline: "Direct answers, not hedged ones, and a filing calendar you never have to chase.",
     audience:
@@ -117,7 +126,7 @@ export const divisions: DivisionSeed[] = [
     mission:
       "To keep a business compliant, tax-efficient, and financially sound, so leadership can make decisions on solid ground instead of guesswork.",
     about:
-      "Z-GATE Advisory handles the parts of the business that don't forgive a mistake — tax filings, compliance, financial structuring, business consulting. The work is judged on one standard: is the number right, and is the business protected. Advisory clients get direct answers, not hedged ones, and a filing calendar they never have to chase.",
+      "Z-GATE Advisory handles the parts of the business that don't forgive a mistake — tax filings, compliance, financial structuring, business consulting. The work is judged on one standard: is the number right, and is the business protected.",
     included: [
       "Tax representation and advisory before the Rwanda Revenue Authority (RRA)",
       "Preparation and filing of personal and business income tax returns",
@@ -170,6 +179,13 @@ export const divisions: DivisionSeed[] = [
     name: "Z-GATE Academy",
     shortName: "Academy",
     subtitle: "Professional Training",
+    // The gate to the courses, and through them to the e-learning platform.
+    cta: { label: "See the courses", href: "/academy/courses" },
+    meta: {
+      title: "Z-GATE Academy — Practical tax, bookkeeping & EBM courses",
+      description:
+        "Short, hands-on courses in tax, bookkeeping and EBM for SME owners and staff in Kigali, built from real Advisory cases.",
+    },
     pillar: "Practical skills",
     headline: "Not a certificate for the wall — a capability the business can point to.",
     audience:
@@ -200,7 +216,7 @@ export const divisions: DivisionSeed[] = [
     objection: {
       question: "Will this certificate mean anything to an employer?",
       answer:
-        "We don't have an employer-verification track record yet — what we can promise is a curriculum built from real work, not slides. See what each course covers before you enroll.",
+        "We don't have an employer-verification track record yet — what we can promise is a curriculum built from real work, not slides. See what each course covers before you join.",
     },
     faq: [
       {
@@ -216,6 +232,12 @@ export const divisions: DivisionSeed[] = [
     name: "Z-GATE Tech",
     shortName: "Tech",
     subtitle: "Technology Solutions",
+    cta: { label: "Start a conversation", href: "/contact" },
+    meta: {
+      title: "Z-GATE Tech — Software, systems & hosting",
+      description:
+        "Software, systems and hosting built for how your business works, with a plain-language explanation of every system.",
+    },
     pillar: "Systems that work",
     headline: "Nothing shipped as a black box.",
     audience:
@@ -223,14 +245,14 @@ export const divisions: DivisionSeed[] = [
     mission:
       "To build the systems a business runs on — reliable, maintainable, and built for the business it's actually serving, not a generic template.",
     about:
-      "Z-GATE Tech designs and builds the software, infrastructure, and automation that let the rest of a client's business move faster. Every system is built with a plain-language explanation of what it does and how to run it — nothing shipped as a black box.",
+      "Z-GATE Tech designs and builds the software, infrastructure, and automation that let the rest of a client's business move faster.",
     included: [
       "Design, development, and maintenance of software, systems, or web applications per the agreed project brief",
       "Onsite or remote management of the Client's computer systems and data-processing facilities, where contracted",
       "Hosting and infrastructure support for systems Z-GATE builds or manages",
     ],
     proof:
-      "Our published support commitments: 2-hour first response on a critical outage, 99% monthly uptime target. This very site and Advisory's own client portal are built by the same team — an internal reference before an external sale.",
+      "Our published support commitments: 2-hour first response on a critical outage, 99% monthly uptime target. This website is built and run by the same team: an internal reference before any external sale.",
     commitments: [
       {
         figure: "2 hrs",
@@ -262,6 +284,12 @@ export const divisions: DivisionSeed[] = [
     name: "Z-GATE Data",
     shortName: "Data",
     subtitle: "Data Analytics & Business Intelligence",
+    cta: { label: "Start a conversation", href: "/contact" },
+    meta: {
+      title: "Z-GATE Data — Reporting, dashboards & data processing",
+      description:
+        'Data entry, reporting and dashboards that give NGOs and businesses a clear, honest answer to "is this working".',
+    },
     pillar: "Numbers you can trust",
     headline: "A clear, honest answer to “is this working” — not a disconnected export.",
     audience:
@@ -269,7 +297,7 @@ export const divisions: DivisionSeed[] = [
     mission:
       'To turn what a business already has — transactions, operations, training records, systems logs — into a clear, honest answer to "is this working."',
     about:
-      "Z-GATE Data builds the dashboards, reports, and analysis that tell leadership what's actually happening, not what looks good in a slide. Because Data sits alongside Advisory, Academy, and Tech, its numbers are built on the business's real financial, training, and system data — not a disconnected export.",
+      "Z-GATE Data builds the dashboards, reports, and analysis that tell leadership what's actually happening, not what looks good in a slide. Because Data sits alongside Advisory, Academy, and Tech, its numbers are built on the business's real financial, training, and system data.",
     included: [
       "Data entry and data processing from the Client's records into an agreed format",
       "Standard reporting and dashboard delivery on the agreed cadence",

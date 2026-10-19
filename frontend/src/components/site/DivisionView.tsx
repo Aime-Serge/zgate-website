@@ -43,7 +43,9 @@ export function DivisionView({
             </p>
             <h1>{division.headline || division.mission}</h1>
             {audienceLine ? <p className="hero__audience">{audienceLine}</p> : null}
-            <p className="lede">{division.headline ? division.mission : division.about}</p>
+            {/* The about text, not the mission: the mission is on the home cards,
+                and under a headline it repeated it (marketing review #1). */}
+            <p className="lede">{division.about}</p>
             <CtaRow settings={settings} topic={division.shortName} {...division.cta} />
           </div>
         </div>
@@ -53,8 +55,7 @@ export function DivisionView({
         <div className="max split">
           <div>
             <Eyebrow>Who it&rsquo;s for</Eyebrow>
-            {division.audience ? <p className="split__lead">{division.audience}</p> : null}
-            {division.headline ? <p>{division.about}</p> : null}
+            <p className="split__lead">{division.audience || division.mission}</p>
           </div>
           <div className="panel">
             <h2 className="panel__heading">What&rsquo;s included</h2>
