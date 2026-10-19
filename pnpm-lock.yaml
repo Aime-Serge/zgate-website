@@ -268,8 +268,8 @@ importers:
         specifier: workspace:*
         version: link:../../config
       '@zgate/elearning-contracts':
-        specifier: file:../../../elearning/packages/elearning-contracts
-        version: file:../elearning/packages/elearning-contracts
+        specifier: file:../../vendor/elearning-contracts
+        version: file:vendor/elearning-contracts
       eslint:
         specifier: ^9
         version: 9.39.5
@@ -1712,8 +1712,8 @@ packages:
   '@vitest/spy@5.0.2':
     resolution: {integrity: sha512-Ijc7T1nT9efNb5LxvjaBrEqw3f/QwUv5EE0nKqZxgqsaV/FxAAZ8baGylA8X/Z2oS4Lp+K74Jr6dTJsDKxJDeg==}
 
-  '@zgate/elearning-contracts@file:../elearning/packages/elearning-contracts':
-    resolution: {directory: ../elearning/packages/elearning-contracts, type: directory}
+  '@zgate/elearning-contracts@file:vendor/elearning-contracts':
+    resolution: {directory: vendor/elearning-contracts, type: directory}
 
   acorn-jsx-walk@2.0.0:
     resolution: {integrity: sha512-uuo6iJj4D4ygkdzd6jPtcxs8vZgDX9YFIkqczGImoypX2fQ4dVImmu3UzA4ynixCIMTrEOWW+95M2HuBaCEOVA==}
@@ -5624,7 +5624,7 @@ snapshots:
 
   '@vitest/spy@5.0.2': {}
 
-  '@zgate/elearning-contracts@file:../elearning/packages/elearning-contracts':
+  '@zgate/elearning-contracts@file:vendor/elearning-contracts':
     dependencies:
       zod: 4.6.5
 
@@ -6253,7 +6253,7 @@ snapshots:
       eslint: 9.39.5
       eslint-import-resolver-node: 0.3.10
       eslint-import-resolver-typescript: 3.10.1(eslint-plugin-import@2.32.0(eslint@9.39.5))(eslint@9.39.5)
-      eslint-plugin-import: 2.32.0(eslint-import-resolver-typescript@3.10.1(eslint-plugin-import@2.32.0(eslint@9.39.5))(eslint@9.39.5))(eslint@9.39.5)
+      eslint-plugin-import: 2.32.0(eslint-import-resolver-typescript@3.10.1)(eslint@9.39.5)
       eslint-plugin-jsx-a11y: 6.10.2(eslint@9.39.5)
       eslint-plugin-react: 7.37.5(eslint@9.39.5)
       eslint-plugin-react-hooks: 7.1.1(eslint@9.39.5)
@@ -6286,7 +6286,7 @@ snapshots:
       tinyglobby: 0.2.17
       unrs-resolver: 1.12.2
     optionalDependencies:
-      eslint-plugin-import: 2.32.0(eslint-import-resolver-typescript@3.10.1(eslint-plugin-import@2.32.0(eslint@9.39.5))(eslint@9.39.5))(eslint@9.39.5)
+      eslint-plugin-import: 2.32.0(eslint-import-resolver-typescript@3.10.1)(eslint@9.39.5)
     transitivePeerDependencies:
       - supports-color
 
@@ -6355,7 +6355,7 @@ snapshots:
       - eslint-import-resolver-webpack
       - supports-color
 
-  eslint-plugin-import@2.32.0(eslint-import-resolver-typescript@3.10.1(eslint-plugin-import@2.32.0(eslint@9.39.5))(eslint@9.39.5))(eslint@9.39.5):
+  eslint-plugin-import@2.32.0(eslint-import-resolver-typescript@3.10.1)(eslint@9.39.5):
     dependencies:
       '@rtsao/scc': 1.1.0
       array-includes: 3.2.0
