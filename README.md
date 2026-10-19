@@ -64,13 +64,18 @@ Breaking changes fail before they reach the other product:
 
 1. **Schema compatibility in the provider.** `packages/website-contracts/compat/` fails when a schema other products rely on removes or renames a field or narrows a type, compared with the agreed baseline. The e-learning repository does the same for its contract, plus `oasdiff breaking` on `/api/v1`.
 2. **Consumer tests on every snapshot update.** A provider change reaches the consumer only through `node scripts/sync-contracts.mjs --from <other checkout>`, in a pull request in the consumer's repository, where its contract tests run against it. CI rejects a hand-edited `vendor/` (`--check`).
-3. **Customer journey on staging** and **production synthetic checks**: the e-learning repository's `journey.yml` and `synthetic.yml` (tests in its `e2e/journeys`), which drive both products together.
+3. **Customer journey on staging** and **production synthetic checks**: the e-learning repository's `journey.yml` and `synthetic.yml` (tests in its `e2e/journeys`), which drive both products together. They gate website releases again once course buttons link to the platform (see "Releases").
 
 **Changing a contract this repository owns:** additive changes only (see `packages/website-contracts/README.md`). Once merged, open a pull request in the e-learning repository that syncs the new snapshot, so its contract tests run against it.
 
 ## Releases
 
-**No production deploy of the website happens unless the customer-journey workflow has passed against staging for the version being deployed** (e-learning repository, Actions, "Customer journey"), in addition to this repository's CI. Staging doesn't exist yet (hosting decision pending, ADR-004), so today the journey's unbuilt steps are marked `fixme`, and the website's own browser checks are the gate in CI. Runbook: `docs/WEBSITE_DEPLOY.md`.
+The website is developed first; the e-learning platform is parked until later, and course pages collect a **waitlist** (CMS: Site settings > Academy > Enrollment mode). While that is so, the release gate is (`docs/architecture/ADR/ADR-011-website-release-gate.md`):
+
+- this repository's CI green for the commit, including "Website / Browser checks"; and
+- the **website smoke check** passed on staging with that commit deployed (`docs/WEBSITE_DEPLOY.md` §4).
+
+**The full customer-journey gate returns the day the enrollment mode is switched to the e-learning platform on staging** (e-learning repository, Actions, "Customer journey"); it must pass there before the same switch in production. Only an admin can make that switch. Staging doesn't exist yet (hosting decision pending, ADR-004). Runbook: `docs/WEBSITE_DEPLOY.md`.
 
 ## Boundaries
 

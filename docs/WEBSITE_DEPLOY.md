@@ -59,7 +59,10 @@ The two containers share two secrets: `LEAD_INTAKE_TOKEN` (the public site hands
 
 CI builds, scans and publishes the images (`z-gate-website-frontend`, `z-gate-website-backend` and `z-gate-website-migrate`) on every merge to `main`, tagged with the commit SHA. All three always deploy together, at the same SHA. Then:
 
-1. Confirm the commit's CI run is green, including **"Website / Browser checks"**, and that the **customer-journey test** (`.github/workflows/journey.yml`) has passed against staging with this SHA deployed there. No production deploy without both (README.md, "Releases").
+1. Confirm the release gate (ADR-011, README.md "Releases"). No production deploy without it:
+   - the commit's CI run is green, including **"Website / Browser checks"**; and
+   - steps 2-4 below have passed **on staging** with this SHA, including a test waitlist submission (step 4).
+   - **Once the enrollment mode is "E-learning platform" on staging:** also the customer-journey test (e-learning repository, Actions, "Customer journey") against staging with this SHA, and record the run's URL in the deploy log.
 2. On the VM:
    ```bash
    export WEBSITE_TAG=<new sha>
@@ -74,7 +77,7 @@ CI builds, scans and publishes the images (`z-gate-website-frontend`, `z-gate-we
    curl -s -o /dev/null -w '%{http_code}\n' https://www.<domain>/admin   # 404 - CMS never on the public host
    curl -s -o /dev/null -w '%{http_code}\n' -X POST https://www.<domain>/api/revalidate   # 404 - webhook is internal only
    ```
-4. Open the home page, one course page and the contact page in a browser.
+4. Open the home page, one course page and the contact page in a browser. On staging, also submit the course page's waitlist form with a test name (e.g. "Release check <sha>") and confirm it appears in the CMS lead inbox (Leads). An admin then deletes it (audit-logged), so test sign-ups never count as course demand.
 
 **Migrations must be backward-compatible with the previous release** (expand, then contract: `docs/platform-v2/06-DEVOPS-RELIABILITY.md` §3). This is what makes rollback safe.
 
