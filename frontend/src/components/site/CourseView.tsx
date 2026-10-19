@@ -156,6 +156,7 @@ export function CourseView({ course, settings, siteUrl, privacyLive }: Props) {
         <ContactChannels
           settings={settings}
           heading={lms || privacyLive ? "Questions first?" : undefined}
+          topic={`the ${course.title} course`}
         />
       </section>
     </>

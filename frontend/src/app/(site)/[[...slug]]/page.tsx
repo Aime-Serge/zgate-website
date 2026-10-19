@@ -119,6 +119,7 @@ export default async function SitePage({ params }: Props) {
           divisions={divisions}
           courses={courses}
           privacyLive={privacyLive}
+          audienceLine={route.page.slug === "home" ? settings.audienceLine : null}
         />
       );
       break;
@@ -128,6 +129,7 @@ export default async function SitePage({ params }: Props) {
           division={route.division}
           audienceLine={settings.audienceLine}
           courses={courses}
+          settings={settings}
         />
       );
       break;

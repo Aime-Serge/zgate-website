@@ -83,6 +83,35 @@
 .button:hover {
   background: #5260e1;
 }
+/* Secondary action (WhatsApp, call, email beside a primary button):
+   outline only, paper text on ink - 16:1, so no AA risk. */
+.button--secondary {
+  background: transparent;
+  color: var(--on-surface);
+  border: 1px solid var(--paper-dim);
+}
+.button--secondary:hover {
+  background: rgba(236, 238, 243, 0.08);
+}
+/* A primary action and its WhatsApp alternative, side by side; they
+   stack full-width on a phone so both stay easy thumb targets. */
+.cta-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+}
+.cta-row .button {
+  flex: 1 1 100%;
+  text-align: center;
+}
+@media (min-width: 480px) {
+  .cta-row .button {
+    flex: 0 0 auto;
+  }
+}
+.block--cta .cta-row {
+  justify-content: center;
+}
 
 .grid {
   display: grid;
@@ -128,8 +157,7 @@
   border-top-color: var(--data);
 }
 
-.checklist,
-.contact-list {
+.checklist {
   padding-left: var(--space-6);
   display: grid;
   gap: var(--space-2);
@@ -315,6 +343,26 @@ textarea:focus-visible {
 }
 .contact-channels h3 {
   margin-bottom: var(--space-3);
+}
+.contact-actions {
+  list-style: none;
+  display: grid;
+  gap: var(--space-3);
+  max-width: 28rem;
+}
+.contact-actions .button {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: center;
+  gap: var(--space-2);
+  width: 100%;
+}
+.contact-actions__detail {
+  font-family: var(--font-mono);
+  font-weight: 400;
+  font-size: 0.9rem;
+  overflow-wrap: anywhere;
 }
 
 /* ---- Courses & articles ---- */

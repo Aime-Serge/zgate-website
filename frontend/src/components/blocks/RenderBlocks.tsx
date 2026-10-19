@@ -1,7 +1,7 @@
 import { RichText } from "@payloadcms/richtext-lexical/react";
 import Link from "next/link";
 import { LeadForm } from "@/components/forms/LeadForm";
-import { ContactChannels } from "@/components/site/ContactChannels";
+import { ContactChannels, WhatsAppButton } from "@/components/site/ContactChannels";
 import { CourseCard } from "@/components/site/CourseCard";
 import type { Course, Division, Page, SiteSetting } from "@zgate/cms-contracts";
 
@@ -12,6 +12,8 @@ type Context = {
   divisions: Division[];
   courses: Course[];
   privacyLive: boolean;
+  /** Who the site is for - shown under the hero headline (home page only). */
+  audienceLine?: string | null;
 };
 
 function CtaLink({ label, href }: { label?: string | null; href?: string | null }) {
@@ -23,15 +25,37 @@ function CtaLink({ label, href }: { label?: string | null; href?: string | null 
   );
 }
 
-function renderBlock(block: Block, { settings, divisions, courses, privacyLive }: Context) {
+/** The page's main action plus WhatsApp, for visitors who'd rather message than fill in a form. */
+function CtaRow({
+  settings,
+  ...cta
+}: {
+  settings: SiteSetting;
+  label?: string | null;
+  href?: string | null;
+}) {
+  if (!cta.label || !cta.href) return null;
+  return (
+    <div className="cta-row">
+      <CtaLink {...cta} />
+      <WhatsAppButton settings={settings} />
+    </div>
+  );
+}
+
+function renderBlock(
+  block: Block,
+  { settings, divisions, courses, privacyLive, audienceLine }: Context,
+) {
   switch (block.blockType) {
     case "hero":
       return (
         <section className="max block block--hero">
           {block.eyebrow ? <p className="eyebrow">{block.eyebrow}</p> : null}
           <h1>{block.headline}</h1>
+          {audienceLine ? <p className="muted">{audienceLine}</p> : null}
           {block.lede ? <p className="lede">{block.lede}</p> : null}
-          <CtaLink {...block.cta} />
+          <CtaRow settings={settings} {...block.cta} />
         </section>
       );
     case "richText":
@@ -104,7 +128,7 @@ function renderBlock(block: Block, { settings, divisions, courses, privacyLive }
         <section className="max block block--cta">
           <h2>{block.heading}</h2>
           {block.body ? <p>{block.body}</p> : null}
-          <CtaLink label={block.label} href={block.href} />
+          <CtaRow settings={settings} label={block.label} href={block.href} />
         </section>
       );
     case "leadForm":

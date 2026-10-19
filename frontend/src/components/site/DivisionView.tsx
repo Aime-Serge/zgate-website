@@ -1,5 +1,6 @@
 import Link from "next/link";
-import type { Course, Division } from "@zgate/cms-contracts";
+import type { Course, Division, SiteSetting } from "@zgate/cms-contracts";
+import { WhatsAppButton } from "./ContactChannels";
 import { CourseCard } from "./CourseCard";
 
 /**
@@ -11,8 +12,10 @@ export function DivisionView({
   division,
   audienceLine,
   courses = [],
+  settings,
 }: {
   division: Division;
+  settings: SiteSetting;
   audienceLine?: string | null;
   courses?: Course[];
 }) {
@@ -54,9 +57,12 @@ export function DivisionView({
         <p>{division.objection.answer}</p>
       </section>
       <section className="max block block--cta">
-        <Link href={division.cta.href} className="button">
-          {division.cta.label}
-        </Link>
+        <div className="cta-row">
+          <Link href={division.cta.href} className="button">
+            {division.cta.label}
+          </Link>
+          <WhatsAppButton settings={settings} topic={division.shortName} />
+        </div>
       </section>
     </>
   );
