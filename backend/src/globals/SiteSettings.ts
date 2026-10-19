@@ -1,5 +1,5 @@
 import type { GlobalConfig } from "payload";
-import { isPublisherOrAdmin, isStaffField } from "@/access/roles";
+import { isAdminField, isPublisherOrAdmin, isStaffField } from "@/access/roles";
 import { enforceGlobalPublishPermission } from "@/hooks/publishing";
 import { revalidateGlobalAfterChange } from "@/hooks/revalidate";
 
@@ -120,13 +120,20 @@ export const SiteSettings: GlobalConfig = {
                   value: "lms",
                 },
               ],
+              // Switching to "lms" sends visitors to the e-learning platform:
+              // a release decision gated on the customer journey passing
+              // (docs/architecture/ADR/ADR-011-website-release-gate.md), so
+              // only an admin may change it. A publisher's change is dropped.
+              access: { update: isAdminField },
               admin: {
-                description: "The planned hand-over point to the e-learning platform (ADR-007).",
+                description:
+                  "The planned hand-over point to the e-learning platform (ADR-007). Admins only: switch to the platform only after the customer journey has passed on staging (ADR-011).",
               },
             },
             {
               name: "lmsBaseUrl",
               type: "text",
+              access: { update: isAdminField },
               admin: {
                 condition: (_, siblingData) => siblingData?.["enrollmentMode"] === "lms",
                 description: "e.g. https://learn.example.rw",
