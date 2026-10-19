@@ -1,7 +1,7 @@
 /**
  * First-touch attribution: which campaign or link brought a visitor, so
  * the team can see which channels actually produce enquiries
- * (website/docs/04-WEBSITE.md §6).
+ * (docs/04-WEBSITE.md §6).
  *
  * Kept in sessionStorage only - no cookies, nothing sent anywhere unless
  * the visitor submits a form, cleared when the tab closes. Captured on the

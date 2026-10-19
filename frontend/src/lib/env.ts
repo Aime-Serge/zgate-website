@@ -15,7 +15,7 @@ const origin = (message: string) =>
     .url(message)
     .transform((v) => v.replace(/\/$/, ""));
 
-// Shared with the CMS (website/backend); `NAME=` in an env file means unset.
+// Shared with the CMS (backend); `NAME=` in an env file means unset.
 const sharedSecret = (name: string) =>
   z.preprocess(
     (value) => (value === "" ? undefined : value),

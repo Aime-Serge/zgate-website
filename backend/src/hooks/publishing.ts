@@ -4,7 +4,7 @@ import { canPublish } from "@/access/roles";
 const MESSAGE = "Only a publisher or admin can publish. Save as a draft and ask them to review it.";
 
 /**
- * Draft -> review -> publish (website/docs/04-WEBSITE.md §4): editors
+ * Draft -> review -> publish (docs/04-WEBSITE.md §4): editors
  * may save drafts but never set a document live. Local API calls with no
  * user (seed and migration scripts running on the server) are trusted
  * system operations; anything arriving over HTTP is checked.

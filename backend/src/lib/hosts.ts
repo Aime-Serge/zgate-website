@@ -5,9 +5,9 @@
  *
  * This app is the CMS only, on its own host (ADMIN_URL, e.g. cms.): the
  * admin UI, the REST API the website frontend reads, and lead intake.
- * Public pages are a separate app (website/frontend) on the public host,
+ * Public pages are a separate app (frontend) on the public host,
  * so the CMS login cookie never reaches the public pages' origin, where
- * cached HTML needs 'unsafe-inline' scripts (website/docs/04-WEBSITE.md §9).
+ * cached HTML needs 'unsafe-inline' scripts (docs/04-WEBSITE.md §9).
  */
 
 export type RouteDecision = { outcome: "next" } | { outcome: "not-found" };

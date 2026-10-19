@@ -1,6 +1,6 @@
 /**
  * Read-side data access for public pages, over the CMS's REST API
- * (website/backend, reached at CMS_URL on the internal network).
+ * (backend, reached at CMS_URL on the internal network).
  *
  * Every request is anonymous and asks for the published version
  * (`draft=false`), so the collections' own read rules - published

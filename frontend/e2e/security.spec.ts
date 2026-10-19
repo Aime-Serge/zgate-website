@@ -1,6 +1,6 @@
 /**
  * Public site / CMS separation and security headers (src/lib/security.ts
- * here, website/backend src/lib/hosts.ts), checked in a real browser so
+ * here, backend src/lib/hosts.ts), checked in a real browser so
  * CSP violations surface the way users would hit them.
  */
 import { expect, type Page, test } from "@playwright/test";

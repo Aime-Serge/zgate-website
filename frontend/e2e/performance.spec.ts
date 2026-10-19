@@ -1,6 +1,6 @@
 /**
  * JavaScript weight budget - the main cost on slow mobile connections
- * (website/docs/04-WEBSITE.md §8). Measured as compressed bytes on the
+ * (docs/04-WEBSITE.md §8). Measured as compressed bytes on the
  * wire, on a cold load.
  *
  * Budgets are set from measurement, with headroom, so growth is a

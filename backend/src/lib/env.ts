@@ -38,7 +38,7 @@ const schema = z
     // builds password-reset and notification links from it, and only this
     // origin may make cookie-authenticated API calls. It must never be the
     // public site's host: the CMS login cookie stays off the public origin
-    // (website/docs/04-WEBSITE.md §9).
+    // (docs/04-WEBSITE.md §9).
     ADMIN_URL: origin("ADMIN_URL must be an absolute URL").default("http://localhost:3004"),
     // Uploaded media on local disk until object storage is wired in
     // (docs/platform-v2/02-TARGET-ARCHITECTURE.md §7, ADR-P7).
