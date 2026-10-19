@@ -8,7 +8,7 @@
  */
 import type { Payload } from "payload";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
-import type { Lead, User } from "@zgate/cms-contracts/payload-types";
+import type { AuditLog, Lead, User } from "@zgate/cms-contracts/payload-types";
 
 const canRun = Boolean(process.env["DATABASE_URL"] && process.env["PAYLOAD_SECRET"]);
 const run = `t${Date.now()}`;
@@ -22,19 +22,33 @@ describe.skipIf(!canRun)("website CMS access rules", () => {
   let lead: Lead;
   const created = { pages: [] as number[], leads: [] as number[], users: [] as number[] };
 
-  const makeUser = async (role: "admin" | "publisher" | "editor") => {
+  const password = (label: string) => `pw-${run}-${label}-A1!`;
+
+  const makeUser = async (role: "admin" | "publisher" | "editor", label: string = role) => {
     const user = await payload.create({
       collection: "users",
       overrideAccess: true,
       data: {
-        email: `${run}-${role}@test.invalid`,
-        password: `pw-${run}-${role}-A1!`,
-        name: role,
+        email: `${run}-${label}@test.invalid`,
+        password: password(label),
+        name: label,
         roles: [role],
       },
     });
     created.users.push(user.id);
     return user;
+  };
+
+  /** Newest audit entry matching `where`, read as the system. */
+  const latestLog = async (where: object): Promise<AuditLog | undefined> => {
+    const logs = await payload.find({
+      collection: "audit-logs",
+      where: where as never,
+      sort: "-createdAt",
+      limit: 1,
+      overrideAccess: true,
+    });
+    return logs.docs[0];
   };
 
   const pageData = (slug: string, status: "draft" | "published") => ({
@@ -80,13 +94,27 @@ describe.skipIf(!canRun)("website CMS access rules", () => {
       await payload.delete({ collection: "pages", id, overrideAccess: true });
     for (const id of created.leads)
       await payload.delete({ collection: "leads", id, overrideAccess: true });
+    for (const id of created.users)
+      await payload
+        .delete({ collection: "users", id, overrideAccess: true })
+        .catch(() => undefined); // already deleted by a test
+    // Every entry this run wrote as a test user (by the email snapshot -
+    // the actor link is gone once the user is), or about a test user.
     await payload.delete({
       collection: "audit-logs",
-      where: { actor: { in: created.users } },
+      where: {
+        or: [
+          { actorEmail: { like: `${run}-` } },
+          {
+            and: [
+              { targetCollection: { equals: "users" } },
+              { docIds: { in: created.users.map(String) } },
+            ],
+          },
+        ],
+      },
       overrideAccess: true,
     });
-    for (const id of created.users)
-      await payload.delete({ collection: "users", id, overrideAccess: true });
   });
 
   describe("publishing workflow", () => {
@@ -203,6 +231,21 @@ describe.skipIf(!canRun)("website CMS access rules", () => {
       expect(updated.consent.contactAllowed).toBe(true);
       expect(updated.consent.noticeVersion).toBe("test");
     });
+
+    it("logs which fields an update changed - names, never values", async () => {
+      // The update in the test above: status changed; the consent tamper
+      // was refused by field access, so consent didn't change.
+      const entry = await latestLog({
+        and: [
+          { actor: { equals: publisher.id } },
+          { targetCollection: { equals: "leads" } },
+          { action: { equals: "update" } },
+        ],
+      });
+      expect(entry?.changedFields).toEqual(["status"]);
+      expect(entry?.actorEmail).toBe(publisher.email);
+      expect(JSON.stringify(entry)).not.toContain("contacted");
+    });
   });
 
   describe("accounts and audit log", () => {
@@ -215,6 +258,87 @@ describe.skipIf(!canRun)("website CMS access rules", () => {
         overrideAccess: false,
       });
       expect(updated.roles).toEqual(["editor"]);
+    });
+
+    it("records a role grant - who granted it, to whom, and that roles changed", async () => {
+      const staff = await makeUser("editor", "promoted");
+      await payload.update({
+        collection: "users",
+        id: staff.id,
+        data: { roles: ["publisher"] },
+        user: admin,
+        overrideAccess: false,
+      });
+      const entry = await latestLog({
+        and: [
+          { targetCollection: { equals: "users" } },
+          { action: { equals: "update" } },
+          { docIds: { in: [String(staff.id)] } },
+        ],
+      });
+      expect(entry).toMatchObject({ actorType: "user", actorEmail: admin.email });
+      expect(entry?.changedFields).toContain("roles");
+    });
+
+    it("records a password change without storing it", async () => {
+      const newPassword = password("editor-changed");
+      await payload.update({
+        collection: "users",
+        id: editor.id,
+        data: { password: newPassword },
+        user: editor,
+        overrideAccess: false,
+      });
+      const entry = await latestLog({
+        and: [
+          { targetCollection: { equals: "users" } },
+          { action: { equals: "update" } },
+          { docIds: { in: [String(editor.id)] } },
+        ],
+      });
+      expect(entry?.changedFields).toEqual(["password"]);
+      expect(JSON.stringify(entry)).not.toContain(newPassword);
+    });
+
+    it("records every staff sign-in", async () => {
+      await payload.login({
+        collection: "users",
+        data: { email: publisher.email, password: password("publisher") },
+      });
+      const entry = await latestLog({
+        and: [{ action: { equals: "login" } }, { docIds: { in: [String(publisher.id)] } }],
+      });
+      expect(entry).toMatchObject({ actorType: "user", actorEmail: publisher.email });
+    });
+
+    it("still says who read a lead after their account is deleted", async () => {
+      const leaver = await makeUser("publisher", "leaver");
+      await payload.findByID({
+        collection: "leads",
+        id: lead.id,
+        user: leaver,
+        overrideAccess: false,
+      });
+      await payload.delete({
+        collection: "users",
+        id: leaver.id,
+        user: admin,
+        overrideAccess: false,
+      });
+      const read = await latestLog({
+        and: [{ actorEmail: { equals: leaver.email } }, { action: { equals: "read" } }],
+      });
+      expect(read?.docIds).toContain(String(lead.id));
+      // The relationship is cleared with the account; the snapshot is not.
+      expect(read?.actor ?? null).toBeNull();
+      const removal = await latestLog({
+        and: [
+          { targetCollection: { equals: "users" } },
+          { action: { equals: "delete" } },
+          { docIds: { in: [String(leaver.id)] } },
+        ],
+      });
+      expect(removal?.actorEmail).toBe(admin.email);
     });
 
     it("keeps the audit log append-only, even for admins", async () => {

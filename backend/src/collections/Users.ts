@@ -1,5 +1,6 @@
 import type { CollectionConfig } from "payload";
 import { adminOrSelf, isAdmin, isAdminField, ROLES } from "@/access/roles";
+import { auditChanges, auditDeletes, auditLogins } from "@/hooks/audit";
 
 /**
  * CMS staff accounts. Separate from the e-learning platform's accounts
@@ -32,6 +33,14 @@ export const Users: CollectionConfig = {
     read: adminOrSelf,
     update: adminOrSelf,
     delete: isAdmin,
+  },
+  // Roles decide who can see leads, so every account change - above all a
+  // role grant - and every sign-in is in the audit log. Reads aren't:
+  // the admin UI reads the signed-in user on every page.
+  hooks: {
+    afterChange: [auditChanges],
+    afterDelete: [auditDeletes],
+    afterLogin: [auditLogins],
   },
   fields: [
     { name: "name", type: "text", required: true, maxLength: 80 },
