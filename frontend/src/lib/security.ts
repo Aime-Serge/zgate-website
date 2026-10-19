@@ -6,8 +6,8 @@
  * Public pages are cached HTML, so they can't carry per-request CSP nonces
  * and need 'unsafe-inline' for Next.js hydration. That is acceptable
  * because this origin has no authenticated surface at all: the CMS is a
- * separate app on its own host (website/backend, ADMIN_URL), so no login
- * cookie ever reaches these pages (website/docs/04-WEBSITE.md §9).
+ * separate app on its own host (backend, ADMIN_URL), so no login
+ * cookie ever reaches these pages (docs/04-WEBSITE.md §9).
  */
 
 const directives = (entries: Record<string, string[]>) =>

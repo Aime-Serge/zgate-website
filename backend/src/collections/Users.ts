@@ -7,7 +7,7 @@ import { adminOrSelf, isAdmin, isAdminField, ROLES } from "@/access/roles";
  *
  * MFA: Payload has no built-in second factor, so until one is added the
  * admin route must sit behind an IP allowlist or zero-trust gateway at the
- * edge proxy (website/docs/04-WEBSITE.md §4).
+ * edge proxy (docs/04-WEBSITE.md §4).
  */
 export const Users: CollectionConfig = {
   slug: "users",

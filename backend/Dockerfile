@@ -1,8 +1,9 @@
 # Z-GATE website CMS (Payload CMS, headless, in its Next.js shell).
 #
-# Build context is the WEBSITE WORKSPACE ROOT (website/):
-#   docker build -f website/backend/Dockerfile --target prod    -t zgate-website-backend website
-#   docker build -f website/backend/Dockerfile --target migrate -t zgate-website-migrate website
+# Build context is the REPOSITORY ROOT (its pnpm lockfile and workspace
+# manifest live there):
+#   docker build -f backend/Dockerfile --target prod    -t zgate-website-backend .
+#   docker build -f backend/Dockerfile --target migrate -t zgate-website-migrate .
 #
 # One image for every environment: no build arguments, no database at
 # build time. DATABASE_URL, PAYLOAD_SECRET, ADMIN_URL, the shared secrets

@@ -1,7 +1,8 @@
 # Z-GATE corporate website - the public site (Next.js).
 #
-# Build context is the WEBSITE WORKSPACE ROOT (website/):
-#   docker build -f website/frontend/Dockerfile -t zgate-website-frontend website
+# Build context is the REPOSITORY ROOT (its pnpm lockfile and workspace
+# manifest live there):
+#   docker build -f frontend/Dockerfile -t zgate-website-frontend .
 #
 # One image for every environment: no build arguments (the site has no
 # NEXT_PUBLIC_* values), and neither the CMS nor a database at build time.

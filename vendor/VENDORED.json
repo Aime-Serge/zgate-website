@@ -1,0 +1,16 @@
+{
+  "source": "the e-learning repository",
+  "packages": {
+    "elearning-contracts": {
+      "name": "@zgate/elearning-contracts",
+      "path": "packages/elearning-contracts",
+      "extraFolders": [
+        "openapi"
+      ],
+      "commit": "6e6f9daa96e461a82b21331b3a30805acb9d5c5b",
+      "tree": "fcdfda7ce9140642abf0474f6f3a6148d439639e",
+      "sha256": "8909bf8f29cbd5df9bba58d7593b81a4e0646aa7822596433ae296b48e3f882b"
+    }
+  },
+  "syncedAt": "2026-10-19"
+}

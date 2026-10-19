@@ -8,7 +8,7 @@
  * anyone can POST to this action without using the page: honeypot,
  * per-visitor and global rate limits, and schema validation. The CMS's lead
  * intake then re-validates, checks the privacy notice and the chosen
- * course, stores the lead and notifies staff (website/backend
+ * course, stores the lead and notifies staff (backend
  * src/endpoints/leadIntake.ts).
  */
 import { headers } from "next/headers";

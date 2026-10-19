@@ -1,0 +1,14 @@
+{
+  "name": "@zgate/elearning-contracts",
+  "version": "0.1.0",
+  "private": true,
+  "description": "What the Z-GATE e-learning platform offers other products: the public catalog API (OpenAPI + Zod) and the enroll-link format. Owned by e-learning; the website links it in its contract tests",
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts",
+    "./openapi/v1.yaml": "./openapi/v1.yaml"
+  },
+  "dependencies": {
+    "zod": "^4.6.1"
+  }
+}

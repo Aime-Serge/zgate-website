@@ -8,10 +8,10 @@
  *   website-contracts -X-> other workspace packages  (other products use it: self-contained)
  *   frontend, packages  -X->  Payload at runtime     (type-only imports allowed)
  *
- *   anything    -X->  ../elearning/   the e-learning platform is another product;
- *   tests/contracts -->  ../elearning/packages/elearning-contracts/ only
- *                                     (its published contract, never its apps)
- *   anything    -X->  ../legacy/      the frozen v1 portal is never a dependency
+ *   anything    -X->  vendor/, @zgate/elearning-*   the e-learning platform
+ *                                     is another product (another repository);
+ *   tests/contracts -->  @zgate/elearning-contracts only (vendor/: a snapshot
+ *                                     of its published contract, never its apps)
  *
  * Run: pnpm lint:boundaries (CI runs it on every push and pull request).
  * Imports are followed to their real path, so a workspace-package import
@@ -19,11 +19,10 @@
  *
  * @type {import('dependency-cruiser').IConfiguration}
  */
-// The e-learning platform, by relative path or as an installed package (a
-// file: dependency is copied into node_modules/.pnpm/@zgate+<name>...).
-const ELEARNING = "^\\.\\./elearning/|@zgate[/+]elearning-";
-const ELEARNING_CONTRACTS =
-  "^\\.\\./elearning/packages/elearning-contracts/|@zgate[/+]elearning-contracts";
+// The e-learning platform: its snapshot in vendor/, or the installed package
+// (a file: dependency is copied into node_modules/.pnpm/@zgate+<name>...).
+const ELEARNING = "^vendor/|@zgate[/+]elearning-";
+const ELEARNING_CONTRACTS = "^vendor/elearning-contracts/|@zgate[/+]elearning-contracts";
 
 module.exports = {
   forbidden: [
@@ -42,13 +41,6 @@ module.exports = {
       severity: "error",
       from: { path: "^tests/contracts/" },
       to: { path: ELEARNING, pathNot: ELEARNING_CONTRACTS },
-    },
-    {
-      name: "nothing-imports-legacy",
-      comment: "legacy/ops is frozen. Nothing may depend on it.",
-      severity: "error",
-      from: {},
-      to: { path: "^\\.\\./legacy/" },
     },
     {
       name: "frontend-must-not-import-backend",

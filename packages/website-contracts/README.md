@@ -1,6 +1,6 @@
 # @zgate/website-contracts
 
-What the Z-GATE website sends to other systems. Owned by the website; the e-learning platform links it (by path) in its contract tests, `elearning/tests/contracts`.
+What the Z-GATE website sends to other systems. Owned by the website; the e-learning repository checks itself against a snapshot of it (its `vendor/website-contracts`) in its contract tests.
 
 | Export                                                        | What it is                                                                                                              |
 | ------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------- |
@@ -13,7 +13,7 @@ What the Z-GATE website sends to other systems. Owned by the website; the e-lear
 
 - Schemas and types only, no I/O. Imports no app and no other workspace package (`pnpm lint:boundaries`).
 - **No breaking changes in place.** Removing or renaming a field, or narrowing a type, breaks consumers. `compat/compat.test.ts` fails on such a change against `compat/published.json`, the agreed contract baseline.
-- A pull request that changes this package also runs the e-learning platform's contract tests (`.github/workflows/website.yml`, job "Consumer contracts").
+- After a change here merges, sync it into the e-learning repository (`node scripts/sync-contracts.mjs --from <website checkout>` there) and run its contract tests in that pull request (README.md, "Contracts").
 
 ## Changing the contract
 

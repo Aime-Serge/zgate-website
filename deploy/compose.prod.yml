@@ -1,13 +1,13 @@
 # Z-GATE website - production stack for a single Rwanda-resident VM
 # (docs/platform-v2/06-DEVOPS-RELIABILITY.md §2). Runbook:
-# website/docs/WEBSITE_DEPLOY.md.
+# docs/WEBSITE_DEPLOY.md.
 #
-#   cp website/deploy/env/prod.backend.env.example  /etc/zgate/website-backend.env   # fill in
-#   cp website/deploy/env/prod.frontend.env.example /etc/zgate/website-frontend.env  # fill in
-#   cp website/deploy/edge/edge.env.example /etc/zgate/edge.env              # fill in
-#   WEBSITE_TAG=<git sha> docker compose -f website/deploy/compose.prod.yml \
+#   cp deploy/env/prod.backend.env.example  /etc/zgate/website-backend.env   # fill in
+#   cp deploy/env/prod.frontend.env.example /etc/zgate/website-frontend.env  # fill in
+#   cp deploy/edge/edge.env.example /etc/zgate/edge.env              # fill in
+#   WEBSITE_TAG=<git sha> docker compose -f deploy/compose.prod.yml \
 #     --env-file /etc/zgate/edge.env run --rm website-migrate
-#   WEBSITE_TAG=<git sha> docker compose -f website/deploy/compose.prod.yml \
+#   WEBSITE_TAG=<git sha> docker compose -f deploy/compose.prod.yml \
 #     --env-file /etc/zgate/edge.env up -d --wait
 #
 # PostgreSQL is NOT in this file: it runs on the separate data host (or a
@@ -41,7 +41,6 @@ services:
       SITE_HOST: ${SITE_HOST:?set SITE_HOST}
       ADMIN_HOST: ${ADMIN_HOST:?set ADMIN_HOST}
       APEX_HOST: ${APEX_HOST:?set APEX_HOST}
-      LEARN_HOST: ${LEARN_HOST:?set LEARN_HOST}
       ADMIN_ALLOWED_IPS: ${ADMIN_ALLOWED_IPS:?set ADMIN_ALLOWED_IPS}
       ACME_EMAIL: ${ACME_EMAIL:?set ACME_EMAIL}
     volumes:

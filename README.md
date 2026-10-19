@@ -1,6 +1,6 @@
-# Website
+# Z-GATE Website
 
-The Z-GATE corporate website. It presents the four divisions and the Academy catalog, collects contact and waitlist requests, and sends learners to the e-learning platform (`../elearning`). It has its own database and runs as two apps:
+The Z-GATE LTD corporate website ("Where Business Meets Technology"). It presents the four divisions (Advisory, Academy, Tech, Data) and the Academy catalog, collects contact and waitlist requests, and sends learners to the e-learning platform, which is a **separate product in its own repository**. It has its own database and runs as two apps:
 
 | Folder      | Package                   | What it is                                                                                                 |
 | ----------- | ------------------------- | ---------------------------------------------------------------------------------------------------------- |
@@ -14,25 +14,26 @@ How they talk (server to server only; the browser never calls the CMS):
 - **Cache:** on publish, the CMS sends an HMAC-signed webhook (`REVALIDATE_SECRET`) to the frontend's `/api/revalidate`, which marks every page stale.
 - **Code:** the frontend never imports `backend/`. It uses `@zgate/cms-contracts` (content types, schemas, webhook signing), and `pnpm lint:boundaries` keeps Payload's runtime out of it.
 
-**This folder is a self-contained workspace**: its own `package.json`, `pnpm-workspace.yaml`, lockfile, `.npmrc`, presets (`config/`), database, deploy files and CI workflow (`.github/workflows/website.yml`). Nothing joins it to the e-learning workspace; run every command below **inside `website/`**. Cross-product documentation (architecture, ADRs, low-memory development) is in the repository's `docs/`.
+**This repository is self-contained**: one pnpm workspace with its own lockfile, presets (`config/`), database, deploy files, documentation and CI. It was split out of the z-gate monorepo on 2026-10-19 with its history (`docs/architecture/ADR/ADR-010-separate-repositories.md`).
 
 ## Layout
 
-| Folder                        | What it holds                                                                                                                        |
-| ----------------------------- | ------------------------------------------------------------------------------------------------------------------------------------ |
-| `packages/website-contracts/` | `@zgate/website-contracts`: the lead form, lead intake and lead/waitlist webhook schemas other products rely on                      |
-| `packages/brand-ui/`          | `@zgate/brand-ui`: brand tokens (and later components); the e-learning platform links it too                                         |
-| `packages/cms-contracts/`     | `@zgate/cms-contracts`, website-only: what the frontend may use from the CMS (content types, division slugs, revalidation webhook)   |
-| `config/`                     | `@zgate/config`: TypeScript, ESLint and Prettier presets and the schema-compatibility check                                          |
-| `database/`                   | Roles SQL (migration owner + least-privilege app role), Postgres configs, `backup.sh` / `restore.sh`                                 |
-| `deploy/`                     | `compose.yml` (local; apps behind profile `full`), `compose.prod.yml` (production stack), `edge/` (Caddy, for both products), `env/` |
-| `docs/`                       | Design and scope (`04-WEBSITE.md`), deploy runbook (`WEBSITE_DEPLOY.md`)                                                             |
-| `scripts/`                    | `dev.mjs`, `migrate.mjs`, `dev.Dockerfile` (the development image Compose uses)                                                      |
+| Folder                        | What it holds                                                                                                                      |
+| ----------------------------- | ---------------------------------------------------------------------------------------------------------------------------------- |
+| `packages/website-contracts/` | `@zgate/website-contracts`: the lead form, lead intake and lead/waitlist webhook schemas other products rely on                    |
+| `packages/brand-ui/`          | `@zgate/brand-ui`: brand tokens (and later components); the e-learning platform uses a snapshot of it                              |
+| `packages/cms-contracts/`     | `@zgate/cms-contracts`, website-only: what the frontend may use from the CMS (content types, division slugs, revalidation webhook) |
+| `config/`                     | `@zgate/config`: TypeScript, ESLint and Prettier presets and the schema-compatibility check                                        |
+| `tests/contracts/`            | `@zgate/website-contract-tests`: proves the website works with the e-learning platform's contract                                  |
+| `vendor/`                     | A checksummed snapshot of that contract (`@zgate/elearning-contracts`). Never edited by hand (`vendor/README.md`)                  |
+| `database/`                   | Roles SQL (migration owner + least-privilege app role), Postgres configs, `backup.sh` / `restore.sh`                               |
+| `deploy/`                     | `compose.yml` (local; apps behind profile `full`), `compose.prod.yml` (production stack), `edge/` (Caddy, for the website), `env/` |
+| `docs/`                       | Scope (`04-WEBSITE.md`), deploy runbook (`WEBSITE_DEPLOY.md`), developer guides, ADRs, the platform-v2 plan, marketing and design  |
+| `scripts/`                    | `dev.mjs`, `migrate.mjs`, `sync-contracts.mjs`, `dev.Dockerfile` (the development image Compose uses)                              |
 
 ## Run it (hybrid mode: Postgres in Docker, apps native)
 
 ```bash
-cd website
 corepack enable                                   # once; the pnpm version comes from package.json
 pnpm install
 docker compose -f deploy/compose.yml up -d        # Postgres on localhost:5432
@@ -45,37 +46,41 @@ pnpm dev                                          # CMS http://localhost:3004/ad
 
 Everything in containers instead: `docker compose -f deploy/compose.yml --profile full up`. On the first page load after starting, the CMS may still be compiling; reload if you get a 500.
 
-**On an 8 GB machine**, read `../docs/DEVELOPMENT_LOW_MEMORY.md` first, and work on one product at a time. This workspace already applies it: hybrid mode by default, a 1.5 GB Node heap ceiling (`.npmrc`), two test workers, ESLint and TypeScript caches, memory caps in Compose, and VS Code watcher limits (`.vscode/settings.json`).
+**On an 8 GB machine**, read `docs/DEVELOPMENT_LOW_MEMORY.md` first. This repository already applies it: hybrid mode by default, a 1.5 GB Node heap ceiling (`.npmrc`), two test workers, ESLint and TypeScript caches, memory caps in Compose, and VS Code watcher limits (`.vscode/settings.json`).
 
-Checks, one package at a time: `pnpm lint:boundaries`, then `pnpm lint`, `pnpm typecheck`, `pnpm test`, `pnpm build`.
+Checks, one package at a time: `pnpm lint:boundaries`, then `pnpm lint`, `pnpm typecheck`, `pnpm test`, `pnpm build`. Full orientation: `docs/DEVELOPER_GUIDE.md`.
 
 ## Contracts
 
-The website and the e-learning platform never import each other's apps. Each **provider owns** its contract package; the other product uses it only in its contract tests:
+The website and the e-learning platform live in separate repositories and never import each other's apps. Each **provider owns** its contract package; the other product checks itself against a **snapshot** of it:
 
-| Contract                              | Owned by   | Package                                                 | Checked by                  |
-| ------------------------------------- | ---------- | ------------------------------------------------------- | --------------------------- |
-| Lead/waitlist webhook, lead form      | website    | `@zgate/website-contracts`                              | `elearning/tests/contracts` |
-| Brand tokens and components           | website    | `@zgate/brand-ui`                                       | `elearning/tests/contracts` |
-| Catalog API (`/api/v1`), enroll links | e-learning | `@zgate/elearning-contracts` (`elearning/packages/...`) | `website/tests/contracts`   |
+| Contract                              | Owned by   | Package                      | Checked by                                                                |
+| ------------------------------------- | ---------- | ---------------------------- | ------------------------------------------------------------------------- |
+| Lead/waitlist webhook, lead form      | website    | `@zgate/website-contracts`   | e-learning repository, `tests/contracts` (against its `vendor/`)          |
+| Brand tokens and components           | website    | `@zgate/brand-ui`            | e-learning repository, `tests/contracts` (against its `vendor/`)          |
+| Catalog API (`/api/v1`), enroll links | e-learning | `@zgate/elearning-contracts` | this repository, `tests/contracts` (against `vendor/elearning-contracts`) |
 
-Breaking changes fail before they merge:
+Breaking changes fail before they reach the other product:
 
-1. **Schema compatibility.** `packages/website-contracts/compat/` fails when a schema other products rely on removes or renames a field or narrows a type, compared with the agreed baseline.
-2. **Consumer tests in the provider's CI.** A pull request that changes `packages/website-contracts` or `packages/brand-ui` also runs the e-learning platform's `tests/contracts` against it (`website.yml`, job "Consumer contracts").
-3. **Customer journey on staging** (`.github/workflows/journey.yml`, tests in `elearning/e2e/journeys`) and **production synthetic checks** (`synthetic.yml`).
+1. **Schema compatibility in the provider.** `packages/website-contracts/compat/` fails when a schema other products rely on removes or renames a field or narrows a type, compared with the agreed baseline. The e-learning repository does the same for its contract, plus `oasdiff breaking` on `/api/v1`.
+2. **Consumer tests on every snapshot update.** A provider change reaches the consumer only through `node scripts/sync-contracts.mjs --from <other checkout>`, in a pull request in the consumer's repository, where its contract tests run against it. CI rejects a hand-edited `vendor/` (`--check`).
+3. **Customer journey on staging** and **production synthetic checks**: the e-learning repository's `journey.yml` and `synthetic.yml` (tests in its `e2e/journeys`), which drive both products together.
+
+**Changing a contract this repository owns:** additive changes only (see `packages/website-contracts/README.md`). Once merged, open a pull request in the e-learning repository that syncs the new snapshot, so its contract tests run against it.
 
 ## Releases
 
-**No production deploy of the website happens unless the customer-journey workflow (`.github/workflows/journey.yml`) has passed against staging for the version being deployed**, in addition to this workspace's CI. Staging doesn't exist yet (hosting decision pending), so today the journey's unbuilt steps are marked `fixme`, and the website's own browser checks are the gate in CI. Runbook: `docs/WEBSITE_DEPLOY.md`.
+**No production deploy of the website happens unless the customer-journey workflow has passed against staging for the version being deployed** (e-learning repository, Actions, "Customer journey"), in addition to this repository's CI. Staging doesn't exist yet (hosting decision pending, ADR-004), so today the journey's unbuilt steps are marked `fixme`, and the website's own browser checks are the gate in CI. Runbook: `docs/WEBSITE_DEPLOY.md`.
 
 ## Boundaries
 
-- `frontend/` never imports `backend/`; `backend/` never imports `frontend/`; `packages/*` and `config/` never import an app; `@zgate/website-contracts` imports no other workspace package. Nothing imports `../elearning` except `tests/contracts`, which may use only `@zgate/elearning-contracts`; nothing imports `../legacy`. Enforced by `pnpm lint:boundaries` in CI.
-- Its own Postgres and database (`zgate_website`), roles, volume and env files. Nothing is shared with the e-learning platform.
-- Images, built with this folder as the context: `docker build -f website/frontend/Dockerfile website` and `docker build -f website/backend/Dockerfile --target prod website` (the `migrate` target builds the one-shot migration image).
+- `frontend/` never imports `backend/`; `backend/` never imports `frontend/`; `packages/*` and `config/` never import an app; `@zgate/website-contracts` imports no other workspace package. Only `tests/contracts` uses the e-learning platform, and only `@zgate/elearning-contracts`. Enforced by `pnpm lint:boundaries` in CI.
+- Its own Postgres and database (`zgate_website`), roles, volume, env files and edge proxy. Nothing is shared with the e-learning platform.
+- Images, built with the repository root as the context: `docker build -f frontend/Dockerfile .` and `docker build -f backend/Dockerfile --target prod .` (the `migrate` target builds the one-shot migration image). CI publishes them as `ghcr.io/<owner>/z-gate-website-{frontend,backend,migrate}`.
 
 ## More
 
-- Deploying: `docs/WEBSITE_DEPLOY.md`.
-- Design and scope: `docs/04-WEBSITE.md`; architecture and ADRs: `../docs/`.
+- Deploying: `docs/WEBSITE_DEPLOY.md`. Security: `docs/SECURITY_GUIDE.md`, `docs/platform-v2/05-SECURITY-COMPLIANCE.md`.
+- Scope: `docs/04-WEBSITE.md`; plan and decisions: `docs/platform-v2/README.md`, `docs/architecture/ADR/`; roadmap: `docs/ROADMAP.md`.
+- Marketing and design: `docs/marketing/`, `docs/design/`.
+- v1 was never deployed to production; its open release blockers are tracked in the e-learning repository (`docs/HANDOVER.md`), which inherited the v1 API and portal.

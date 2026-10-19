@@ -1,5 +1,5 @@
 /**
- * "Content changed" webhook from the CMS (website/backend
+ * "Content changed" webhook from the CMS (backend
  * src/hooks/revalidate.ts): marks every cached public page stale, so each
  * re-renders with published content on its next visit.
  *

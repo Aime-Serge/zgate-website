@@ -25,7 +25,7 @@ export default buildConfig({
   secret: config.PAYLOAD_SECRET,
   // The CMS origin. Payload builds password-reset links from this; leaving
   // it unset would make it trust the request's Host header instead
-  // (reset-link poisoning). The public site (website/frontend) never links
+  // (reset-link poisoning). The public site (frontend) never links
   // to this host.
   serverURL: config.ADMIN_URL,
   admin: {

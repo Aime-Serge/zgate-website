@@ -15,7 +15,7 @@
     "@types/react-dom": "^19",
     "@zgate/cms-contracts": "workspace:*",
     "@zgate/config": "workspace:*",
-    "@zgate/elearning-contracts": "file:../../../elearning/packages/elearning-contracts",
+    "@zgate/elearning-contracts": "file:../../vendor/elearning-contracts",
     "eslint": "^9",
     "react": "19.2.8",
     "react-dom": "19.2.8",

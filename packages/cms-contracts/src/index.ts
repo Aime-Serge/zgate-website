@@ -1,6 +1,6 @@
 /**
  * Everything the website frontend may import from the CMS side
- * (`@zgate/cms-contracts`); the frontend never imports website/backend
+ * (`@zgate/cms-contracts`); the frontend never imports backend
  * itself, and .dependency-cruiser.cjs enforces that. Nothing here may
  * depend on Payload at runtime: content types are types only, generated
  * from the collections (payload-types.ts).

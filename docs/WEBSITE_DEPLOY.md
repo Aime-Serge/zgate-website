@@ -1,7 +1,7 @@
 # Runbook: Deploying the Z-GATE website
 
-**Applies to:** `website/frontend` (public site, Next.js) and `website/backend` (CMS, Payload).
-**Files:** `website/deploy/compose.prod.yml`, `website/deploy/env/prod.*.env.example`, `website/deploy/edge/Caddyfile`, `website/deploy/edge/edge.env.example`, `website/database/`.
+**Applies to:** `frontend` (public site, Next.js) and `backend` (CMS, Payload).
+**Files:** `deploy/compose.prod.yml`, `deploy/env/prod.*.env.example`, `deploy/edge/Caddyfile`, `deploy/edge/edge.env.example`, `database/`.
 **Audience:** whoever deploys or operates the website. Read it once end to end before the first deployment.
 
 ## 1. What runs where
@@ -29,15 +29,15 @@ The two containers share two secrets: `LEAD_INTAKE_TOKEN` (the public site hands
    CREATE DATABASE zgate_website OWNER zgate_website;
    ```
    Require TLS for remote connections (`sslmode=require` in `DATABASE_URL`).
-   Planned, not yet adopted in production: the separate migration-owner and least-privilege app roles in `website/database/init/01-roles.sql`, with the server settings in `website/database/postgresql.conf` and backups via `website/database/backup.sh` (see `website/database/README.md`).
+   Planned, not yet adopted in production: the separate migration-owner and least-privilege app roles in `database/init/01-roles.sql`, with the server settings in `database/postgresql.conf` and backups via `database/backup.sh` (see `database/README.md`).
 3. **Configuration on the web VM:**
-   - Copy `website/deploy/env/prod.backend.env.example` to `/etc/zgate/website-backend.env`, `website/deploy/env/prod.frontend.env.example` to `/etc/zgate/website-frontend.env`, and `website/deploy/edge/edge.env.example` to `/etc/zgate/edge.env`. All owned by root, mode `600`.
+   - Copy `deploy/env/prod.backend.env.example` to `/etc/zgate/website-backend.env`, `deploy/env/prod.frontend.env.example` to `/etc/zgate/website-frontend.env`, and `deploy/edge/edge.env.example` to `/etc/zgate/edge.env`. All owned by root, mode `600`.
    - Fill in real values. Generate `PAYLOAD_SECRET`, `LEAD_INTAKE_TOKEN` and `REVALIDATE_SECRET` with `openssl rand -base64 48`. The last two must be identical in both app files.
 4. **Firewall:** allow 80/443 inbound from anywhere. Allow 22 (SSH) only from the admin network. Nothing else.
 5. **Migrate, seed once, start:**
    ```bash
    export WEBSITE_TAG=<git sha from CI>
-   C="docker compose -f website/deploy/compose.prod.yml --env-file /etc/zgate/edge.env"
+   C="docker compose -f deploy/compose.prod.yml --env-file /etc/zgate/edge.env"
    $C run --rm website-migrate
    $C run --rm website-migrate node_modules/.bin/payload run src/seed/run.ts   # first deployment only
    $C up -d --wait
@@ -59,7 +59,7 @@ The two containers share two secrets: `LEAD_INTAKE_TOKEN` (the public site hands
 
 CI builds, scans and publishes the images (`z-gate-website-frontend`, `z-gate-website-backend` and `z-gate-website-migrate`) on every merge to `main`, tagged with the commit SHA. All three always deploy together, at the same SHA. Then:
 
-1. Confirm the commit's CI run is green, including **"Website / Browser checks"**, and that the **customer-journey test** (`.github/workflows/journey.yml`) has passed against staging with this SHA deployed there. No production deploy without both (website/README.md, "Releases").
+1. Confirm the commit's CI run is green, including **"Website / Browser checks"**, and that the **customer-journey test** (`.github/workflows/journey.yml`) has passed against staging with this SHA deployed there. No production deploy without both (README.md, "Releases").
 2. On the VM:
    ```bash
    export WEBSITE_TAG=<new sha>
