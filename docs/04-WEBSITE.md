@@ -88,7 +88,7 @@ v1's technical SEO carries over: canonical URLs, sitemap, robots and Organizatio
 - `Course` JSON-LD on course pages (provider, description, `hasCourseInstance` with start dates and mode). `FAQPage` where real FAQs exist.
 - The sitemap is generated from the CMS and the LMS catalog at build time, using the **runtime-correct** site URL.
 - `hreflang` alternates once `rw` and `fr` content exists. No machine-translated pages are indexed without human review.
-- LMS course pages are canonical to the website's course pages ([02 §6](../../docs/platform-v2/02-TARGET-ARCHITECTURE.md#6-how-the-website-hands-off-to-the-lms)).
+- LMS course pages are canonical to the website's course pages ([02 §6](platform-v2/02-TARGET-ARCHITECTURE.md#6-how-the-website-hands-off-to-the-lms)).
 - Off-platform but essential: Google Business Profile, with the real address and hours.
 
 ## 8. Performance budget (enforced by Lighthouse CI on every PR)
@@ -110,7 +110,7 @@ Images go through `next/image` with AVIF/WebP and explicit sizes. Fonts stay sel
 - **No authentication and no user-generated content on this origin.** That removes the main risk the residual `'unsafe-inline'` CSP finding (F-5) was about, because there is no session to steal here.
   - Static Next.js pages cannot carry per-request nonces, so the website CSP keeps `script-src 'self' 'unsafe-inline'`, now with an explicit, documented justification.
   - Every other directive stays strict: `default-src 'self'`, `frame-ancestors 'none'`, `form-action 'self'`, `base-uri 'self'`, `object-src 'none'`.
-  - The **learn** app, which does have sessions, gets a strict **nonce-based** CSP (see [05](../../docs/platform-v2/05-SECURITY-COMPLIANCE.md)).
+  - The **learn** app, which does have sessions, gets a strict **nonce-based** CSP (see [05](platform-v2/05-SECURITY-COMPLIANCE.md)).
 - CMS rich text is rendered through an allowlist serializer. No raw HTML blocks.
 - Response headers are set at the CDN or edge: HSTS (preload once the domain is final), `X-Content-Type-Options`, `Referrer-Policy`, `Permissions-Policy`. Remove `X-Powered-By` (F-7).
 
