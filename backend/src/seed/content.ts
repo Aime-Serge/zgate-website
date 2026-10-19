@@ -17,6 +17,26 @@ export const company = {
   phone: "+250 792 957 513",
 } as const;
 
+// Verifiable facts only (docs/marketing/MARKETING_STRATEGY.md, "What can be
+// used as proof today": registration/licensing, every page and footer).
+// Source: Business Project Development Report (RDB registration).
+export const companyFacts = [
+  "Registered in Rwanda as Z-GATE LTD",
+  "TIN 156848508",
+  "Licensed for tax representation before the RRA",
+  "Based in Kiyovu, Nyarugenge, Kigali",
+];
+
+// Mission/Vision doc, "Boilerplate".
+export const boilerplate =
+  "Z-GATE Solution is a business group built around one idea: a company's finances, people, technology, and data shouldn't be run by four separate vendors. Through its four divisions — Advisory, Academy, Tech, and Data — Z-GATE gives businesses one point of entry for tax and consulting, professional training, technology solutions, and data analytics.";
+
+// 90-Day Business Plan §B1, primary message (verbatim, split at the dash).
+export const primaryMessage = {
+  headline: "Stop juggling four vendors for compliance, skills, systems and data.",
+  answer: "Z-GATE is the one gate for all four.",
+};
+
 // Mission/Vision doc, "Elevator Pitch (short paragraph)".
 export const elevatorPitch =
   "Most businesses hire a tax consultant, a trainer, a developer, and a data analyst separately — and spend half their time translating between them. Z-GATE Solution puts all four under one roof. Advisory keeps the business compliant and financially sound. Academy builds the skills the team needs to run it. Tech builds the systems it runs on. Data tells you, in numbers, whether any of it is working. One gate, four rooms, no translation lost between them.";
@@ -60,21 +80,40 @@ export type DivisionSeed = {
   order: number;
   name: string;
   shortName: string;
+  /** Brand guide division line. */
+  subtitle: string;
+  /** 90-Day Plan §B1 message-house pillar. */
+  pillar: string;
+  /** Messaging Framework level 4, verbatim. */
+  headline: string;
   mission: string;
   about: string;
+  audience: string;
   included: string[];
   proof: string;
+  /** SLA Schedule A-D targets - commitments, never results. */
+  commitments: { figure: string; label: string }[];
   objection: { question: string; answer: string };
+  faq: { question: string; answer: string }[];
 };
 
 // Mission/Vision doc "Division Copy" + Client SLA Template Part 2 scope;
-// proof/objection from docs/marketing/MESSAGING_FRAMEWORK.md.
+// proof/objection from docs/marketing/MESSAGING_FRAMEWORK.md. Subtitles from
+// the Brand Identity Guide; pillars from the 90-Day Plan §B1; headlines are
+// the Messaging Framework's level-4 lines; commitments are SLA Schedule A-D
+// targets (docs/business/BUSINESS_RULES.md §2); audiences restate the ICPs
+// (docs/marketing/ICP.md) in plain words.
 export const divisions: DivisionSeed[] = [
   {
     slug: "advisory",
     order: 1,
     name: "Z-GATE Advisory",
     shortName: "Advisory",
+    subtitle: "Tax & Business Consulting",
+    pillar: "Compliance certainty",
+    headline: "Direct answers, not hedged ones, and a filing calendar you never have to chase.",
+    audience:
+      "Traders and small businesses that need EBM, VAT, income tax and monthly books handled correctly and on time, and growing firms that want the same discipline across the business.",
     mission:
       "To keep a business compliant, tax-efficient, and financially sound, so leadership can make decisions on solid ground instead of guesswork.",
     about:
@@ -88,17 +127,53 @@ export const divisions: DivisionSeed[] = [
     ],
     proof:
       "Advisory is Z-GATE's registered main business activity — tax representation and advisory before the Rwanda Revenue Authority. Our published service commitments include filing at least 2 business days ahead of any statutory deadline and responding to an urgent compliance issue within 4 business hours.",
+    commitments: [
+      {
+        figure: "Same day",
+        label: "Routine questions on WhatsApp or email acknowledged, within 1 business day at most",
+      },
+      {
+        figure: "5th",
+        label: "Business day of the next month: monthly books closed and reconciled",
+      },
+      {
+        figure: "2 days",
+        label: "VAT and EBM returns filed at least 2 business days before the deadline",
+      },
+      {
+        figure: "4 hrs",
+        label:
+          "First response to an urgent compliance issue, such as an EBM failure (business hours)",
+      },
+    ],
     objection: {
       question: "Can I afford ongoing help?",
       answer:
         "Weigh it against the cost of getting EBM or VAT wrong. A retainer is a fixed, predictable cost; a missed filing isn't.",
     },
+    faq: [
+      {
+        question: "Is Z-GATE a real, licensed company?",
+        answer:
+          "Yes. Z-GATE LTD is registered in Rwanda (TIN 156848508), and tax representation before the Rwanda Revenue Authority is its licensed main business activity.",
+      },
+      {
+        question: "What if I need something that isn't in my agreement?",
+        answer:
+          "Anything outside your signed service schedule is quoted separately, before any work starts.",
+      },
+    ],
   },
   {
     slug: "academy",
     order: 2,
     name: "Z-GATE Academy",
     shortName: "Academy",
+    subtitle: "Professional Training",
+    pillar: "Practical skills",
+    headline: "Not a certificate for the wall — a capability the business can point to.",
+    audience:
+      "SME owners and their staff who need practical tax, bookkeeping and EBM skills, with no accounting background required.",
     mission:
       "To build the specific, usable skills a team needs to do the job in front of them — not a certificate for the wall, but a capability the business can point to.",
     about:
@@ -110,17 +185,41 @@ export const divisions: DivisionSeed[] = [
     ],
     proof:
       "Our first two courses are built directly from Advisory's own anonymized client casework, not generic material — real compliance problems SME owners actually bring in.",
+    commitments: [
+      {
+        figure: "2 days",
+        label: "Your enrollment confirmed within 2 business days of registering",
+      },
+      { figure: "90%", label: "Minimum session completion rate we hold every cohort to" },
+      {
+        figure: "5 days",
+        label: "Certificate issued within 5 business days of completing the course",
+      },
+      { figure: "1 day", label: "First response to a learner's question, within 1 business day" },
+    ],
     objection: {
       question: "Will this certificate mean anything to an employer?",
       answer:
-        "We don't have an employer-verification track record yet — what we can promise is a curriculum built from real work, not slides. See each course's outline before you enroll.",
+        "We don't have an employer-verification track record yet — what we can promise is a curriculum built from real work, not slides. See what each course covers before you enroll.",
     },
+    faq: [
+      {
+        question: "Where do the courses run?",
+        answer:
+          "The courses themselves run on Z-GATE Academy's learning platform. Until it opens, join a course's waitlist here and we'll tell you as soon as registration starts.",
+      },
+    ],
   },
   {
     slug: "tech",
     order: 3,
     name: "Z-GATE Tech",
     shortName: "Tech",
+    subtitle: "Technology Solutions",
+    pillar: "Systems that work",
+    headline: "Nothing shipped as a black box.",
+    audience:
+      "Growing businesses that need software, systems or hosting built for how they actually work, and explained in plain language.",
     mission:
       "To build the systems a business runs on — reliable, maintainable, and built for the business it's actually serving, not a generic template.",
     about:
@@ -132,17 +231,41 @@ export const divisions: DivisionSeed[] = [
     ],
     proof:
       "Our published support commitments: 2-hour first response on a critical outage, 99% monthly uptime target. This very site and Advisory's own client portal are built by the same team — an internal reference before an external sale.",
+    commitments: [
+      {
+        figure: "2 hrs",
+        label: "First response to a critical outage, when a production system is down",
+      },
+      { figure: "8 hrs", label: "Resolution target for a critical outage (business hours)" },
+      { figure: "4 hrs", label: "First response to a high-priority defect (business hours)" },
+      {
+        figure: "99%",
+        label: "Monthly uptime target for systems we host, excluding scheduled maintenance",
+      },
+    ],
     objection: {
       question: "Do you have external Tech clients yet?",
       answer:
         "Tech is proving itself internally first, on Z-GATE's own systems, before taking on external client work — the same discipline we'd apply to any client's build.",
     },
+    faq: [
+      {
+        question: "Will we understand what you build?",
+        answer:
+          "Yes. Every system comes with a plain-language explanation of what it does and how to run it.",
+      },
+    ],
   },
   {
     slug: "data",
     order: 4,
     name: "Z-GATE Data",
     shortName: "Data",
+    subtitle: "Data Analytics & Business Intelligence",
+    pillar: "Numbers you can trust",
+    headline: "A clear, honest answer to “is this working” — not a disconnected export.",
+    audience:
+      "NGOs and businesses with records on paper, in spreadsheets or in systems, but no clear picture of what they show.",
     mission:
       'To turn what a business already has — transactions, operations, training records, systems logs — into a clear, honest answer to "is this working."',
     about:
@@ -154,33 +277,75 @@ export const divisions: DivisionSeed[] = [
     ],
     proof:
       "Our published accuracy target is 99.5%, verified by sample audit before delivery. Reports are shared only through access-controlled channels — never open links or unsecured email.",
+    commitments: [
+      {
+        figure: "3 days",
+        label:
+          "Standard data entry and processing delivered within 3 business days of receiving the records",
+      },
+      {
+        figure: "5th",
+        label: "Business day of the next month: monthly report or dashboard delivered",
+      },
+      { figure: "99.5%", label: "Data accuracy target, verified by sample audit before delivery" },
+      { figure: "1 day", label: "First response to an urgent data request, within 1 business day" },
+    ],
     objection: {
       question: "Will my data be mixed with anyone else's?",
       answer:
         "No. We don't use one client's data to build or benchmark another client's work without written consent.",
     },
+    faq: [
+      {
+        question: "Where is our data kept?",
+        answer:
+          "Our agreements commit us to storing personal data in Rwanda by default, under Law N° 058/2021. Moving it abroad would need an NCSA-issued certificate and written notice to you first.",
+      },
+    ],
   },
 ];
 
-// Academy Course Curriculum (also seeded by the e-learning API, migration 010).
-// Outcomes, syllabus and intake dates are left empty on purpose: they
-// aren't in the approved source available here, so they're not invented.
+// Academy Course Curriculum (29 Aug 2026; also seeded by the e-learning API,
+// migration 010). The website is the gate to the e-learning platform, not
+// the platform: it shows what a visitor needs to decide (who it's for,
+// length, fee, what they'll be able to do) and hands over. Modules,
+// assessment and certificates belong to the platform (ADR-007). Outcomes
+// are the curriculum's learning objectives, verbatim; intake dates stay
+// empty until a cohort is scheduled.
 export const courses = [
   {
     slug: "tax-bookkeeping-fundamentals",
     title: "Tax & Bookkeeping Fundamentals for Small Business Owners",
+    summary:
+      "Rwanda's core business taxes, VAT deadlines and simple bookkeeping, taught from real (anonymized) Advisory cases.",
     audience: "SME owners and staff; no prior accounting background required",
+    format: "In person, Nyarugenge",
     duration: "4 weeks — 8 sessions, 1.5 hrs each",
     priceAmount: 40000,
     priceNote: "per learner",
+    outcomes: [
+      "Explain Rwanda's core business tax obligations (PIT/CIT) and the RRA registration process.",
+      "Maintain a simple, accurate bookkeeping ledger for a small business.",
+      "Identify VAT registration thresholds and filing deadlines relevant to their business.",
+      "Recognize and avoid the most common compliance mistakes SMEs make.",
+    ],
   },
   {
     slug: "ebm-digital-invoicing",
     title: "EBM & Digital Invoicing Mastery",
+    summary:
+      "Short and hands-on by design: leave able to issue a correct EBM receipt, not just able to describe the process.",
     audience: "SME owners and staff who issue or are required to issue EBM receipts",
+    format: "In person, Nyarugenge",
     duration: "2 weeks — 4 sessions, 1.5 hrs each",
     priceAmount: 40000,
     priceNote: "per learner",
+    outcomes: [
+      "Explain what an EBM is, why it's legally required, and the penalties for non-compliance.",
+      "Set up and operate an EBM device or app independently.",
+      "Diagnose and resolve the most common EBM operating errors.",
+      "Apply digital invoicing best practices in day-to-day business.",
+    ],
   },
 ] as const;
 

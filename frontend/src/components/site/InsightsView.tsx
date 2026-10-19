@@ -13,28 +13,33 @@ export const articlePath = (article: Pick<Article, "slug">) => `/insights/${arti
 export function InsightsView({ articles }: { articles: Article[] }) {
   return (
     <>
-      <section className="max block block--hero">
-        <h1>Insights</h1>
+      <section className="hero">
+        <div className="max">
+          <p className="eyebrow">Plain-language explainers</p>
+          <h1>Insights</h1>
+        </div>
       </section>
-      <section className="max block">
-        <ul className="article-list">
-          {articles.map((article) => (
-            <li key={article.id}>
-              <article>
-                <h2>
-                  <Link href={articlePath(article)}>{article.title}</Link>
-                </h2>
-                <p className="muted">
-                  <time dateTime={article.publishedOn}>
-                    {dayFormat.format(new Date(article.publishedOn))}
-                  </time>{" "}
-                  · {article.authorName}
-                </p>
-                <p>{article.excerpt}</p>
-              </article>
-            </li>
-          ))}
-        </ul>
+      <section className="block">
+        <div className="max">
+          <ul className="article-list">
+            {articles.map((article) => (
+              <li key={article.id}>
+                <article>
+                  <h2>
+                    <Link href={articlePath(article)}>{article.title}</Link>
+                  </h2>
+                  <p className="muted">
+                    <time dateTime={article.publishedOn}>
+                      {dayFormat.format(new Date(article.publishedOn))}
+                    </time>{" "}
+                    · {article.authorName}
+                  </p>
+                  <p>{article.excerpt}</p>
+                </article>
+              </li>
+            ))}
+          </ul>
+        </div>
       </section>
     </>
   );
@@ -42,7 +47,7 @@ export function InsightsView({ articles }: { articles: Article[] }) {
 
 export function ArticleView({ article }: { article: Article }) {
   return (
-    <article className="max block prose">
+    <article className="max block prose article">
       <p className="eyebrow">
         <Link href="/insights">Insights</Link>
       </p>

@@ -4,7 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState, useSyncExternalStore } from "react";
 
-export type NavLink = { href: string; label: string; external?: boolean };
+export type NavLink = { href: string; label: string; external?: boolean; tone?: string };
 
 /**
  * Collapses into a menu button on small screens. Without JavaScript the
@@ -13,7 +13,7 @@ export type NavLink = { href: string; label: string; external?: boolean };
  */
 const noopSubscribe = () => () => {};
 
-export function HeaderNav({ links }: { links: NavLink[] }) {
+export function HeaderNav({ links, cta }: { links: NavLink[]; cta?: NavLink }) {
   const pathname = usePathname();
   // true in the browser, false during server render - without an effect.
   const hydrated = useSyncExternalStore(
@@ -56,13 +56,28 @@ export function HeaderNav({ links }: { links: NavLink[] }) {
               {link.external ? (
                 <a href={link.href}>{link.label}</a>
               ) : (
-                <Link href={link.href} aria-current={current ? "page" : undefined}>
+                <Link
+                  href={link.href}
+                  aria-current={current ? "page" : undefined}
+                  className={link.tone ? `site-nav__link tone--${link.tone}` : "site-nav__link"}
+                >
                   {link.label}
                 </Link>
               )}
             </li>
           );
         })}
+        {cta ? (
+          <li className="site-nav__cta">
+            <Link
+              href={cta.href}
+              className="button button--small"
+              aria-current={pathname === cta.href ? "page" : undefined}
+            >
+              {cta.label}
+            </Link>
+          </li>
+        ) : null}
       </ul>
     </nav>
   );

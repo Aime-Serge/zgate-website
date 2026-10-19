@@ -151,9 +151,14 @@ export interface Page {
   pageType: 'marketing' | 'legal';
   layout: (
     | HeroBlock
+    | FactStripBlock
+    | DoorsBlock
+    | MarketFactsBlock
+    | DivisionGridBlock
+    | CommitmentsBlock
+    | StepsBlock
     | RichTextBlock
     | FeatureListBlock
-    | DivisionGridBlock
     | CourseListBlock
     | FaqBlock
     | CallToActionBlock
@@ -182,15 +187,130 @@ export interface HeroBlock {
     label?: string | null;
     href?: string | null;
   };
+  visual?: ('none' | 'gate') | null;
   id?: string | null;
   blockName?: string | null;
   blockType: 'hero';
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "FactStripBlock".
+ */
+export interface FactStripBlock {
+  /**
+   * Optional. Edit the facts themselves in Site settings > Company.
+   */
+  heading?: string | null;
+  id?: string | null;
+  blockName?: string | null;
+  blockType: 'factStrip';
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "DoorsBlock".
+ */
+export interface DoorsBlock {
+  eyebrow?: string | null;
+  heading: string;
+  items: {
+    /**
+     * The need as a visitor would say it, e.g. "My EBM keeps failing".
+     */
+    need: string;
+    answer?: string | null;
+    /**
+     * Sets the colour. Each division keeps its own.
+     */
+    division?: ('advisory' | 'academy' | 'tech' | 'data' | 'bundle') | null;
+    label: string;
+    href: string;
+    id?: string | null;
+  }[];
+  id?: string | null;
+  blockName?: string | null;
+  blockType: 'doors';
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "MarketFactsBlock".
+ */
+export interface MarketFactsBlock {
+  eyebrow?: string | null;
+  heading: string;
+  intro?: string | null;
+  items: {
+    figure: string;
+    statement: string;
+    id?: string | null;
+  }[];
+  /**
+   * The published research these figures come from. Never Z-GATE's own results - those need real, consented case studies.
+   */
+  source: string;
+  id?: string | null;
+  blockName?: string | null;
+  blockType: 'marketFacts';
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "DivisionGridBlock".
+ */
+export interface DivisionGridBlock {
+  eyebrow?: string | null;
+  heading?: string | null;
+  intro?: string | null;
+  id?: string | null;
+  blockName?: string | null;
+  blockType: 'divisionGrid';
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "CommitmentsBlock".
+ */
+export interface CommitmentsBlock {
+  eyebrow?: string | null;
+  heading: string;
+  intro?: string | null;
+  /**
+   * Only targets written in a client service agreement (SLA schedule).
+   */
+  items: {
+    figure: string;
+    label: string;
+    /**
+     * Sets the colour. Each division keeps its own.
+     */
+    division?: ('advisory' | 'academy' | 'tech' | 'data') | null;
+    id?: string | null;
+  }[];
+  note: string;
+  id?: string | null;
+  blockName?: string | null;
+  blockType: 'commitments';
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "StepsBlock".
+ */
+export interface StepsBlock {
+  eyebrow?: string | null;
+  heading: string;
+  intro?: string | null;
+  items: {
+    title: string;
+    body?: string | null;
+    id?: string | null;
+  }[];
+  id?: string | null;
+  blockName?: string | null;
+  blockType: 'steps';
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "RichTextBlock".
  */
 export interface RichTextBlock {
+  eyebrow?: string | null;
   heading?: string | null;
   content: {
     root: {
@@ -216,7 +336,12 @@ export interface RichTextBlock {
  * via the `definition` "FeatureListBlock".
  */
 export interface FeatureListBlock {
+  eyebrow?: string | null;
   heading?: string | null;
+  /**
+   * Show 01, 02, 03 beside the items.
+   */
+  numbered?: boolean | null;
   items: {
     title: string;
     body?: string | null;
@@ -228,19 +353,10 @@ export interface FeatureListBlock {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "DivisionGridBlock".
- */
-export interface DivisionGridBlock {
-  heading?: string | null;
-  id?: string | null;
-  blockName?: string | null;
-  blockType: 'divisionGrid';
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "CourseListBlock".
  */
 export interface CourseListBlock {
+  eyebrow?: string | null;
   heading?: string | null;
   /**
    * Leave empty to list every published course.
@@ -269,6 +385,9 @@ export interface Course {
         id?: string | null;
       }[]
     | null;
+  /**
+   * Not shown on the website: it is the gate to the e-learning platform, which owns course outlines (ADR-007).
+   */
   syllabus?:
     | {
         title: string;
@@ -316,6 +435,7 @@ export interface Course {
  * via the `definition` "FaqBlock".
  */
 export interface FaqBlock {
+  eyebrow?: string | null;
   heading?: string | null;
   items: {
     question: string;
@@ -331,6 +451,7 @@ export interface FaqBlock {
  * via the `definition` "CallToActionBlock".
  */
 export interface CallToActionBlock {
+  eyebrow?: string | null;
   heading: string;
   body?: string | null;
   label: string;
@@ -364,8 +485,24 @@ export interface Division {
   order: number;
   name: string;
   shortName: string;
+  /**
+   * The brand guide's line, e.g. "Tax & Business Consulting".
+   */
+  subtitle?: string | null;
+  /**
+   * Its message-house pillar, e.g. "Compliance certainty".
+   */
+  pillar?: string | null;
+  /**
+   * The page's main heading: the division's approved message (docs/marketing/MESSAGING_FRAMEWORK.md, level 4).
+   */
+  headline?: string | null;
   mission: string;
   about: string;
+  /**
+   * Who it's for, in one or two plain sentences.
+   */
+  audience?: string | null;
   /**
    * Service scope from the signed SLA schedule - not aspirational items.
    */
@@ -377,10 +514,33 @@ export interface Division {
    * Real, checkable commitments only. No invented results or testimonials.
    */
   proof: string;
+  /**
+   * Targets from this division's SLA schedule, shown as figures. Commitments only - never past results.
+   */
+  commitments?:
+    | {
+        figure: string;
+        label: string;
+        id?: string | null;
+      }[]
+    | null;
+  /**
+   * The question this division's buyers ask first. Shown first.
+   */
   objection: {
     question: string;
     answer: string;
   };
+  /**
+   * Honest answers only (docs/marketing/MESSAGING_FRAMEWORK.md).
+   */
+  faq?:
+    | {
+        question: string;
+        answer: string;
+        id?: string | null;
+      }[]
+    | null;
   cta: {
     label: string;
     href: string;
@@ -696,9 +856,14 @@ export interface PagesSelect<T extends boolean = true> {
     | T
     | {
         hero?: T | HeroBlockSelect<T>;
+        factStrip?: T | FactStripBlockSelect<T>;
+        doors?: T | DoorsBlockSelect<T>;
+        marketFacts?: T | MarketFactsBlockSelect<T>;
+        divisionGrid?: T | DivisionGridBlockSelect<T>;
+        commitments?: T | CommitmentsBlockSelect<T>;
+        steps?: T | StepsBlockSelect<T>;
         richText?: T | RichTextBlockSelect<T>;
         featureList?: T | FeatureListBlockSelect<T>;
-        divisionGrid?: T | DivisionGridBlockSelect<T>;
         courseList?: T | CourseListBlockSelect<T>;
         faq?: T | FaqBlockSelect<T>;
         callToAction?: T | CallToActionBlockSelect<T>;
@@ -728,25 +893,97 @@ export interface HeroBlockSelect<T extends boolean = true> {
         label?: T;
         href?: T;
       };
+  visual?: T;
   id?: T;
   blockName?: T;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "RichTextBlock_select".
+ * via the `definition` "FactStripBlock_select".
  */
-export interface RichTextBlockSelect<T extends boolean = true> {
+export interface FactStripBlockSelect<T extends boolean = true> {
   heading?: T;
-  content?: T;
   id?: T;
   blockName?: T;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "FeatureListBlock_select".
+ * via the `definition` "DoorsBlock_select".
  */
-export interface FeatureListBlockSelect<T extends boolean = true> {
+export interface DoorsBlockSelect<T extends boolean = true> {
+  eyebrow?: T;
   heading?: T;
+  items?:
+    | T
+    | {
+        need?: T;
+        answer?: T;
+        division?: T;
+        label?: T;
+        href?: T;
+        id?: T;
+      };
+  id?: T;
+  blockName?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "MarketFactsBlock_select".
+ */
+export interface MarketFactsBlockSelect<T extends boolean = true> {
+  eyebrow?: T;
+  heading?: T;
+  intro?: T;
+  items?:
+    | T
+    | {
+        figure?: T;
+        statement?: T;
+        id?: T;
+      };
+  source?: T;
+  id?: T;
+  blockName?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "DivisionGridBlock_select".
+ */
+export interface DivisionGridBlockSelect<T extends boolean = true> {
+  eyebrow?: T;
+  heading?: T;
+  intro?: T;
+  id?: T;
+  blockName?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "CommitmentsBlock_select".
+ */
+export interface CommitmentsBlockSelect<T extends boolean = true> {
+  eyebrow?: T;
+  heading?: T;
+  intro?: T;
+  items?:
+    | T
+    | {
+        figure?: T;
+        label?: T;
+        division?: T;
+        id?: T;
+      };
+  note?: T;
+  id?: T;
+  blockName?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "StepsBlock_select".
+ */
+export interface StepsBlockSelect<T extends boolean = true> {
+  eyebrow?: T;
+  heading?: T;
+  intro?: T;
   items?:
     | T
     | {
@@ -759,10 +996,30 @@ export interface FeatureListBlockSelect<T extends boolean = true> {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "DivisionGridBlock_select".
+ * via the `definition` "RichTextBlock_select".
  */
-export interface DivisionGridBlockSelect<T extends boolean = true> {
+export interface RichTextBlockSelect<T extends boolean = true> {
+  eyebrow?: T;
   heading?: T;
+  content?: T;
+  id?: T;
+  blockName?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "FeatureListBlock_select".
+ */
+export interface FeatureListBlockSelect<T extends boolean = true> {
+  eyebrow?: T;
+  heading?: T;
+  numbered?: T;
+  items?:
+    | T
+    | {
+        title?: T;
+        body?: T;
+        id?: T;
+      };
   id?: T;
   blockName?: T;
 }
@@ -771,6 +1028,7 @@ export interface DivisionGridBlockSelect<T extends boolean = true> {
  * via the `definition` "CourseListBlock_select".
  */
 export interface CourseListBlockSelect<T extends boolean = true> {
+  eyebrow?: T;
   heading?: T;
   courses?: T;
   id?: T;
@@ -781,6 +1039,7 @@ export interface CourseListBlockSelect<T extends boolean = true> {
  * via the `definition` "FaqBlock_select".
  */
 export interface FaqBlockSelect<T extends boolean = true> {
+  eyebrow?: T;
   heading?: T;
   items?:
     | T
@@ -797,6 +1056,7 @@ export interface FaqBlockSelect<T extends boolean = true> {
  * via the `definition` "CallToActionBlock_select".
  */
 export interface CallToActionBlockSelect<T extends boolean = true> {
+  eyebrow?: T;
   heading?: T;
   body?: T;
   label?: T;
@@ -824,8 +1084,12 @@ export interface DivisionsSelect<T extends boolean = true> {
   order?: T;
   name?: T;
   shortName?: T;
+  subtitle?: T;
+  pillar?: T;
+  headline?: T;
   mission?: T;
   about?: T;
+  audience?: T;
   included?:
     | T
     | {
@@ -833,11 +1097,25 @@ export interface DivisionsSelect<T extends boolean = true> {
         id?: T;
       };
   proof?: T;
+  commitments?:
+    | T
+    | {
+        figure?: T;
+        label?: T;
+        id?: T;
+      };
   objection?:
     | T
     | {
         question?: T;
         answer?: T;
+      };
+  faq?:
+    | T
+    | {
+        question?: T;
+        answer?: T;
+        id?: T;
       };
   cta?:
     | T
@@ -1112,6 +1390,27 @@ export interface SiteSetting {
    * Who the site is for, in one line (e.g. "For growing businesses in Rwanda"). Shown on home and division pages. Leave empty until the business has agreed the wording.
    */
   audienceLine?: string | null;
+  /**
+   * The approved company paragraph. Shown in the footer.
+   */
+  boilerplate?: string | null;
+  /**
+   * Verifiable facts only (registration, TIN, licence) - shown in the fact strip and footer.
+   */
+  companyFacts?:
+    | {
+        fact: string;
+        id?: string | null;
+      }[]
+    | null;
+  /**
+   * A banner above every page - for a real, dated event only (e.g. a free EBM clinic). Leave empty otherwise.
+   */
+  announcement?: {
+    text?: string | null;
+    label?: string | null;
+    href?: string | null;
+  };
   email: string;
   phone: string;
   /**
@@ -1160,6 +1459,20 @@ export interface SiteSettingsSelect<T extends boolean = true> {
   motto?: T;
   elevatorPitch?: T;
   audienceLine?: T;
+  boilerplate?: T;
+  companyFacts?:
+    | T
+    | {
+        fact?: T;
+        id?: T;
+      };
+  announcement?:
+    | T
+    | {
+        text?: T;
+        label?: T;
+        href?: T;
+      };
   email?: T;
   phone?: T;
   whatsapp?: T;

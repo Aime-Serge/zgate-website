@@ -29,6 +29,10 @@ export const Courses: CollectionConfig = {
     {
       name: "syllabus",
       type: "array",
+      admin: {
+        description:
+          "Not shown on the website: it is the gate to the e-learning platform, which owns course outlines (ADR-007).",
+      },
       fields: [
         { name: "title", type: "text", required: true, maxLength: 160 },
         { name: "summary", type: "textarea", maxLength: 600 },

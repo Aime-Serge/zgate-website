@@ -1,5 +1,6 @@
 import type { GlobalConfig } from "payload";
 import { isAdminField, isPublisherOrAdmin, isStaffField } from "@/access/roles";
+import { linkFields } from "@/fields/common";
 import { enforceGlobalPublishPermission } from "@/hooks/publishing";
 import { revalidateGlobalAfterChange } from "@/hooks/revalidate";
 
@@ -38,6 +39,36 @@ export const SiteSettings: GlobalConfig = {
                 description:
                   'Who the site is for, in one line (e.g. "For growing businesses in Rwanda"). Shown on home and division pages. Leave empty until the business has agreed the wording.',
               },
+            },
+            {
+              name: "boilerplate",
+              type: "textarea",
+              maxLength: 600,
+              admin: { description: "The approved company paragraph. Shown in the footer." },
+            },
+            {
+              name: "companyFacts",
+              type: "array",
+              maxRows: 5,
+              admin: {
+                description:
+                  "Verifiable facts only (registration, TIN, licence) - shown in the fact strip and footer.",
+              },
+              fields: [{ name: "fact", type: "text", required: true, maxLength: 80 }],
+            },
+          ],
+        },
+        {
+          label: "Announcement",
+          fields: [
+            {
+              name: "announcement",
+              type: "group",
+              admin: {
+                description:
+                  "A banner above every page - for a real, dated event only (e.g. a free EBM clinic). Leave empty otherwise.",
+              },
+              fields: [{ name: "text", type: "text", maxLength: 140 }, ...linkFields(false)],
             },
           ],
         },

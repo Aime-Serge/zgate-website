@@ -127,6 +127,7 @@ export default async function SitePage({ params }: Props) {
       body = (
         <DivisionView
           division={route.division}
+          divisions={divisions}
           audienceLine={settings.audienceLine}
           courses={courses}
           settings={settings}
