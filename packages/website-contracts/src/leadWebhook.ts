@@ -6,12 +6,12 @@
  * forwarded to a CRM).
  *
  * Contract definition only: the website does not send this webhook yet.
- * The fields mirror what the CMS stores for every lead today
- * (backend src/collections/Leads.ts) and the limits match the
+ * The fields mirror what the CMS stores for every lead
+ * (backend/leads/models.py) and the limits match the
  * lead form (leads/schema.ts), so a stored lead always fits.
  */
 import { z } from "zod";
-import { INTERESTS } from "./leads/constants.ts";
+import { INTERESTS, REPLY_CHANNELS, SERVICE_AREAS } from "./leads/constants.ts";
 
 export const LEAD_WEBHOOK_EVENT = "lead.created";
 
@@ -29,8 +29,12 @@ export const leadWebhookPayloadSchema = z.object({
     id: z.string().min(1).max(64),
     kind: z.enum(["contact", "waitlist"]),
     name: z.string().min(1).max(200),
+    businessName: z.string().max(160).optional(),
     /** Free-form on purpose: email, phone or WhatsApp number. */
     contact: z.string().min(1).max(200),
+    preferredChannel: z.enum(REPLY_CHANNELS).optional(),
+    serviceInterests: z.array(z.enum(SERVICE_AREAS)).optional(),
+    /** @deprecated Use serviceInterests. Kept for existing v1 webhook consumers. */
     interest: z.enum(INTERESTS).optional(),
     /** Set for waitlist sign-ups: the course they asked about. */
     courseSlug: courseSlug.optional(),

@@ -6,6 +6,8 @@
  * e2e/performance.spec.ts).
  */
 export const INTERESTS = ["advisory", "academy", "tech", "data", "not-sure"] as const;
+export const SERVICE_AREAS = ["advisory", "academy", "tech", "data", "not-sure"] as const;
+export const REPLY_CHANNELS = ["provided-contact", "whatsapp", "phone", "email"] as const;
 
 export const ATTRIBUTION_FIELDS = [
   "utmSource",
@@ -23,7 +25,9 @@ export type LeadField =
   | "kind"
   | "name"
   | "contact"
-  | "interest"
+  | "businessName"
+  | "preferredChannel"
+  | "serviceInterests"
   | "courseId"
   | "message"
   | "consentContact"
@@ -37,5 +41,7 @@ export type LeadFormState =
       message: string;
       fieldErrors: Partial<Record<LeadField, string>>;
       // Echoed back so a no-JavaScript submission doesn't lose what was typed.
-      values: Partial<Record<"name" | "contact" | "message" | "interest" | "courseId", string>>;
+      values: Partial<
+        Record<"name" | "businessName" | "contact" | "message" | "courseId", string>
+      > & { serviceInterests?: string[]; preferredChannel?: string };
     };

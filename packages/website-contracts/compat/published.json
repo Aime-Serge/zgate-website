@@ -15,20 +15,39 @@
         "minLength": 1,
         "maxLength": 200
       },
+      "businessName": {
+        "type": "string",
+        "maxLength": 160
+      },
       "contact": {
         "type": "string",
         "minLength": 1,
         "maxLength": 200
       },
-      "interest": {
+      "preferredChannel": {
+        "default": "provided-contact",
         "type": "string",
         "enum": [
-          "advisory",
-          "academy",
-          "tech",
-          "data",
-          "not-sure"
+          "provided-contact",
+          "whatsapp",
+          "phone",
+          "email"
         ]
+      },
+      "serviceInterests": {
+        "default": [],
+        "maxItems": 5,
+        "type": "array",
+        "items": {
+          "type": "string",
+          "enum": [
+            "advisory",
+            "academy",
+            "tech",
+            "data",
+            "not-sure"
+          ]
+        }
       },
       "courseId": {
         "type": "integer",
@@ -49,7 +68,10 @@
     "required": [
       "kind",
       "name",
+      "businessName",
       "contact",
+      "preferredChannel",
+      "serviceInterests",
       "message",
       "consentContact",
       "consentMarketing"
@@ -137,10 +159,36 @@
             "minLength": 1,
             "maxLength": 200
           },
+          "businessName": {
+            "type": "string",
+            "maxLength": 160
+          },
           "contact": {
             "type": "string",
             "minLength": 1,
             "maxLength": 200
+          },
+          "preferredChannel": {
+            "type": "string",
+            "enum": [
+              "provided-contact",
+              "whatsapp",
+              "phone",
+              "email"
+            ]
+          },
+          "serviceInterests": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "enum": [
+                "advisory",
+                "academy",
+                "tech",
+                "data",
+                "not-sure"
+              ]
+            }
           },
           "interest": {
             "type": "string",
