@@ -6,6 +6,7 @@
 ## Context
 
 v1 was one application containing the whole business: marketing site, CRM, client portal, staff console and Academy. Leadership has decided Z-GATE needs two separate digital products:
+
 - a **corporate website**, which is needed first;
 - an **e-learning platform**, built afterwards.
 
@@ -17,13 +18,14 @@ The architecture review (`docs/platform-v2/`) first proposed one shared modular-
 
 Each product owns its backend and its data:
 
-| Product | Backend | Data |
-|---|---|---|
-| Website (`website/frontend` + `website/backend`) | **Payload CMS, headless** (`website/backend`): content admin, REST API, lead intake, lead inbox and staff login. The public pages are a separate Next.js app (`website/frontend`) that reads the CMS over HTTP. *(Originally one deployable with Payload embedded; see the second amendment.)* | Its own Postgres database: content, media metadata, leads, consents |
-| E-learning (`elearning/frontend` + `elearning/backend`) | The v1 Fastify backend, evolved into the LMS API (ADR-001 still applies *within* it) | Its own Postgres database: identity, LMS, commerce, plus v1 ops tables until D2 is decided |
+| Product                                                 | Backend                                                                                                                                                                                                                                                                                        | Data                                                                                       |
+| ------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------ |
+| Website (`website/frontend` + `website/backend`)        | **Payload CMS, headless** (`website/backend`): content admin, REST API, lead intake, lead inbox and staff login. The public pages are a separate Next.js app (`website/frontend`) that reads the CMS over HTTP. _(Originally one deployable with Payload embedded; see the second amendment.)_ | Its own Postgres database: content, media metadata, leads, consents                        |
+| E-learning (`elearning/frontend` + `elearning/backend`) | The v1 Fastify backend, evolved into the LMS API (ADR-001 still applies _within_ it)                                                                                                                                                                                                           | Its own Postgres database: identity, LMS, commerce, plus v1 ops tables until D2 is decided |
 
 Rules:
-1. **No shared database, tables or sessions.** One Postgres *server* may host both databases to keep operating cost low, but each product has its own database and its own DB user.
+
+1. **No shared database, tables or sessions.** One Postgres _server_ may host both databases to keep operating cost low, but each product has its own database and its own DB user.
 2. **Integration only through versioned contracts**, defined in `shared/contracts` (`@zgate/contracts`):
    - LMS → website: a public catalog API, plus a signed `course.published` webhook that triggers revalidation.
    - Website → LMS: enroll deep links carrying UTM parameters.

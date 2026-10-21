@@ -21,7 +21,7 @@ ADR-007 split the website and the e-learning platform into separate products wit
 
    Neither imports the other; both may use `shared/` (code) and `platform/` (runtime). dependency-cruiser enforces the import rules in CI (`pnpm lint:boundaries`).
 
-2. **Separate databases, separate instances.** Each product has its own Postgres container locally (website on port 5432, e-learning on 5433, separate volumes), and its own instance in production. Each database has a migration-owner role and a least-privilege app role (`<product>/database/init/`). Backup targets differ by risk: the website, nightly; the e-learning platform, point-in-time recovery with at most 15 minutes of data loss. Schemas stay with their backends (`website/backend/src/migrations`, `elearning/backend/db/migrations`).
+2. **Separate databases, separate instances.** Each product has its own Postgres container locally (website on port 5432, e-learning on 5433, separate volumes), and its own instance in production. Each database has a migration-owner role and a least-privilege app role (`<product>/database/init/`). Backup targets differ by risk: the website, nightly; the e-learning platform, point-in-time recovery with at most 15 minutes of data loss. Schemas stay with their backends (`website/backend/<app>/migrations`, Django since ADR-012; `elearning/backend/db/migrations`).
 
 3. **A dedicated worker for the e-learning platform.** `elearning/worker` runs background work (payment webhooks, email and SMS, certificate PDFs, video processing) so none of it runs inside an API request. It shares the database schema with the API, never its code.
 

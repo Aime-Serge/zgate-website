@@ -4,7 +4,7 @@
 
 ## Context
 
-The Data Privacy & Security Policy commits, in writing, to storing personal data "within Rwanda by default," with any offshore storage requiring "an NCSA-issued certificate authorizing that transfer, and written notice to the affected Client before the transfer begins" (`docs/business/BUSINESS_RULES.md` §4, citing Law N° 058/2021). Separately, `docs/discovery/SECURITY_BASELINE.md` found that Z-GATE's own NCSA registration — the prerequisite for either being a compliant in-Rwanda data controller/processor *or* obtaining a valid offshore-transfer certificate — is still **"Pending"** as of the last recorded state across every phase of this engagement.
+The Data Privacy & Security Policy commits, in writing, to storing personal data "within Rwanda by default," with any offshore storage requiring "an NCSA-issued certificate authorizing that transfer, and written notice to the affected Client before the transfer begins" (`docs/business/BUSINESS_RULES.md` §4, citing Law N° 058/2021). Separately, `docs/discovery/SECURITY_BASELINE.md` found that Z-GATE's own NCSA registration — the prerequisite for either being a compliant in-Rwanda data controller/processor _or_ obtaining a valid offshore-transfer certificate — is still **"Pending"** as of the last recorded state across every phase of this engagement.
 
 No approved business document confirms a specific Rwanda-based hosting provider or a specific hyperscaler region with confirmed Rwanda presence. This document does not have independent knowledge of a verified Rwanda-region offering from a major cloud provider as of the information available to it, and will not assert one exists without confirmation — doing so would be exactly the kind of fabrication this entire engagement has consistently refused to do (`docs/marketing/MARKETING_STRATEGY.md`'s proof-strategy discipline applies here just as much as it applies to marketing claims).
 
@@ -24,4 +24,4 @@ Resolve NCSA registration status first (it's already tracked as pending across t
 
 ## Consequences of leaving this open
 
-Development and staging environments (which never hold real Client data, per the already-committed separation rule) are not blocked by this ADR and can proceed on any reasonable, cheap infrastructure immediately. Only the *production* deployment of real Client personal/financial data is gated on this decision.
+Development and staging environments (which never hold real Client data, per the already-committed separation rule) are not blocked by this ADR and can proceed on any reasonable, cheap infrastructure immediately. Only the _production_ deployment of real Client personal/financial data is gated on this decision.
