@@ -2,31 +2,84 @@
 
 import Link from "next/link";
 import { button, cx, sectionHeading } from "@/components/ui/styles";
-import { useActionState, useEffect, useRef } from "react";
+import { useActionState, useEffect, useRef, useSyncExternalStore } from "react";
 import { submitLead } from "@/app/(site)/actions";
 import { readAttribution } from "@/components/site/attribution";
 import {
   ATTRIBUTION_FIELDS,
-  INTERESTS,
+  SERVICE_AREAS,
   type LeadFormState,
 } from "@zgate/website-contracts/constants";
 
 type CourseOption = { id: number; title: string };
+type ServiceArea = (typeof SERVICE_AREAS)[number];
+
+function isServiceArea(value: string): value is ServiceArea {
+  return SERVICE_AREAS.some((service) => service === value);
+}
+
+type ContextualService = Exclude<ServiceArea, "not-sure">;
+
+const noopSubscribe = () => () => {};
+
+/** A stable number per action result, so fields can remount when a new one arrives. */
+const resultIds = new WeakMap<object, number>();
+let lastResultId = 0;
+function resultId(state: object): number {
+  let value = resultIds.get(state);
+  if (value === undefined) {
+    value = ++lastResultId;
+    resultIds.set(state, value);
+  }
+  return value;
+}
+
+/**
+ * The service named in the address (`/contact?service=advisory`, from a
+ * division page's button), read in the browser. Reading it on the server
+ * would make every page dynamic and skip the page cache; here the page
+ * stays cached and only the form adapts. Null during server render.
+ */
+function serviceFromUrl(): ContextualService | null {
+  const value = new URLSearchParams(window.location.search).get("service");
+  return value && isServiceArea(value) && value !== "not-sure" ? value : null;
+}
+
+/**
+ * `?intent=demo` (the floating "Demo" button): the message starts as a demo
+ * request - a person walks the visitor through how Z-GATE would work for
+ * their business. Read in the browser, like `?service=`.
+ */
+const DEMO_MESSAGE = "I'd like a demo: a walkthrough of how Z-GATE could work for my business.";
+/**
+ * The demo request message, naming the demo when the Demo Library sent the
+ * visitor (`&topic=`); "" when the address asks for no demo.
+ */
+function demoMessage(): string {
+  const params = new URLSearchParams(window.location.search);
+  if (params.get("intent") !== "demo") return "";
+  // Plain text in a textarea's default value (React escapes it), capped in length.
+  const topic = (params.get("topic") ?? "").trim().slice(0, 120);
+  return topic ? `I'd like a live walkthrough of: ${topic}.` : DEMO_MESSAGE;
+}
 
 type Props = {
   variant: "contact" | "waitlist";
   heading?: string | null;
   intro?: string | null;
   courses: CourseOption[];
+  responseTimeCommitment?: string | null;
+  /** Preselects a service; otherwise `?service=` in the address does. */
+  contextualService?: ContextualService;
   /** On a course page the course is already known - shown, not asked. */
   fixedCourse?: CourseOption;
 };
 
-const INTEREST_LABELS: Record<(typeof INTERESTS)[number], string> = {
-  advisory: "Advisory — tax, compliance, bookkeeping",
-  academy: "Academy — training courses",
-  tech: "Tech — software and systems",
-  data: "Data — reporting and analysis",
+const SERVICE_LABELS: Record<ServiceArea, string> = {
+  advisory: "Advisory — tax and business support",
+  academy: "Academy — professional training",
+  tech: "Tech — technology solutions",
+  data: "Data — analytics and reporting",
   "not-sure": "Not sure yet",
 };
 
@@ -44,8 +97,31 @@ const checkboxBox =
  * Works without JavaScript: the form posts to the server action and the
  * page re-renders with the result. With JavaScript it submits in place.
  */
-export function LeadForm({ variant, heading, intro, courses, fixedCourse }: Props) {
+export function LeadForm({
+  variant,
+  heading,
+  intro,
+  courses,
+  responseTimeCommitment,
+  contextualService: contextualServiceProp,
+  fixedCourse,
+}: Props) {
+  const urlService = useSyncExternalStore(noopSubscribe, serviceFromUrl, () => null);
+  const demoText = useSyncExternalStore(noopSubscribe, demoMessage, () => "");
+  const demo = variant === "contact" ? demoText : "";
+  const contextualService =
+    variant === "contact" ? (contextualServiceProp ?? urlService ?? undefined) : undefined;
   const [state, formAction, pending] = useActionState(submitLead, initialState);
+  // The service select is uncontrolled, like the other fields: React resets
+  // a form after its action completes, which would leave a controlled
+  // select showing its first option while its state said otherwise. It is
+  // remounted (key) with the echoed choice after each result, and once the
+  // address's ?service= is known after hydration.
+  const defaultService =
+    state.status === "error" && state.values.serviceInterests
+      ? (state.values.serviceInterests.find(isServiceArea) ?? "")
+      : (contextualService ?? "");
+  const serviceKey = `${contextualService ?? "none"}-${resultId(state)}`;
   const summaryRef = useRef<HTMLDivElement>(null);
   const formRef = useRef<HTMLFormElement>(null);
   const id = (field: string) => `${variant}-${field}`;
@@ -100,6 +176,37 @@ export function LeadForm({ variant, heading, intro, courses, fixedCourse }: Prop
     >
       {heading ? <h2 className={sectionHeading}>{heading}</h2> : null}
       {intro ? <p className="text-paper-dim">{intro}</p> : null}
+
+      <div className="grid gap-2 rounded-md border border-line bg-ink-2 p-4 text-[0.9375rem] text-paper-dim">
+        {responseTimeCommitment ? (
+          <p>
+            Current reply target: <strong className="text-paper">{responseTimeCommitment}</strong>.
+            A team member will respond personally using your preferred contact method.
+          </p>
+        ) : (
+          <p>
+            A team member reviews submissions and replies personally using your preferred contact
+            method.
+          </p>
+        )}
+        {variant === "contact" ? (
+          <>
+            <p>
+              This form is not live chat. For urgent help, call or WhatsApp us. Existing clients
+              should use the support channel and response commitments in their service agreement.
+            </p>
+            <p>
+              You will see an on-screen confirmation after sending; we do not send an automated chat
+              or SMS reply.
+            </p>
+          </>
+        ) : (
+          <p>
+            This adds you to the course waitlist; it does not enroll you. We will contact you when
+            registration opens.
+          </p>
+        )}
+      </div>
 
       {state.status === "error" ? (
         <div
@@ -160,26 +267,54 @@ export function LeadForm({ variant, heading, intro, courses, fixedCourse }: Prop
       {variant === "contact" ? (
         <>
           <div className={fieldBox}>
-            <label htmlFor={id("interest")}>What can we help with? (optional)</label>
-            <select id={id("interest")} name="interest" defaultValue={values.interest ?? ""}>
-              <option value="">Choose one</option>
-              {INTERESTS.map((interest) => (
-                <option key={interest} value={interest}>
-                  {INTEREST_LABELS[interest]}
+            <label htmlFor={id("serviceInterests")}>What do you need help with?</label>
+            {contextualService ? (
+              <p className={hint} id={id("serviceInterests-hint")}>
+                We selected {SERVICE_LABELS[contextualService]} based on the page you came from.
+              </p>
+            ) : null}
+            <select
+              id={id("serviceInterests")}
+              name="serviceInterests"
+              key={serviceKey}
+              defaultValue={defaultService}
+              required
+              aria-invalid={Boolean(errors.serviceInterests)}
+              aria-describedby={[
+                contextualService ? id("serviceInterests-hint") : "",
+                describedBy("serviceInterests"),
+              ]
+                .filter(Boolean)
+                .join(" ")}
+            >
+              <option value="">Choose a service</option>
+              {SERVICE_AREAS.map((service) => (
+                <option key={service} value={service}>
+                  {SERVICE_LABELS[service]}
                 </option>
               ))}
             </select>
+            {fieldError("serviceInterests")}
           </div>
+
           <div className={fieldBox}>
-            <label htmlFor={id("message")}>Tell us a little more (optional)</label>
+            <label htmlFor={id("message")}>How can we help?</label>
+            <p className={hint} id={id("message-hint")}>
+              A few details will help us direct your enquiry. Please don’t include passwords, tax
+              IDs or confidential client information.
+            </p>
             <textarea
               id={id("message")}
               name="message"
-              rows={5}
+              rows={4}
               maxLength={2000}
-              defaultValue={values.message}
+              // Remounted once ?intent=demo is known, and after each result (see the select).
+              key={`${demo ? "demo" : "plain"}-${resultId(state)}`}
+              defaultValue={values.message ?? (demo || undefined)}
               aria-invalid={Boolean(errors.message)}
-              aria-describedby={describedBy("message")}
+              aria-describedby={[id("message-hint"), describedBy("message")]
+                .filter(Boolean)
+                .join(" ")}
             />
             {fieldError("message")}
           </div>
@@ -229,13 +364,6 @@ export function LeadForm({ variant, heading, intro, courses, fixedCourse }: Prop
           <Link href="/privacy">privacy notice</Link>.
         </label>
         {fieldError("consentContact")}
-      </div>
-
-      <div className={checkboxBox}>
-        <input id={id("consentMarketing")} name="consentMarketing" type="checkbox" />
-        <label htmlFor={id("consentMarketing")}>
-          Also send me occasional news about Z-GATE courses and services (optional).
-        </label>
       </div>
 
       <button

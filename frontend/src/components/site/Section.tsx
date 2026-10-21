@@ -1,7 +1,7 @@
 import Link from "next/link";
 import type React from "react";
 import type { SiteSetting } from "@zgate/cms-contracts";
-import { button, ctaRow, cx, eyebrow, hairlineGrid, sectionHeading } from "@/components/ui/styles";
+import { button, ctaRow, cx, eyebrow, sectionHeading } from "@/components/ui/styles";
 import { tone } from "@/components/ui/tone";
 import { WhatsAppButton } from "./ContactChannels";
 
@@ -14,6 +14,24 @@ export function Eyebrow({
   className?: string;
 }) {
   return children ? <p className={cx(eyebrow, className)}>{children}</p> : null;
+}
+
+/**
+ * Keeps "Z-GATE" on one line: browsers may break a line at its hyphen,
+ * which leaves "Z-" at a line end on phones.
+ */
+export function KeepBrand({ text }: { text: string }) {
+  const parts = text.split("Z-GATE");
+  return (
+    <>
+      {parts.map((part, index) => (
+        <span key={index}>
+          {index > 0 ? <span className="whitespace-nowrap">Z-GATE</span> : null}
+          {part}
+        </span>
+      ))}
+    </>
+  );
 }
 
 export function SectionHead({
@@ -29,7 +47,11 @@ export function SectionHead({
   return (
     <div className="mb-8 max-w-[46rem]">
       <Eyebrow>{eyebrowText}</Eyebrow>
-      {heading ? <h2 className={sectionHeading}>{heading}</h2> : null}
+      {heading ? (
+        <h2 className={sectionHeading}>
+          <KeepBrand text={heading} />
+        </h2>
+      ) : null}
       {intro ? <p className="mt-4 text-[1.0625rem] text-paper-dim">{intro}</p> : null}
     </div>
   );
@@ -73,44 +95,40 @@ export type Commitment = {
   division?: string | null;
 };
 
-/** One figure: a large number in the tone's accent over a plain label. */
+/** One figure as a card: a large number in the tone's accent over a plain label. */
 export function Figure({
   value,
   label,
   large = false,
-  surface = "ink",
   className,
 }: {
   value: string;
   label: string;
   large?: boolean;
-  /** Matches the section behind the grid, so the hairlines read as lines. */
-  surface?: "ink" | "ink-2";
   className?: string;
 }) {
   return (
     <li
       className={cx(
-        "flex flex-col gap-2 p-6",
-        surface === "ink-2" ? "bg-ink-2" : "bg-ink",
+        "flex flex-col gap-3 rounded-2xl border border-line bg-ink-2 bg-[linear-gradient(160deg,var(--glow),transparent_60%)] p-6 sm:p-8",
         className,
       )}
     >
       <span
         className={cx(
-          "font-display leading-none font-semibold tracking-[-0.02em] text-accent",
-          large ? "text-[clamp(3rem,8vw,4.5rem)]" : "text-[2.5rem]",
+          "font-display leading-none font-bold tracking-[-0.03em] whitespace-nowrap text-accent",
+          large ? "text-[clamp(3.5rem,9vw,5.5rem)]" : "text-[clamp(2.75rem,5vw,3.5rem)]",
         )}
       >
         {value}
       </span>
-      <span className="text-paper-dim">{label}</span>
+      <span className="text-[1.0625rem] text-paper">{label}</span>
     </li>
   );
 }
 
-/** The grid that holds figures, hairline-separated. */
-export const figureGrid = cx(hairlineGrid, "sm:grid-cols-[repeat(auto-fit,minmax(220px,1fr))]");
+/** The grid that holds figure cards. */
+export const figureGrid = "grid list-none gap-4 sm:grid-cols-2 lg:grid-cols-3";
 
 /** Small mono line under a figure grid (source or "not past results"). */
 export function FigureNote({ children }: { children: React.ReactNode }) {

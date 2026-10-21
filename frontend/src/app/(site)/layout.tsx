@@ -9,10 +9,11 @@ const spaceGrotesk = Space_Grotesk({
   subsets: ["latin"],
   weight: ["500", "600", "700"],
 });
+// Only the weights the site uses: every weight is another font download.
 const inter = Inter({
   variable: "--font-inter",
   subsets: ["latin"],
-  weight: ["400", "500", "600"],
+  weight: ["400", "600"],
 });
 const ibmPlexMono = IBM_Plex_Mono({
   variable: "--font-ibm-plex-mono",
@@ -29,10 +30,15 @@ const ibmPlexMono = IBM_Plex_Mono({
  * tone as the default accent. Heading typography is in globals.css's base
  * layer, so any utility on a heading still overrides it.
  */
+const JS_FLAG = "document.documentElement.classList.add('js')";
+
 export default function SiteLayout({ children }: { children: React.ReactNode }) {
   return (
+    // suppressHydrationWarning: the inline script below adds the `js` class
+    // before React hydrates, which is the point - only <html> is exempted.
     <html
       lang="en"
+      suppressHydrationWarning
       className={cx(
         spaceGrotesk.variable,
         inter.variable,
@@ -40,6 +46,12 @@ export default function SiteLayout({ children }: { children: React.ReactNode }) 
         "scroll-smooth motion-reduce:scroll-auto",
       )}
     >
+      <head>
+        {/* Marks the page as scripted before first paint, so tabs and
+            menus render in their final layout (no shift on hydration);
+            without JavaScript, globals.css shows their content in full. */}
+        <script dangerouslySetInnerHTML={{ __html: JS_FLAG }} />
+      </head>
       <body
         className={cx(
           tone("gate"),

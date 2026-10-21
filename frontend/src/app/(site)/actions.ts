@@ -8,8 +8,7 @@
  * anyone can POST to this action without using the page: honeypot,
  * per-visitor and global rate limits, and schema validation. The CMS's lead
  * intake then re-validates, checks the privacy notice and the chosen
- * course, stores the lead and notifies staff (backend
- * src/endpoints/leadIntake.ts).
+ * course, stores the lead and notifies staff (backend/leads/views.py).
  */
 import { headers } from "next/headers";
 import {
@@ -29,14 +28,25 @@ const perVisitor = new RateLimiter(5, 10 * 60 * 1000);
 // site-wide, whatever addresses they come from.
 const siteWide = new RateLimiter(300, 60 * 60 * 1000);
 
-const ECHOED = ["name", "contact", "message", "interest", "courseId"] as const;
+const ECHOED = [
+  "name",
+  "businessName",
+  "contact",
+  "message",
+  "courseId",
+  "preferredChannel",
+] as const;
+
+type EchoedValues = Extract<LeadFormState, { status: "error" }>["values"];
 
 function echo(formData: FormData) {
-  const values: Partial<Record<(typeof ECHOED)[number], string>> = {};
+  const values: EchoedValues = {};
   for (const key of ECHOED) {
     const value = formData.get(key);
     if (typeof value === "string") values[key] = value.slice(0, 2000);
   }
+  const services = formData.getAll("serviceInterests");
+  values.serviceInterests = services.filter((value): value is string => typeof value === "string");
   return values;
 }
 
@@ -55,7 +65,7 @@ function successMessage(responseTime: string | null | undefined): string {
 }
 
 /** Hands the submission to the CMS. Throws on transport or server errors. */
-async function sendToCms(form: Record<string, string>): Promise<LeadIntakeResponse> {
+async function sendToCms(form: Record<string, string | string[]>): Promise<LeadIntakeResponse> {
   const { CMS_URL, LEAD_INTAKE_TOKEN } = env();
   if (!LEAD_INTAKE_TOKEN) throw new Error("LEAD_INTAKE_TOKEN is not set");
   const response = await fetch(`${CMS_URL}${LEAD_INTAKE_PATH}`, {
@@ -87,16 +97,22 @@ export async function submitLead(
   if (!perVisitor.attempt(ip) || !siteWide.attempt("site")) {
     return fail(
       formData,
-      `We've received several messages from this connection. Please wait a few minutes, or reach us directly on ${settings.phone}.`,
+      "We've received several messages from this connection. Please wait a few minutes, or use the phone, WhatsApp or email links on this page.",
     );
   }
 
-  const form = Object.fromEntries(
+  const form: Record<string, string | string[]> = Object.fromEntries(
     [...formData.entries()].filter(
       (entry): entry is [string, string] =>
-        typeof entry[1] === "string" && !entry[0].startsWith("$ACTION"),
+        typeof entry[1] === "string" &&
+        !entry[0].startsWith("$ACTION") &&
+        entry[0] !== "serviceInterests",
     ),
   );
+  const services = formData.getAll("serviceInterests");
+  if (services.every((value): value is string => typeof value === "string")) {
+    form.serviceInterests = services;
+  }
   const parsed = leadFormSchema.safeParse(form);
   if (!parsed.success) {
     return fail(formData, "Please check the highlighted fields.", fieldErrorsFrom(parsed.error));
@@ -109,7 +125,7 @@ export async function submitLead(
     console.error("Lead submission failed:", error instanceof Error ? error.message : error);
     return fail(
       formData,
-      `Sorry — something went wrong on our side and your message wasn't saved. Please try again, or reach us on ${settings.phone}.`,
+      "Sorry — your message wasn't saved. Please try again, or use the phone, WhatsApp or email links on this page.",
     );
   }
 

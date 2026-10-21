@@ -1,61 +1,128 @@
 import Link from "next/link";
 import type { Course } from "@zgate/cms-contracts";
-import { cx, goLink, label } from "@/components/ui/styles";
+import {
+  coursePath,
+  enrollAction,
+  type EnrollAction,
+  formatPrice,
+  nextIntake,
+} from "@/lib/courses";
+import { ArrowRight, Form } from "@/components/ui/icons";
+import { buttonSmall, buttonSmallSecondary, chip, cx, label } from "@/components/ui/styles";
 import { tone } from "@/components/ui/tone";
 
-// "RWF 40,000" - Intl's en-RW currency style prints the symbol "RF", which
-// readers here don't use on prices.
-const amount = new Intl.NumberFormat("en-GB", { maximumFractionDigits: 0 });
+export {
+  coursePath,
+  enrollAction,
+  type EnrollAction,
+  formatPrice,
+  learningPlatform,
+  nextIntake,
+} from "@/lib/courses";
 
-export function formatPrice(
-  course: Pick<Course, "priceAmount" | "priceNote" | "currency">,
-): string | null {
-  if (typeof course.priceAmount !== "number") return null;
-  return [`${course.currency ?? "RWF"} ${amount.format(course.priceAmount)}`, course.priceNote]
-    .filter(Boolean)
-    .join(" ");
+export function EnrollButton({ action, className }: { action: EnrollAction; className?: string }) {
+  return action.external ? (
+    <a href={action.href} className={cx(buttonSmall, className)}>
+      {action.label}
+    </a>
+  ) : (
+    <Link href={action.href} className={cx(buttonSmall, className)}>
+      {action.label}
+    </Link>
+  );
 }
 
-export const coursePath = (course: Pick<Course, "slug">) => `/academy/courses/${course.slug}`;
-
-export function CourseCard({ course }: { course: Course }) {
+/**
+ * A course as the gate to it: whether registration is open, the facts a
+ * visitor decides on (format, duration, fee, next intake), then two
+ * actions - enroll (or join the waitlist) and the full details.
+ */
+export function CourseCard({ course, platform }: { course: Course; platform: string | null }) {
   const price = formatPrice(course);
+  const action = enrollAction(course, platform);
   return (
-    // The whole card is the one link - the title's ::after covers it - so
-    // keyboard users meet a single focus stop, ringed via focus-within.
     <article
       className={cx(
         tone("academy"),
-        "relative flex flex-col gap-3 rounded-lg border border-l-[3px] border-line border-l-accent p-6 transition-colors duration-150 hover:bg-ink-2",
-        "focus-within:outline-2 focus-within:outline-offset-2 focus-within:outline-gate-2",
+        "flex h-full flex-col gap-4 rounded-2xl border border-line bg-[linear-gradient(145deg,var(--glow),transparent_55%)] p-6 transition-colors duration-150 hover:border-accent",
       )}
     >
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <span className={chip}>Practical course</span>
+        <span className="inline-flex items-center gap-2 font-mono text-xs text-paper-dim">
+          <span
+            aria-hidden="true"
+            className={cx("size-2 rounded-full", action.open ? "bg-accent" : "bg-paper-dim")}
+          />
+          {action.open ? "Registration open" : "Waitlist open"}
+        </span>
+      </div>
       <h3 className="text-xl leading-[1.3]">
-        <Link
-          href={coursePath(course)}
-          className="no-underline after:absolute after:inset-0 after:content-[''] focus-visible:outline-none"
-        >
+        <Link href={coursePath(course)} className="no-underline hover:underline">
           {course.title}
         </Link>
       </h3>
       <p className="text-paper-dim">{course.summary || course.audience}</p>
-      <dl className="flex flex-wrap gap-x-8 gap-y-2 text-[0.9375rem]">
+      <dl className="mt-auto grid grid-cols-2 gap-x-4 gap-y-4 border-t border-line pt-4 text-[0.9375rem]">
+        {course.format ? (
+          <div>
+            <dt className={label}>Format</dt>
+            <dd className="mt-1">{course.format}</dd>
+          </div>
+        ) : null}
         {course.duration ? (
           <div>
             <dt className={label}>Duration</dt>
-            <dd>{course.duration}</dd>
+            <dd className="mt-1">{course.duration}</dd>
           </div>
         ) : null}
         {price ? (
           <div>
             <dt className={label}>Fee</dt>
-            <dd>{price}</dd>
+            <dd className="mt-1">{price}</dd>
           </div>
         ) : null}
+        <div>
+          <dt className={label}>Next intake</dt>
+          <dd className="mt-1">{nextIntake(course)}</dd>
+        </div>
       </dl>
-      <span className={goLink} aria-hidden="true">
-        View course →
-      </span>
+      <div className="flex flex-wrap gap-3">
+        <EnrollButton action={action} />
+        <Link
+          href={coursePath(course)}
+          className={buttonSmallSecondary}
+          aria-label={`Details: ${course.title}`}
+        >
+          Details
+          <ArrowRight className="ml-2 size-4" />
+        </Link>
+      </div>
+    </article>
+  );
+}
+
+/**
+ * The card after the courses: for a need no course covers yet. A real next
+ * step (a conversation with Academy), not a sample course.
+ */
+export function CourseRequestCard() {
+  return (
+    <article
+      className={cx(
+        tone("academy"),
+        "flex h-full flex-col justify-center gap-4 rounded-2xl border border-dashed border-line p-6",
+      )}
+    >
+      <Form className="size-6 text-accent" />
+      <h3 className="text-xl leading-[1.3]">Need a course we don&rsquo;t run yet?</h3>
+      <p className="text-paper-dim">
+        Tell us what your team needs to learn. We&rsquo;ll tell you if a course is planned, or point
+        you to the right one.
+      </p>
+      <Link href="/contact?service=academy" className={cx(buttonSmallSecondary, "self-start")}>
+        Ask the Academy
+      </Link>
     </article>
   );
 }

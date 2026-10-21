@@ -1,16 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { CmsError, getDivisionBySlug, getPageBySlug, toQueryString } from "@/lib/cms";
-
-describe("toQueryString", () => {
-  it("encodes nested where clauses the way Payload's REST API reads them", () => {
-    const query = toQueryString({ where: { slug: { equals: "home" } }, limit: 1, draft: false });
-    expect(decodeURIComponent(query)).toBe("where[slug][equals]=home&limit=1&draft=false");
-  });
-
-  it("skips undefined values and escapes the rest", () => {
-    expect(toQueryString({ a: undefined, b: "x&y" })).toBe("b=x%26y");
-  });
-});
+import { CmsError, findRedirect, getDivisionBySlug, getPageBySlug, listCourses } from "@/lib/cms";
 
 describe("CMS reads", () => {
   const fetchMock = vi.fn();
@@ -26,24 +15,50 @@ describe("CMS reads", () => {
     fetchMock.mockReset();
   });
 
-  it("asks for published content only, anonymously", async () => {
-    fetchMock.mockResolvedValue(Response.json({ docs: [{ id: 1, slug: "about" }] }));
+  it("reads a page by slug, with no credentials when no API token is set", async () => {
+    fetchMock.mockResolvedValue(Response.json({ id: 1, slug: "about" }));
     expect(await getPageBySlug("about")).toEqual({ id: 1, slug: "about" });
 
     const [url, init] = fetchMock.mock.calls[0] as [string, RequestInit];
-    const parsed = new URL(url);
-    expect(parsed.origin + parsed.pathname).toBe("http://cms.internal:3004/api/pages");
-    expect(parsed.searchParams.get("draft")).toBe("false");
-    expect(parsed.searchParams.get("where[slug][equals]")).toBe("about");
+    expect(url).toBe("http://cms.internal:3004/api/pages/about");
     expect(new Headers(init.headers).has("authorization")).toBe(false);
   });
 
-  it("returns null when nothing matches", async () => {
-    fetchMock.mockResolvedValue(Response.json({ docs: [] }));
+  it("presents the API token when one is set", async () => {
+    const token = "a".repeat(32);
+    process.env["CMS_API_TOKEN"] = token;
+    vi.resetModules(); // env() is read once per process
+    try {
+      const cms = await import("@/lib/cms");
+      fetchMock.mockResolvedValue(Response.json({ id: 1, slug: "about" }));
+      await cms.getPageBySlug("about");
+      const [, init] = fetchMock.mock.calls[0] as [string, RequestInit];
+      expect(new Headers(init.headers).get("authorization")).toBe(`Bearer ${token}`);
+    } finally {
+      delete process.env["CMS_API_TOKEN"];
+    }
+  });
+
+  it("returns null when the CMS has no published document", async () => {
+    fetchMock.mockResolvedValue(Response.json({ error: "not found" }, { status: 404 }));
     expect(await getPageBySlug("missing")).toBeNull();
   });
 
-  it("never queries the division enum with an unknown slug", async () => {
+  it("unwraps lists", async () => {
+    fetchMock.mockResolvedValue(Response.json({ docs: [{ id: 1, slug: "a1" }] }));
+    expect(await listCourses()).toEqual([{ id: 1, slug: "a1" }]);
+  });
+
+  it("escapes what it puts in a URL", async () => {
+    fetchMock.mockResolvedValue(Response.json({}, { status: 404 }));
+    await getPageBySlug("../admin");
+    await findRedirect("/old page?x=1");
+    const urls = fetchMock.mock.calls.map((call) => call[0] as string);
+    expect(urls[0]).toBe("http://cms.internal:3004/api/pages/..%2Fadmin");
+    expect(urls[1]).toBe("http://cms.internal:3004/api/redirects?from=%2Fold%20page%3Fx%3D1");
+  });
+
+  it("never asks for an unknown division", async () => {
     expect(await getDivisionBySlug("hacking")).toBeNull();
     expect(fetchMock).not.toHaveBeenCalled();
   });

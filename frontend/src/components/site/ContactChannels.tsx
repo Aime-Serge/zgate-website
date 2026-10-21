@@ -25,8 +25,8 @@ const whatsappNumber = (settings: SiteSetting) => settings.whatsapp || settings.
 const detail = "font-mono text-[0.9rem] font-normal [overflow-wrap:anywhere]";
 
 /**
- * Secondary action beside "Start a conversation": WhatsApp is the primary
- * channel for the core persona (docs/marketing/CONVERSION_FUNNEL.md), so it
+ * Secondary action beside "Start Now": WhatsApp is the primary
+ * channel for the core persona (docs/CONTENT_GUIDE.md), so it
  * gets a button where the decision is made, not just a footer link.
  */
 export function WhatsAppButton({

@@ -54,14 +54,15 @@ export function GateMark({
   );
 }
 
-/** Mark + wordmark: "Z-GATE Solution", or "Z-GATE Advisory" for a division. */
+/** Mark + wordmark: "Z-GATE" for the company, or "Z-GATE Advisory" for a division. */
 export function Lockup({
   division,
   name,
   size = "md",
 }: {
   division?: DivisionSlug;
-  name: string;
+  /** A division's name after "Z-GATE"; none for the company itself. */
+  name?: string;
   size?: "md" | "lg";
 }) {
   return (
@@ -75,8 +76,13 @@ export function Lockup({
           size === "lg" ? "text-xl" : "text-lg",
         )}
       >
-        Z-GATE {/* Master brand: the lighter "Solution"; a division name stays solid. */}
-        <span className={division ? "font-semibold" : "font-normal opacity-70"}>{name}</span>
+        Z-GATE
+        {name ? (
+          <>
+            {" "}
+            <span className={division ? "font-semibold" : "font-normal opacity-70"}>{name}</span>
+          </>
+        ) : null}
       </span>
     </span>
   );

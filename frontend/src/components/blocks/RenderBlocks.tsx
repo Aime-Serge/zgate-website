@@ -1,57 +1,58 @@
-import { RichText } from "@payloadcms/richtext-lexical/react";
 import Link from "next/link";
 import { GateMark } from "@/components/brand/GateMark";
-import { GateVisual } from "@/components/brand/GateVisual";
 import { LeadForm } from "@/components/forms/LeadForm";
 import { ContactChannels } from "@/components/site/ContactChannels";
-import { CourseCard } from "@/components/site/CourseCard";
+import { CourseCard, learningPlatform } from "@/components/site/CourseCard";
+import { RichText } from "@/components/site/RichText";
 import {
   CommitmentGrid,
-  CtaRow,
   Eyebrow,
   Figure,
-  FigureNote,
-  figureGrid,
   QuestionList,
   SectionHead,
 } from "@/components/site/Section";
+import { ArrowRight } from "@/components/ui/icons";
 import {
+  arrowLink,
+  band,
+  card,
+  cardLink,
   container,
   courseGrid,
-  ctaBand,
   cx,
   formSplit,
-  goLink,
   hairlineGrid,
-  hero,
-  heroAudience,
-  heroHeading,
   label,
-  lede,
   prose,
   section,
   sectionHeading,
 } from "@/components/ui/styles";
 import { tone } from "@/components/ui/tone";
-import type { Course, Division, Page, SiteSetting } from "@zgate/cms-contracts";
+import type { SiteSetting } from "@zgate/cms-contracts";
+import { Audiences } from "./Audiences";
+import { ClosingCta } from "./ClosingCta";
+import { Hero } from "./Hero";
+import { Latest } from "./Latest";
+import { Pillars } from "./Pillars";
+import { Scenarios } from "./Scenarios";
+import { SolutionGrid } from "./SolutionGrid";
+import { Showcase } from "./Showcase";
+import { Spotlights } from "./Spotlights";
+import { Trust } from "./Trust";
+import type { Block, BlockContext } from "./types";
 
-type Block = Page["layout"][number];
-
-type Context = {
-  settings: SiteSetting;
-  divisions: Division[];
-  courses: Course[];
-  privacyLive: boolean;
-  /** Who the site is for - shown under the hero headline (home page only). */
-  audienceLine?: string | null;
-};
+export type { BlockContext } from "./types";
 
 const pad = (n: number) => String(n).padStart(2, "0");
 
-/** A step or feature: hairline on top, mono number, title, body. */
+/** A feature: hairline on top, mono number, title, body. */
 const numberedItem = "border-t border-line pt-4 [&_h3]:mb-2 [&_h3]:text-lg [&_p]:text-paper-dim";
 const itemNumber = "mb-3 block font-mono text-xs text-accent";
 
+/**
+ * The company's verifiable facts (registration, licence) as a trust
+ * bar - where a larger company would show client logos. From Site settings.
+ */
 export function FactStrip({
   settings,
   heading,
@@ -62,14 +63,17 @@ export function FactStrip({
   const facts = settings.companyFacts ?? [];
   if (facts.length === 0) return null;
   return (
-    <section className="py-6" aria-label={heading || "Company facts"}>
+    <section
+      className="border-y border-line bg-ink-2/60 py-6"
+      aria-label={heading || "Company facts"}
+    >
       <div className={container}>
-        {heading ? <h2 className="mb-3 text-base">{heading}</h2> : null}
-        <ul className="flex list-none flex-wrap gap-x-8 gap-y-2 font-mono text-[0.8125rem] text-paper-dim">
+        {heading ? <h2 className="mb-4 text-center text-base">{heading}</h2> : null}
+        <ul className="flex list-none flex-wrap items-center justify-center gap-x-10 gap-y-3 font-mono text-[0.8125rem] tracking-[0.04em] text-paper-dim">
           {facts.map((entry) => (
             <li
               key={entry.id ?? entry.fact}
-              className="inline-flex items-center gap-2 before:size-1.5 before:rounded-sm before:bg-gate-2 before:content-['']"
+              className="inline-flex items-center gap-2.5 before:size-1.5 before:rounded-sm before:bg-gate-2 before:content-['']"
             >
               {entry.fact}
             </li>
@@ -80,42 +84,29 @@ export function FactStrip({
   );
 }
 
-function renderBlock(block: Block, context: Context, isFirst: boolean) {
-  const { settings, divisions, courses, privacyLive, audienceLine } = context;
+function renderBlock(block: Block, context: BlockContext, isFirst: boolean) {
+  const { settings, divisions, courses, privacyLive, contextualService } = context;
   switch (block.blockType) {
-    case "hero": {
-      const withVisual = block.visual === "gate" && divisions.length > 0;
-      return (
-        <section className={hero}>
-          <div
-            className={cx(
-              container,
-              "grid items-center gap-12",
-              withVisual && "lg:grid-cols-[1.15fr_1fr]",
-            )}
-          >
-            <div>
-              <Eyebrow>{block.eyebrow}</Eyebrow>
-              {isFirst ? (
-                <h1 className={heroHeading}>{block.headline}</h1>
-              ) : (
-                <h2 className={heroHeading}>{block.headline}</h2>
-              )}
-              {audienceLine ? <p className={heroAudience}>{audienceLine}</p> : null}
-              {block.lede ? <p className={lede}>{block.lede}</p> : null}
-              <CtaRow settings={settings} {...block.cta} />
-            </div>
-            {withVisual ? (
-              // Decorative: on a phone its labels would be too small to
-              // read, and the headline already says it.
-              <div className="hidden w-full max-w-[560px] sm:block">
-                <GateVisual divisions={divisions} />
-              </div>
-            ) : null}
-          </div>
-        </section>
-      );
-    }
+    case "hero":
+      return <Hero block={block} context={context} isFirst={isFirst} />;
+    case "showcase":
+      return <Showcase block={block} context={context} />;
+    case "spotlights":
+      return <Spotlights block={block} />;
+    case "pillars":
+      return <Pillars block={block} />;
+    case "audiences":
+      return <Audiences block={block} />;
+    case "scenarios":
+      return <Scenarios block={block} context={context} />;
+    case "trust":
+      return <Trust block={block} />;
+    case "latest":
+      return <Latest block={block} context={context} />;
+    case "solutionGrid":
+      return <SolutionGrid block={block} context={context} />;
+    case "callToAction":
+      return <ClosingCta block={block} context={context} />;
     case "factStrip":
       return <FactStrip settings={settings} heading={block.heading} />;
     case "doors":
@@ -128,14 +119,20 @@ function renderBlock(block: Block, context: Context, isFirst: boolean) {
                 <li key={door.id ?? door.need} className={tone(door.division ?? "bundle")}>
                   <Link
                     href={door.href}
-                    className="flex h-full flex-col gap-3 rounded-lg border border-l-[3px] border-line border-l-accent bg-[linear-gradient(90deg,var(--glow),transparent_55%)] p-6 no-underline transition-colors duration-150 hover:bg-ink-2"
+                    className={cx(
+                      cardLink,
+                      "min-h-60 gap-4 bg-[linear-gradient(135deg,var(--glow),transparent_62%)] p-6",
+                    )}
                   >
-                    <span className="font-display text-xl leading-[1.3] font-semibold">
+                    <span className="font-display text-xl leading-[1.3] font-bold">
                       {door.need}
                     </span>
-                    {door.answer ? <span className="text-paper-dim">{door.answer}</span> : null}
-                    <span className={goLink}>
-                      {door.label} <span aria-hidden="true">→</span>
+                    {door.answer ? (
+                      <span className="text-[0.9375rem] text-paper-dim">{door.answer}</span>
+                    ) : null}
+                    <span className={cx(arrowLink, "mt-auto text-accent")}>
+                      {door.label}
+                      <ArrowRight className="size-4" />
                     </span>
                   </Link>
                 </li>
@@ -145,22 +142,31 @@ function renderBlock(block: Block, context: Context, isFirst: boolean) {
         </section>
       );
     case "marketFacts":
+      // A spotlight card: the cited problem, large, with its source beneath.
       return (
-        <section className={cx(section, "bg-ink-2")}>
+        <section className={section}>
           <div className={container}>
-            <SectionHead eyebrow={block.eyebrow} heading={block.heading} intro={block.intro} />
-            <ul className={figureGrid}>
-              {block.items.map((item) => (
-                <Figure
-                  key={item.id ?? item.statement}
-                  value={item.figure}
-                  label={item.statement}
-                  large
-                  surface="ink-2"
-                />
-              ))}
-            </ul>
-            <FigureNote>Source: {block.source}</FigureNote>
+            <div className="grid gap-10 rounded-2xl border border-gate-1/35 bg-ink-2 bg-[radial-gradient(ellipse_60%_120%_at_0%_0%,rgb(91_107_250/0.22),transparent_60%)] p-6 sm:p-10 lg:grid-cols-[1fr_1.1fr] lg:items-center lg:p-14">
+              <div>
+                <Eyebrow>{block.eyebrow}</Eyebrow>
+                <h2 className={sectionHeading}>{block.heading}</h2>
+                {block.intro ? <p className="mt-4 text-lg text-paper-dim">{block.intro}</p> : null}
+              </div>
+              <div>
+                <ul className="grid list-none gap-4 sm:grid-cols-2">
+                  {block.items.map((item) => (
+                    <Figure
+                      key={item.id ?? item.statement}
+                      value={item.figure}
+                      label={item.statement}
+                      large
+                    />
+                  ))}
+                </ul>
+                {/* The figures' source is kept in the CMS (required there, as
+                    the record behind them) but not printed on the card. */}
+              </div>
+            </div>
           </div>
         </section>
       );
@@ -185,14 +191,10 @@ function renderBlock(block: Block, context: Context, isFirst: boolean) {
                       <GateMark division={division.slug} className="w-6" />
                       <span className="font-display text-xl font-semibold">{division.name}</span>
                     </span>
-                    {division.subtitle ? (
-                      <span className="font-mono text-[0.6875rem] tracking-[0.1em] text-paper-dim uppercase">
-                        {division.subtitle}
-                      </span>
-                    ) : null}
                     <span className="mb-4 text-[0.9375rem] text-paper-dim">{division.mission}</span>
-                    <span className={goLink}>
-                      Explore {division.shortName} <span aria-hidden="true">→</span>
+                    <span className={cx(arrowLink, "mt-auto text-accent")}>
+                      Explore {division.shortName}
+                      <ArrowRight className="size-4" />
                     </span>
                   </Link>
                 </li>
@@ -203,7 +205,7 @@ function renderBlock(block: Block, context: Context, isFirst: boolean) {
       );
     case "commitments":
       return (
-        <section className={section}>
+        <section className={cx(section, band)}>
           <div className={container}>
             <SectionHead eyebrow={block.eyebrow} heading={block.heading} intro={block.intro} />
             <CommitmentGrid items={block.items} note={block.note} />
@@ -215,14 +217,20 @@ function renderBlock(block: Block, context: Context, isFirst: boolean) {
         <section className={section}>
           <div className={container}>
             <SectionHead eyebrow={block.eyebrow} heading={block.heading} intro={block.intro} />
-            <ol className="grid list-none gap-8 md:grid-cols-2 wide:auto-cols-fr wide:grid-flow-col">
+            <ol className="grid list-none gap-4 md:grid-cols-2 wide:auto-cols-fr wide:grid-flow-col">
               {block.items.map((step, index) => (
-                <li key={step.id ?? step.title} className={numberedItem}>
-                  <span className={itemNumber} aria-hidden="true">
+                <li
+                  key={step.id ?? step.title}
+                  className={cx(card, "grid content-start gap-3 p-6")}
+                >
+                  <span
+                    className="inline-flex size-10 items-center justify-center rounded-full border border-gate-2/50 font-mono text-sm text-gate-2"
+                    aria-hidden="true"
+                  >
                     {pad(index + 1)}
                   </span>
-                  <h3>{step.title}</h3>
-                  {step.body ? <p>{step.body}</p> : null}
+                  <h3 className="text-lg font-bold">{step.title}</h3>
+                  {step.body ? <p className="text-paper-dim">{step.body}</p> : null}
                 </li>
               ))}
             </ol>
@@ -236,7 +244,7 @@ function renderBlock(block: Block, context: Context, isFirst: boolean) {
             {/* Outside the prose wrapper, so its p styles don't reach the eyebrow. */}
             <SectionHead eyebrow={block.eyebrow} heading={block.heading} />
             <div className={prose}>
-              <RichText data={block.content} />
+              <RichText html={block.content} />
             </div>
           </div>
         </section>
@@ -263,7 +271,9 @@ function renderBlock(block: Block, context: Context, isFirst: boolean) {
         </section>
       );
     case "courseList": {
-      const chosen = (block.courses ?? []).filter((c): c is Course => typeof c === "object");
+      const chosen = (block.courses ?? []).filter(
+        (c): c is (typeof courses)[number] => typeof c === "object",
+      );
       const list = chosen.length > 0 ? chosen : courses;
       return (
         <section className={section}>
@@ -271,7 +281,7 @@ function renderBlock(block: Block, context: Context, isFirst: boolean) {
             <SectionHead eyebrow={block.eyebrow} heading={block.heading} />
             <div className={courseGrid}>
               {list.map((course) => (
-                <CourseCard key={course.id} course={course} />
+                <CourseCard key={course.id} course={course} platform={learningPlatform(settings)} />
               ))}
             </div>
           </div>
@@ -284,24 +294,6 @@ function renderBlock(block: Block, context: Context, isFirst: boolean) {
           <div className={container}>
             <SectionHead eyebrow={block.eyebrow} heading={block.heading} />
             <QuestionList items={block.items} />
-          </div>
-        </section>
-      );
-    case "callToAction":
-      return (
-        <section className={section}>
-          <div className={container}>
-            <div className={ctaBand}>
-              <Eyebrow className="justify-center">{block.eyebrow}</Eyebrow>
-              <h2 className={sectionHeading}>{block.heading}</h2>
-              {block.body ? <p className="mt-3 text-paper-dim">{block.body}</p> : null}
-              <CtaRow
-                settings={settings}
-                label={block.label}
-                href={block.href}
-                className="justify-center"
-              />
-            </div>
           </div>
         </section>
       );
@@ -318,6 +310,8 @@ function renderBlock(block: Block, context: Context, isFirst: boolean) {
                 heading={block.heading}
                 intro={block.intro}
                 courses={courses.map((course) => ({ id: course.id, title: course.title }))}
+                responseTimeCommitment={settings.responseTimeCommitment}
+                contextualService={contextualService}
               />
             ) : null}
             {/* No form yet: channels and office side by side across the full width. */}
@@ -340,21 +334,44 @@ function renderBlock(block: Block, context: Context, isFirst: boolean) {
         </section>
       );
     default: {
+      // Compile time: every known block type is handled above. Run time: a
+      // type this release doesn't know yet (the CMS was released first,
+      // docs/DEPLOYMENT.md §4) is skipped instead of breaking the page.
       const unhandled: never = block;
-      return unhandled;
+      void unhandled;
+      return null;
     }
   }
 }
 
-/** Blocks in order, with the brand guide's hairline between consecutive sections. */
-export function RenderBlocks({ blocks, ...context }: { blocks: Block[] } & Context) {
+/**
+ * Blocks in order. Sections on the plain surface are separated by a
+ * hairline; bands, the trust bar and spotlight cards carry their own edges.
+ * Two bands in a row read as one: the second loses its top padding.
+ */
+const OWN_EDGE = new Set<Block["blockType"]>(["factStrip", "commitments", "pillars", "spotlights"]);
+const BANDS = new Set<Block["blockType"]>(["commitments", "pillars"]);
+
+export function RenderBlocks({ blocks, ...context }: { blocks: Block[] } & BlockContext) {
   return (
     <>
-      {blocks.map((block, index) => (
-        <div key={block.id ?? index} className={index > 0 ? "border-t border-line" : undefined}>
-          {renderBlock(block, context, index === 0)}
-        </div>
-      ))}
+      {blocks.map((block, index) => {
+        const previous = blocks[index - 1];
+        const rule =
+          index > 0 &&
+          !OWN_EDGE.has(block.blockType) &&
+          previous &&
+          !OWN_EDGE.has(previous.blockType);
+        const joined = previous && BANDS.has(previous.blockType) && BANDS.has(block.blockType);
+        return (
+          <div
+            key={block.id ?? index}
+            className={rule ? "border-t border-line" : joined ? "[&>section]:pt-0" : undefined}
+          >
+            {renderBlock(block, context, index === 0)}
+          </div>
+        );
+      })}
     </>
   );
 }

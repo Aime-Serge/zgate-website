@@ -3,7 +3,11 @@ import { notFound, permanentRedirect, redirect } from "next/navigation";
 import { RenderBlocks } from "@/components/blocks/RenderBlocks";
 import { CoursesView, CourseView } from "@/components/site/CourseView";
 import { DivisionView } from "@/components/site/DivisionView";
-import { ArticleView, InsightsView } from "@/components/site/InsightsView";
+import { Breadcrumbs } from "@/components/site/Breadcrumbs";
+import { ArticleView, articlePath, InsightsView } from "@/components/site/InsightsView";
+import { JsonLd } from "@/components/site/JsonLd";
+import { DemosView } from "@/components/site/DemosView";
+import { SearchView } from "@/components/site/SearchView";
 import { SiteShell } from "@/components/site/SiteShell";
 import { env } from "@/lib/env";
 import {
@@ -11,10 +15,21 @@ import {
   getDivisionBySlug,
   getSiteSettings,
   isPrivacyNoticeLive,
+  listArticles,
   listCourses,
+  listDemos,
   listDivisions,
+  listPages,
+  listSolutions,
 } from "@/lib/cms";
 import { pathFor, resolveRoute, type Route } from "@/lib/routes";
+import { buildSearchIndex } from "@/lib/search";
+import {
+  breadcrumbJsonLd,
+  type Crumb,
+  organizationJsonLd,
+  websiteJsonLd,
+} from "@/lib/structuredData";
 import { shortDescription } from "@/lib/text";
 import type { SiteSetting } from "@zgate/cms-contracts";
 
@@ -31,7 +46,9 @@ export function generateStaticParams() {
   return [];
 }
 
-type Props = { params: Promise<{ slug?: string[] }> };
+type Props = {
+  params: Promise<{ slug?: string[] }>;
+};
 
 /**
  * Fallbacks when an editor hasn't filled "Search & sharing". Titles use the
@@ -52,6 +69,22 @@ function describe(route: Route, settings: SiteSetting): { title: string; descrip
         description: page.meta?.description || fallback,
       };
     }
+    case "solution":
+      return {
+        title: route.page.meta?.title || `${route.page.title} — ${brand}`,
+        description: route.page.meta?.description || fallback,
+      };
+    case "demos":
+      return {
+        title: `Demo Library — ${brand}`,
+        description:
+          "Short walkthroughs of how Z-GATE's Advisory, Academy, Tech and Data teams work, and a live walkthrough for your business.",
+      };
+    case "search":
+      return {
+        title: `Search — ${brand}`,
+        description: "Search Z-GATE's services, solutions, courses and articles in one place.",
+      };
     case "division": {
       const { division } = route;
       return {
@@ -101,6 +134,8 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     title,
     description,
     alternates: { canonical: path },
+    // One page whose results depend on the visitor's query: not worth indexing.
+    ...(route.kind === "search" ? { robots: { index: false, follow: true } } : {}),
     openGraph: {
       title,
       description,
@@ -115,13 +150,18 @@ export default async function SitePage({ params }: Props) {
   // "home" is the homepage's CMS slug, not a second URL for it.
   if (slug?.length === 1 && slug[0] === "home") permanentRedirect("/");
 
-  const [route, settings, divisions, courses, privacyLive] = await Promise.all([
-    resolveRoute(slug),
-    getSiteSettings(),
-    listDivisions(),
-    listCourses(),
-    isPrivacyNoticeLive(),
-  ]);
+  const [route, settings, divisions, courses, articles, privacyLive, solutions] = await Promise.all(
+    [
+      resolveRoute(slug),
+      getSiteSettings(),
+      listDivisions(),
+      listCourses(),
+      // Shared with the header and footer through React's cache.
+      listArticles(3),
+      isPrivacyNoticeLive(),
+      listSolutions(),
+    ],
+  );
 
   if (!route) {
     // Old URLs editors have redirected in the CMS, before giving up.
@@ -130,20 +170,54 @@ export default async function SitePage({ params }: Props) {
     notFound();
   }
 
+  const siteUrl = env().SITE_URL;
+  const blockContext = { settings, divisions, courses, articles, privacyLive, solutions };
   let body: React.ReactNode;
   switch (route.kind) {
-    case "page":
+    case "page": {
+      const isHome = route.page.slug === "home";
       body = (
-        <RenderBlocks
-          blocks={route.page.layout}
-          settings={settings}
-          divisions={divisions}
-          courses={courses}
-          privacyLive={privacyLive}
-          audienceLine={route.page.slug === "home" ? settings.audienceLine : null}
-        />
+        <>
+          {isHome ? (
+            <>
+              <JsonLd data={organizationJsonLd(settings, divisions, siteUrl)} />
+              <JsonLd data={websiteJsonLd(settings, siteUrl)} />
+            </>
+          ) : null}
+          <RenderBlocks
+            blocks={route.page.layout}
+            {...blockContext}
+            audienceLine={isHome ? settings.audienceLine : null}
+          />
+        </>
       );
       break;
+    }
+    case "solution": {
+      const trail: Crumb[] = [
+        { label: "Home", href: "/" },
+        { label: "Solutions", href: "/solutions" },
+        { label: route.page.title, href: `/solutions/${route.page.slug}` },
+      ];
+      body = (
+        <>
+          <JsonLd data={breadcrumbJsonLd(trail, siteUrl)} />
+          <Breadcrumbs trail={trail} />
+          <RenderBlocks blocks={route.page.layout} {...blockContext} />
+        </>
+      );
+      break;
+    }
+    case "demos":
+      body = <DemosView demos={await listDemos()} settings={settings} />;
+      break;
+    case "search": {
+      // Everything published, not just the three newest articles.
+      const [pages, allArticles] = await Promise.all([listPages(), listArticles()]);
+      const index = buildSearchIndex({ pages, divisions, courses, articles: allArticles });
+      body = <SearchView index={index} settings={settings} />;
+      break;
+    }
     case "division":
       body = (
         <DivisionView
@@ -159,7 +233,7 @@ export default async function SitePage({ params }: Props) {
       // Intro reuses the Academy division's approved proof copy rather
       // than new, unreviewed marketing text.
       const academy = await getDivisionBySlug("academy");
-      body = <CoursesView courses={route.courses} intro={academy?.proof} />;
+      body = <CoursesView courses={route.courses} intro={academy?.proof} settings={settings} />;
       break;
     }
     case "course":
@@ -167,8 +241,9 @@ export default async function SitePage({ params }: Props) {
         <CourseView
           course={route.course}
           settings={settings}
-          siteUrl={env().SITE_URL}
+          siteUrl={siteUrl}
           privacyLive={privacyLive}
+          responseTimeCommitment={settings.responseTimeCommitment}
         />
       );
       break;
@@ -176,7 +251,21 @@ export default async function SitePage({ params }: Props) {
       body = <InsightsView articles={route.articles} />;
       break;
     case "article":
-      body = <ArticleView article={route.article} />;
+      body = (
+        <>
+          <JsonLd
+            data={breadcrumbJsonLd(
+              [
+                { label: "Home", href: "/" },
+                { label: "Insights", href: "/insights" },
+                { label: route.article.title, href: articlePath(route.article) },
+              ],
+              siteUrl,
+            )}
+          />
+          <ArticleView article={route.article} />
+        </>
+      );
       break;
   }
 

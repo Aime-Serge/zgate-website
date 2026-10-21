@@ -4,7 +4,6 @@ import {
   button,
   checkItem,
   container,
-  courseGrid,
   ctaBandRoom,
   ctaRow,
   cx,
@@ -25,9 +24,18 @@ import {
 import { tone } from "@/components/ui/tone";
 import { LeadForm } from "@/components/forms/LeadForm";
 import type { Course, SiteSetting } from "@zgate/cms-contracts";
+import { breadcrumbJsonLd } from "@/lib/structuredData";
 import { ContactChannels } from "./ContactChannels";
+import { JsonLd } from "./JsonLd";
 import { SectionHead } from "./Section";
-import { CourseCard, coursePath, formatPrice } from "./CourseCard";
+import {
+  CourseCard,
+  CourseRequestCard,
+  coursePath,
+  enrollAction,
+  formatPrice,
+  learningPlatform,
+} from "./CourseCard";
 
 const dayFormat = new Intl.DateTimeFormat("en-GB", {
   day: "numeric",
@@ -58,7 +66,12 @@ function courseJsonLd(course: Course, settings: SiteSetting, siteUrl: string) {
     name: course.title,
     description: course.summary || course.audience,
     url: `${siteUrl}${coursePath(course)}`,
-    provider: { "@type": "Organization", name: settings.legalName, url: siteUrl },
+    provider: {
+      "@type": "Organization",
+      "@id": `${siteUrl}/#organization`,
+      name: settings.legalName,
+      url: siteUrl,
+    },
     ...(offers ? { offers } : {}),
     ...(instances.length > 0 ? { hasCourseInstance: instances } : {}),
   };
@@ -69,6 +82,7 @@ type Props = {
   settings: SiteSetting;
   siteUrl: string;
   privacyLive: boolean;
+  responseTimeCommitment?: string | null;
 };
 
 /**
@@ -78,9 +92,15 @@ type Props = {
  * live, its waitlist until then. Module outlines, lessons, assessment and
  * certificates live on the platform (ADR-007), so they aren't shown here.
  */
-export function CourseView({ course, settings, siteUrl, privacyLive }: Props) {
+export function CourseView({
+  course,
+  settings,
+  siteUrl,
+  privacyLive,
+  responseTimeCommitment,
+}: Props) {
   const price = formatPrice(course);
-  const lms = settings.enrollmentMode === "lms" && settings.lmsBaseUrl ? settings.lmsBaseUrl : null;
+  const lms = learningPlatform(settings);
   const upcoming = (course.intakes ?? []).filter(
     (intake) => new Date(intake.startsOn) >= new Date(),
   );
@@ -98,32 +118,78 @@ export function CourseView({ course, settings, siteUrl, privacyLive }: Props) {
   ].filter((fact): fact is { term: string; value: string } => Boolean(fact.value));
   return (
     <div className={tone("academy")}>
-      <script
-        type="application/ld+json"
-        // JSON.stringify escaped for "<" so CMS text can't close the script tag.
-        dangerouslySetInnerHTML={{
-          __html: JSON.stringify(courseJsonLd(course, settings, siteUrl)).replace(/</g, "\\u003c"),
-        }}
+      <JsonLd data={courseJsonLd(course, settings, siteUrl)} />
+      <JsonLd
+        data={breadcrumbJsonLd(
+          [
+            { label: "Home", href: "/" },
+            { label: "Academy", href: "/academy" },
+            { label: "Courses", href: "/academy/courses" },
+            { label: course.title, href: coursePath(course) },
+          ],
+          siteUrl,
+        )}
       />
       <section className={heroRoom}>
-        <div className={container}>
-          <p className={heroLockup}>
-            <Link href="/academy" className="no-underline">
-              <Lockup division="academy" name="Academy" size="lg" />
+        <div
+          className={cx(
+            container,
+            "grid items-center gap-10 nav:grid-cols-[1.2fr_0.8fr] nav:gap-14",
+          )}
+        >
+          <div>
+            <p className={heroLockup}>
+              <Link href="/academy" className="no-underline">
+                <Lockup division="academy" name="Academy" size="lg" />
+              </Link>
+              <Link
+                href="/academy/courses"
+                className={cx(heroSubtitle, "underline underline-offset-4")}
+              >
+                All courses
+              </Link>
+            </p>
+            <h1 className={roomHeading}>{course.title}</h1>
+            {course.summary ? <p className={lede}>{course.summary}</p> : null}
+          </div>
+          <aside className="rounded-lg border border-line bg-ink-2 p-6 sm:p-8">
+            <p className={label}>Course at a glance</p>
+            <dl className="mt-5 grid gap-4">
+              {course.duration ? (
+                <div>
+                  <dt className={label}>Duration</dt>
+                  <dd className="mt-1 font-display text-lg font-semibold">{course.duration}</dd>
+                </div>
+              ) : null}
+              {price ? (
+                <div>
+                  <dt className={label}>Fee</dt>
+                  <dd className="mt-1 font-display text-lg font-semibold">{price}</dd>
+                </div>
+              ) : null}
+              <div>
+                <dt className={label}>Next intake</dt>
+                <dd className="mt-1 font-display text-lg font-semibold">
+                  {upcoming[0]
+                    ? `${upcoming[0].label} — ${dayFormat.format(new Date(upcoming[0].startsOn))}`
+                    : "Dates to be announced"}
+                </dd>
+              </div>
+            </dl>
+            <Link href="#enroll" className={cx(button, "mt-6 w-full")}>
+              View enrollment options
             </Link>
             <Link
-              href="/academy/courses"
-              className={cx(heroSubtitle, "underline underline-offset-4")}
+              href="#course-details"
+              className="mt-4 inline-block min-h-11 py-3 text-sm text-paper-dim underline underline-offset-4 hover:text-paper"
             >
-              All courses
+              See course details
             </Link>
-          </p>
-          <h1 className={roomHeading}>{course.title}</h1>
-          {course.summary ? <p className={lede}>{course.summary}</p> : null}
+          </aside>
         </div>
       </section>
 
-      <section className={cx(section, sectionRule)}>
+      <section className={cx(section, sectionRule, "scroll-mt-24")} id="course-details">
         <div className={cx(container, split)}>
           <dl className={cx(hairlineGrid, "w-full")}>
             {facts.map((fact) => (
@@ -148,7 +214,7 @@ export function CourseView({ course, settings, siteUrl, privacyLive }: Props) {
         </div>
       </section>
 
-      <section className={cx(section, sectionRule)} id="enroll">
+      <section className={cx(section, sectionRule, "scroll-mt-24")} id="enroll">
         <div className={cx(container, formSplit)}>
           {lms ? (
             <div className={ctaBandRoom}>
@@ -157,10 +223,7 @@ export function CourseView({ course, settings, siteUrl, privacyLive }: Props) {
                 Enrollment, lessons and certificates are on Z-GATE Academy Online.
               </p>
               <div className={ctaRow}>
-                <a
-                  className={button}
-                  href={`${lms}/courses/${encodeURIComponent(course.slug)}/enroll`}
-                >
+                <a className={button} href={enrollAction(course, lms).href}>
                   Enroll on Z-GATE Academy Online
                 </a>
               </div>
@@ -171,6 +234,7 @@ export function CourseView({ course, settings, siteUrl, privacyLive }: Props) {
               heading="Join the waitlist"
               intro="Registration isn't open yet. Leave your details and we'll tell you as soon as it is."
               courses={[{ id: course.id, title: course.title }]}
+              responseTimeCommitment={responseTimeCommitment}
               fixedCourse={{ id: course.id, title: course.title }}
             />
           ) : (
@@ -195,7 +259,16 @@ export function CourseView({ course, settings, siteUrl, privacyLive }: Props) {
   );
 }
 
-export function CoursesView({ courses, intro }: { courses: Course[]; intro?: string | null }) {
+export function CoursesView({
+  courses,
+  intro,
+  settings,
+}: {
+  courses: Course[];
+  intro?: string | null;
+  settings: SiteSetting;
+}) {
+  const platform = learningPlatform(settings);
   return (
     <div className={tone("academy")}>
       <section className={heroRoom}>
@@ -214,13 +287,18 @@ export function CoursesView({ courses, intro }: { courses: Course[]; intro?: str
           <SectionHead
             eyebrow="Short, practical courses"
             heading="Choose a course"
-            intro="Each course page shows who it's for, how long it takes and the fee, then takes you through to registration."
+            intro={
+              platform
+                ? "Who each course is for, how long it takes and the fee. Enroll on Z-GATE Academy Online, or open the details first."
+                : "Who each course is for, how long it takes and the fee. Registration opens on Z-GATE Academy Online; until then, join a course's waitlist and we'll tell you when you can sign up."
+            }
           />
           {courses.length > 0 ? (
-            <div className={courseGrid}>
+            <div className="grid gap-4 md:grid-cols-2 wide:grid-cols-3">
               {courses.map((course) => (
-                <CourseCard key={course.id} course={course} />
+                <CourseCard key={course.id} course={course} platform={platform} />
               ))}
+              <CourseRequestCard />
             </div>
           ) : (
             <p>

@@ -1,6 +1,5 @@
 /**
- * The visitor's IP for rate limiting - the website's answer to finding N-1
- * (docs/platform-v2/01-CURRENT-STATE-ASSESSMENT.md).
+ * The visitor's IP for rate limiting, read so that it can't be spoofed.
  *
  * X-Forwarded-For is a list: the client can put anything at its left end,
  * and each reverse proxy appends the address it received the request from.

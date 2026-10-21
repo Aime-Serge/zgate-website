@@ -3,7 +3,7 @@ import { listArticles, listCourses, listDivisions, listPages } from "@/lib/cms";
 
 // Built per request (cached by CDNs for an hour) from published content and
 // the runtime SITE_URL - never at build time, which would need the CMS and
-// bake in a placeholder origin (finding N-2).
+// bake in a placeholder origin.
 export const dynamic = "force-dynamic";
 
 type Entry = { path: string; updatedAt?: string | null };
@@ -22,11 +22,17 @@ export async function GET() {
 
   const entries: Entry[] = [
     ...pages.map((page) => ({
-      path: page.slug === "home" ? "/" : `/${page.slug}`,
+      path:
+        page.slug === "home"
+          ? "/"
+          : page.pageType === "solution"
+            ? `/solutions/${page.slug}`
+            : `/${page.slug}`,
       updatedAt: page.updatedAt,
     })),
     ...divisions.map((division) => ({ path: `/${division.slug}`, updatedAt: division.updatedAt })),
     { path: "/academy/courses" },
+    { path: "/demos" },
     ...courses.map((course) => ({
       path: `/academy/courses/${course.slug}`,
       updatedAt: course.updatedAt,

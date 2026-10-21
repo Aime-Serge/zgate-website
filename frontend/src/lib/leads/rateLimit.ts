@@ -1,7 +1,7 @@
 /**
  * Fixed-window limiter for the public forms. In-process memory is enough
  * for a single website instance; when the site runs on more than one, move
- * this to the shared store planned in docs/platform-v2/02-TARGET-ARCHITECTURE.md §8.
+ * the counters to a shared store (e.g. Redis) so every instance sees them.
  */
 export class RateLimiter {
   private readonly hits = new Map<string, { count: number; resetAt: number }>();

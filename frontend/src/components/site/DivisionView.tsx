@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { GateMark, Lockup } from "@/components/brand/GateMark";
 import {
+  buttonSmall,
   checkItem,
   container,
   courseGrid,
@@ -23,8 +24,56 @@ import {
 } from "@/components/ui/styles";
 import { tone } from "@/components/ui/tone";
 import type { Course, Division, SiteSetting } from "@zgate/cms-contracts";
-import { CourseCard } from "./CourseCard";
+import { CourseCard, learningPlatform } from "./CourseCard";
 import { CommitmentGrid, CtaRow, QuestionList, SectionHead } from "./Section";
+
+/** Anchored sections clear the header and the section bar when jumped to. */
+const anchored = "scroll-mt-36";
+
+/**
+ * The page's own sticky bar under the site header (a product-page
+ * pattern): jump links to each section and the division's main action.
+ * Plain anchors - nothing here needs a script.
+ */
+function SectionBar({
+  name,
+  items,
+  cta,
+}: {
+  name: string;
+  items: { href: string; label: string }[];
+  cta: { label?: string | null; href?: string | null };
+}) {
+  return (
+    <nav
+      aria-label={`${name} sections`}
+      className="sticky top-[4.3rem] z-20 border-y border-line bg-ink/90 backdrop-blur"
+    >
+      <div className={cx(container, "flex items-center justify-between gap-6")}>
+        <ul className="flex list-none gap-1 overflow-x-auto py-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+          {items.map((item) => (
+            <li key={item.href} className="shrink-0">
+              <a
+                href={item.href}
+                className="inline-flex min-h-11 items-center rounded-full px-3 text-[0.9375rem] font-semibold text-paper-dim no-underline transition-colors hover:bg-paper/8 hover:text-paper"
+              >
+                {item.label}
+              </a>
+            </li>
+          ))}
+        </ul>
+        {cta.label && cta.href ? (
+          // Phones already have the quick-contact bar.
+          <span className="hidden shrink-0 sm:block">
+            <Link href={cta.href} className={buttonSmall}>
+              {cta.label}
+            </Link>
+          </span>
+        ) : null}
+      </div>
+    </nav>
+  );
+}
 
 const COMMITMENT_NOTE =
   "Targets from our client service agreements: commitments we are held to, not past results.";
@@ -52,24 +101,69 @@ export function DivisionView({
   const others = divisions.filter((other) => other.slug !== division.slug);
   const questions = [division.objection, ...(division.faq ?? [])];
   const block = cx(section, sectionRule);
+  const featuredCommitment = division.commitments?.[0];
+  const contactCta =
+    division.cta.href === "/contact"
+      ? { ...division.cta, href: `/contact?service=${encodeURIComponent(division.slug)}` }
+      : division.cta;
   return (
     <div className={tone(division.slug)}>
       <section className={heroRoom}>
-        <div className={container}>
-          <p className={heroLockup}>
-            <Lockup division={division.slug} name={division.shortName} size="lg" />
-            {division.subtitle ? <span className={heroSubtitle}>{division.subtitle}</span> : null}
-          </p>
-          <h1 className={roomHeading}>{division.headline || division.mission}</h1>
-          {audienceLine ? <p className={heroAudience}>{audienceLine}</p> : null}
-          {/* The about text, not the mission: the mission is on the home cards,
-              and under a headline it repeated it (marketing review #1). */}
-          <p className={lede}>{division.about}</p>
-          <CtaRow settings={settings} topic={division.shortName} {...division.cta} />
+        <div
+          className={cx(
+            container,
+            "grid items-center gap-10",
+            featuredCommitment && "nav:grid-cols-[1.2fr_0.8fr] nav:gap-14",
+          )}
+        >
+          <div>
+            <p className={heroLockup}>
+              <Lockup division={division.slug} name={division.shortName} size="lg" />
+              {division.subtitle ? <span className={heroSubtitle}>{division.subtitle}</span> : null}
+            </p>
+            <h1 className={roomHeading}>{division.headline || division.mission}</h1>
+            {audienceLine ? <p className={heroAudience}>{audienceLine}</p> : null}
+            {/* The about text, not the mission: the mission is on the home cards,
+                and under a headline it repeated it (marketing review #1). */}
+            <p className={lede}>{division.about}</p>
+            <CtaRow settings={settings} topic={division.shortName} {...contactCta} />
+          </div>
+          {featuredCommitment ? (
+            <aside className="relative overflow-hidden rounded-lg border border-line bg-ink-2 p-6 sm:p-8">
+              <div
+                aria-hidden="true"
+                className="absolute -top-20 -right-16 size-48 rounded-full bg-accent/10 blur-3xl"
+              />
+              <div className="relative">
+                <p className={eyebrow}>A commitment in writing</p>
+                <p className="font-display text-[clamp(2.5rem,6vw,4rem)] leading-none font-semibold tracking-[-0.03em] text-accent">
+                  {featuredCommitment.figure}
+                </p>
+                <p className="mt-4 text-paper">{featuredCommitment.label}</p>
+                <p className="mt-5 border-t border-line pt-4 font-mono text-xs leading-relaxed text-paper-dim">
+                  An agreement target we are held to — not a past-results claim.
+                </p>
+              </div>
+            </aside>
+          ) : null}
         </div>
       </section>
 
-      <section className={block}>
+      <SectionBar
+        name={division.shortName}
+        items={[
+          { href: "#overview", label: "Overview" },
+          ...(division.slug === "academy" && courses.length > 0
+            ? [{ href: "#courses", label: "Courses" }]
+            : []),
+          { href: "#commitments", label: "Commitments" },
+          { href: "#questions", label: "Questions" },
+          { href: "#talk", label: "Talk to us" },
+        ]}
+        cta={contactCta}
+      />
+
+      <section className={cx(block, anchored)} id="overview">
         <div className={cx(container, split)}>
           <div>
             <p className={eyebrow}>Who it&rsquo;s for</p>
@@ -91,19 +185,19 @@ export function DivisionView({
       </section>
 
       {division.slug === "academy" && courses.length > 0 ? (
-        <section className={block}>
+        <section className={cx(block, anchored)} id="courses">
           <div className={container}>
             <SectionHead eyebrow="Courses" heading="Short, practical, built from real cases" />
             <div className={courseGrid}>
               {courses.map((course) => (
-                <CourseCard key={course.id} course={course} />
+                <CourseCard key={course.id} course={course} platform={learningPlatform(settings)} />
               ))}
             </div>
           </div>
         </section>
       ) : null}
 
-      <section className={block}>
+      <section className={cx(block, anchored)} id="commitments">
         <div className={container}>
           <SectionHead
             eyebrow="The number first"
@@ -119,7 +213,7 @@ export function DivisionView({
         </div>
       </section>
 
-      <section className={block}>
+      <section className={cx(block, anchored)} id="questions">
         <div className={container}>
           <SectionHead eyebrow="Questions" heading="Straight answers" />
           <QuestionList items={questions} />
@@ -162,7 +256,7 @@ export function DivisionView({
         </section>
       ) : null}
 
-      <section className={block}>
+      <section className={cx(block, anchored)} id="talk">
         <div className={container}>
           <div className={cx(ctaBandRoom, "text-center")}>
             <h2 className={sectionHeading}>Talk to {division.name}</h2>
@@ -173,7 +267,7 @@ export function DivisionView({
               settings={settings}
               topic={division.shortName}
               className="justify-center"
-              {...division.cta}
+              {...contactCta}
             />
           </div>
         </div>

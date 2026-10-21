@@ -31,21 +31,23 @@ describe("parseEnv", () => {
     );
   });
 
-  it("requires both shared secrets in production", () => {
+  it("requires every shared secret in production", () => {
     const prod = {
       ...valid,
       NODE_ENV: "production",
+      CMS_API_TOKEN: "a".repeat(32),
       LEAD_INTAKE_TOKEN: "t".repeat(32),
       REVALIDATE_SECRET: "r".repeat(32),
     };
     expect(() => parseEnv(prod)).not.toThrow();
+    expect(() => parseEnv({ ...prod, CMS_API_TOKEN: "" })).toThrow(/CMS_API_TOKEN/);
     expect(() => parseEnv({ ...prod, LEAD_INTAKE_TOKEN: "" })).toThrow(/LEAD_INTAKE_TOKEN/);
     expect(() => parseEnv({ ...prod, REVALIDATE_SECRET: "" })).toThrow(/REVALIDATE_SECRET/);
   });
 
   it("accepts the documented .env.example as-is", () => {
     const text = readFileSync(
-      fileURLToPath(new URL("../../../deploy/env/dev.env.example", import.meta.url)),
+      fileURLToPath(new URL("../../.env.example", import.meta.url)),
       "utf8",
     );
     const fromFile = Object.fromEntries(

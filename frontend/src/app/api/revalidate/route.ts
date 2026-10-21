@@ -1,11 +1,13 @@
 /**
- * "Content changed" webhook from the CMS (backend
- * src/hooks/revalidate.ts): marks every cached public page stale, so each
+ * "Content changed" webhook from the CMS (backend/content/revalidate.py):
+ * marks every cached public page stale, so each
  * re-renders with published content on its next visit.
  *
  * Only the CMS knows REVALIDATE_SECRET; an unsigned, wrongly signed or
- * replayed request is refused. The public proxy doesn't route this path
- * either (platform/edge/Caddyfile) - the CMS calls it on the internal network.
+ * replayed request is refused. With the two apps hosted apart the CMS
+ * calls this over the internet, so the signature is what protects it; the
+ * frontend's proxy can also restrict it to the CMS host's address
+ * (REVALIDATE_ALLOWED_IPS, frontend/deploy/Caddyfile).
  */
 import { revalidatePath } from "next/cache";
 import { REVALIDATE_SIGNATURE_HEADER, verifyRevalidation } from "@zgate/cms-contracts";

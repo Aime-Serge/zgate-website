@@ -1,4 +1,4 @@
-import { RichText } from "@payloadcms/richtext-lexical/react";
+import { RichText } from "./RichText";
 import Link from "next/link";
 import type { Article } from "@zgate/cms-contracts";
 import {
@@ -74,7 +74,7 @@ export function ArticleView({ article }: { article: Article }) {
         · {article.authorName}
       </p>
       <div className={prose}>
-        <RichText data={article.body} />
+        <RichText html={article.body} />
       </div>
     </article>
   );
