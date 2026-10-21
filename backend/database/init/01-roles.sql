@@ -1,16 +1,16 @@
 -- Website database: roles and the database itself (ADR-008).
 --
 -- Two roles:
---   zgate_website_owner  owns the database and every table; runs Payload
---                        migrations (deploy-time only).
+--   zgate_website_owner  owns the database and every table; runs Django's
+--                        migrations (`manage.py migrate`, deploy-time only).
 --   zgate_website_app    what the running CMS connects as: read and write
 --                        rows, nothing else - no DDL, no TRUNCATE.
 -- The public site (frontend/) has no database role at all.
 --
 -- Local development: Postgres runs this once, when the data volume is first
--- created (deploy/compose.yml). The passwords below are dev-only throwaway
+-- created (compose.yml at the repository root). The passwords below are dev-only throwaway
 -- values. Production: a DBA runs the same statements on the data host with
--- generated passwords (docs/WEBSITE_DEPLOY.md).
+-- generated passwords (docs/DEPLOYMENT.md).
 
 CREATE ROLE zgate_website_owner WITH LOGIN PASSWORD 'zgate_website_owner_dev';
 CREATE ROLE zgate_website_app WITH LOGIN PASSWORD 'zgate_website_app_dev';

@@ -1,0 +1,61 @@
+# Edge proxy of the CMS host (backend/deploy/compose.yml, docs/DEPLOYMENT.md).
+#
+# One hostname, CMS_HOST (e.g. cms.example.rw), split by path:
+#
+#   /api/*   the content API and lead intake, which the public site calls
+#            from ITS host over the internet. Protected by the CMS's own
+#            bearer tokens (CMS_API_TOKEN, LEAD_INTAKE_TOKEN); narrow it
+#            further with API_ALLOWED_IPS when the frontend host has a
+#            fixed outbound address.
+#   else     the Wagtail admin, its static files, media and documents:
+#            ADMIN_ALLOWED_IPS only (office, VPN), since the CMS has no
+#            built-in second factor (docs/SECURITY.md).
+#
+# The public site's host has its own edge (frontend/deploy/Caddyfile), and
+# the e-learning platform's learn. host another, in its own repository
+# (ADR-010). Caddy obtains and renews TLS certificates itself (ACME_EMAIL).
+#
+# X-Forwarded-For: no trusted_proxies here, so Caddy replaces any
+# client-supplied value with the address it actually received.
+
+{
+	email {$ACME_EMAIL}
+}
+
+{$CMS_HOST} {
+	encode zstd gzip
+	header {
+		# Add "preload" only once the production domain is final (decision D4).
+		Strict-Transport-Security "max-age=31536000; includeSubDomains"
+		-Server
+	}
+
+	@api path /api/*
+	handle @api {
+		@api_allowed remote_ip {$API_ALLOWED_IPS}
+		handle @api_allowed {
+			# A lead is a few kilobytes; nothing on the API takes uploads.
+			request_body {
+				max_size 256KB
+			}
+			reverse_proxy website-backend:3004
+		}
+		handle {
+			respond "Not found" 404
+		}
+	}
+
+	@admin_allowed remote_ip {$ADMIN_ALLOWED_IPS}
+	handle @admin_allowed {
+		# Image and PDF uploads in the admin.
+		request_body {
+			max_size 25MB
+		}
+		reverse_proxy website-backend:3004
+	}
+
+	# Everyone else learns nothing about what's here.
+	handle {
+		respond "Not found" 404
+	}
+}

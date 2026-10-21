@@ -8,7 +8,7 @@
 #   BACKUP_AGE_RECIPIENT    if set, encrypt with `age -r` (recommended:
 #                           the dump holds leads and consent records)
 #
-# Target: nightly (database/README.md). Copy BACKUP_DIR off the host.
+# Target: nightly (backend/database/README.md). Copy BACKUP_DIR off the host.
 set -euo pipefail
 
 : "${BACKUP_DIR:?set BACKUP_DIR}"

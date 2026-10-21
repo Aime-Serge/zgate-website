@@ -1,0 +1,65 @@
+# Z-GATE public website (frontend/) - staging or production, on its OWN
+# host. The CMS runs on another host (backend/deploy/); the two talk over
+# HTTPS only. This host has no database and no CMS credentials beyond
+# the three shared tokens. Runbook: docs/DEPLOYMENT.md (part C).
+#
+# On the frontend host, from a checkout of this folder (or a copy of it):
+#   cp edge.env.example      /etc/zgate/edge.env               # fill in
+#   cp frontend.env.example  /etc/zgate/website-frontend.env   # fill in
+#   export FRONTEND_TAG=<git sha>
+#   docker compose -f compose.yml --env-file /etc/zgate/edge.env up -d --wait
+
+name: zgate-website-frontend
+
+x-hardening: &hardening
+  restart: unless-stopped
+  security_opt:
+    - no-new-privileges:true
+  cap_drop:
+    - ALL
+  logging:
+    driver: json-file
+    options:
+      max-size: "20m"
+      max-file: "5"
+
+services:
+  caddy:
+    <<: *hardening
+    # Pinned by release age (>= 14 days, docs/SECURITY.md).
+    image: caddy:2.11.4-alpine
+    cap_add:
+      - NET_BIND_SERVICE
+    ports:
+      - "80:80"
+      - "443:443"
+      - "443:443/udp"
+    environment:
+      SITE_HOST: ${SITE_HOST:?set SITE_HOST}
+      APEX_HOST: ${APEX_HOST:?set APEX_HOST}
+      REVALIDATE_ALLOWED_IPS: ${REVALIDATE_ALLOWED_IPS:-0.0.0.0/0 ::/0}
+      ACME_EMAIL: ${ACME_EMAIL:?set ACME_EMAIL}
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    depends_on:
+      website-frontend:
+        condition: service_healthy
+    mem_limit: 256m
+
+  # The public site. Reads content from the CMS host (CMS_URL) and hands
+  # form submissions to it; only Caddy reaches it, no host port is published.
+  website-frontend:
+    <<: *hardening
+    image: ghcr.io/aime-serge/z-gate-website-frontend:${FRONTEND_TAG:?set FRONTEND_TAG to a git SHA}
+    env_file: /etc/zgate/website-frontend.env
+    expose:
+      - "3002"
+    # Rendered pages are cached inside the container (.next/cache) and
+    # start empty after each rollout; the first visits re-fill it.
+    mem_limit: 1g
+
+volumes:
+  caddy_data:
+  caddy_config:
