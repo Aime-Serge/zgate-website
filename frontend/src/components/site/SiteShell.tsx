@@ -25,7 +25,7 @@ function Announcement({ settings }: { settings: SiteSetting }) {
   const { text, label, href } = settings.announcement ?? {};
   if (!text) return null;
   return (
-    <div className="border-b border-line bg-ink-2 text-[0.9375rem]">
+    <div className="border-b border-line bg-ink-2 text-sm">
       <p
         className={`${container} py-2 before:mr-2 before:inline-block before:size-2 before:rounded-full before:bg-gate-2 before:content-['']`}
       >

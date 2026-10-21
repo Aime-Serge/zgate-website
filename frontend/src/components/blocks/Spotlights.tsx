@@ -36,9 +36,7 @@ export function Spotlights({ block }: { block: BlockOf<"spotlights"> }) {
                   </span>
                 ) : null}
                 <span className="font-display text-xl leading-[1.25] font-bold">{item.title}</span>
-                {item.body ? (
-                  <span className="text-[0.9375rem] text-paper-dim">{item.body}</span>
-                ) : null}
+                {item.body ? <span className="text-sm/6 text-paper-dim">{item.body}</span> : null}
                 <span className={cx(arrowLink, "mt-auto pt-2")}>
                   {item.label}
                   <ArrowRight className="size-4" />

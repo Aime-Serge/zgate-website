@@ -89,7 +89,7 @@ export function Tabs({
               onKeyDown={(event) => onKeyDown(event, index)}
               className={cx(
                 item.toneClass,
-                "min-h-11 shrink-0 cursor-pointer rounded-full border px-4 py-2 text-[0.9375rem] font-semibold whitespace-nowrap transition-colors duration-150",
+                "min-h-11 shrink-0 cursor-pointer rounded-full border px-4 py-2 text-sm font-semibold whitespace-nowrap transition-colors duration-150",
                 active
                   ? "border-accent bg-glow-strong text-paper"
                   : "border-line bg-transparent text-paper-dim hover:border-paper-dim hover:text-paper",

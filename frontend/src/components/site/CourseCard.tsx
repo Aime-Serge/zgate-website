@@ -63,7 +63,7 @@ export function CourseCard({ course, platform }: { course: Course; platform: str
         </Link>
       </h3>
       <p className="text-paper-dim">{course.summary || course.audience}</p>
-      <dl className="mt-auto grid grid-cols-2 gap-x-4 gap-y-4 border-t border-line pt-4 text-[0.9375rem]">
+      <dl className="mt-auto grid grid-cols-2 gap-x-4 gap-y-4 border-t border-line pt-4 text-sm">
         {course.format ? (
           <div>
             <dt className={label}>Format</dt>

@@ -69,7 +69,7 @@ export function FactStrip({
     >
       <div className={container}>
         {heading ? <h2 className="mb-4 text-center text-base">{heading}</h2> : null}
-        <ul className="flex list-none flex-wrap items-center justify-center gap-x-10 gap-y-3 font-mono text-[0.8125rem] tracking-[0.04em] text-paper-dim">
+        <ul className="flex list-none flex-wrap items-center justify-center gap-x-10 gap-y-3 font-mono text-sm tracking-[0.04em] text-paper-dim">
           {facts.map((entry) => (
             <li
               key={entry.id ?? entry.fact}
@@ -128,7 +128,7 @@ function renderBlock(block: Block, context: BlockContext, isFirst: boolean) {
                       {door.need}
                     </span>
                     {door.answer ? (
-                      <span className="text-[0.9375rem] text-paper-dim">{door.answer}</span>
+                      <span className="text-sm/6 text-paper-dim">{door.answer}</span>
                     ) : null}
                     <span className={cx(arrowLink, "mt-auto text-accent")}>
                       {door.label}
@@ -191,7 +191,7 @@ function renderBlock(block: Block, context: BlockContext, isFirst: boolean) {
                       <GateMark division={division.slug} className="w-6" />
                       <span className="font-display text-xl font-semibold">{division.name}</span>
                     </span>
-                    <span className="mb-4 text-[0.9375rem] text-paper-dim">{division.mission}</span>
+                    <span className="mb-4 text-sm/6 text-paper-dim">{division.mission}</span>
                     <span className={cx(arrowLink, "mt-auto text-accent")}>
                       Explore {division.shortName}
                       <ArrowRight className="size-4" />

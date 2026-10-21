@@ -57,9 +57,7 @@ export function Latest({ block, context }: { block: BlockOf<"latest">; context: 
           <div className="max-w-[46rem]">
             <Eyebrow>{block.eyebrow}</Eyebrow>
             <h2 className={sectionHeading}>{block.heading}</h2>
-            {block.intro ? (
-              <p className="mt-4 text-[1.0625rem] text-paper-dim">{block.intro}</p>
-            ) : null}
+            {block.intro ? <p className="mt-4 text-lede text-paper-dim">{block.intro}</p> : null}
           </div>
           <div className="flex flex-wrap gap-3">
             <Link href="/academy/courses" className={buttonSecondary}>
@@ -114,9 +112,7 @@ export function Latest({ block, context }: { block: BlockOf<"latest">; context: 
                       {row.title}
                     </span>
                     {row.detail ? (
-                      <span className="line-clamp-2 text-[0.9375rem] text-paper-dim">
-                        {row.detail}
-                      </span>
+                      <span className="line-clamp-2 text-sm/6 text-paper-dim">{row.detail}</span>
                     ) : null}
                     <span className={cx(arrowLink, "mt-1")}>
                       {row.kind === "Course" ? "See the course" : "Read"}

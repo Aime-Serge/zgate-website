@@ -52,7 +52,7 @@ export function SectionHead({
           <KeepBrand text={heading} />
         </h2>
       ) : null}
-      {intro ? <p className="mt-4 text-[1.0625rem] text-paper-dim">{intro}</p> : null}
+      {intro ? <p className="mt-4 text-lede text-paper-dim">{intro}</p> : null}
     </div>
   );
 }
@@ -116,13 +116,13 @@ export function Figure({
     >
       <span
         className={cx(
-          "font-display leading-none font-bold tracking-[-0.03em] whitespace-nowrap text-accent",
-          large ? "text-[clamp(3.5rem,9vw,5.5rem)]" : "text-[clamp(2.75rem,5vw,3.5rem)]",
+          "font-display font-bold whitespace-nowrap text-accent",
+          large ? "text-figure-lg" : "text-figure",
         )}
       >
         {value}
       </span>
-      <span className="text-[1.0625rem] text-paper">{label}</span>
+      <span className="text-lg text-paper">{label}</span>
     </li>
   );
 }

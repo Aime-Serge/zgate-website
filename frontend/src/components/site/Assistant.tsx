@@ -224,7 +224,7 @@ export function Assistant({ aiMode, whatsapp }: { aiMode: boolean; whatsapp: str
                   }
                 }}
                 placeholder="Ask about EBM, VAT, courses…"
-                className="max-h-28 min-h-11 flex-1 resize-none rounded-2xl border border-line bg-ink-2 px-4 py-2.5 text-[0.9375rem] text-paper placeholder:text-paper-dim focus-visible:border-gate-2"
+                className="max-h-28 min-h-11 flex-1 resize-none rounded-2xl border border-line bg-ink-2 px-4 py-2.5 text-base text-paper placeholder:text-paper-dim focus-visible:border-gate-2"
               />
               <button
                 type="submit"
@@ -235,7 +235,7 @@ export function Assistant({ aiMode, whatsapp }: { aiMode: boolean; whatsapp: str
                 <Send className="size-5" />
               </button>
             </div>
-            <p className="mt-2 text-[0.75rem] leading-snug text-paper-dim">
+            <p className="mt-2 text-xs leading-snug text-paper-dim">
               Don&rsquo;t share passwords, tax IDs or client records.
               {aiMode ? " Questions are answered by AI, processed outside Rwanda." : null}{" "}
               <Link href="/contact" className="underline underline-offset-2">
@@ -255,6 +255,6 @@ export function Assistant({ aiMode, whatsapp }: { aiMode: boolean; whatsapp: str
 }
 
 const bubbleAssistant =
-  "max-w-[90%] rounded-2xl rounded-tl-sm bg-ink-2 px-3.5 py-2.5 text-[0.9375rem] leading-relaxed text-paper";
+  "max-w-[90%] rounded-2xl rounded-tl-sm bg-ink-2 px-3.5 py-2.5 text-sm leading-relaxed text-paper";
 const bubbleUser =
-  "max-w-[85%] rounded-2xl rounded-tr-sm bg-action px-3.5 py-2.5 text-[0.9375rem] leading-relaxed text-white";
+  "max-w-[85%] rounded-2xl rounded-tr-sm bg-action px-3.5 py-2.5 text-sm leading-relaxed text-white";

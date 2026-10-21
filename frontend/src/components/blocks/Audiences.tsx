@@ -15,9 +15,7 @@ function AudiencePanel({ item }: { item: Audience }) {
   return (
     <div className="grid items-center gap-10 rounded-2xl border border-line bg-[radial-gradient(ellipse_70%_90%_at_0%_0%,var(--glow-strong),transparent_65%)] p-6 sm:p-10 lg:grid-cols-[1.1fr_1fr]">
       <div>
-        <h3 className="text-[clamp(1.75rem,3.4vw,2.5rem)] leading-[1.1] font-bold tracking-[-0.025em]">
-          {item.headline}
-        </h3>
+        <h3 className="text-subtitle font-bold">{item.headline}</h3>
         <p className="mt-4 max-w-[52ch] text-lg text-paper-dim">{item.body}</p>
         <Link href={item.href} className={cx(button, "mt-8")}>
           {item.label}

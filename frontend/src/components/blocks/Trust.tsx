@@ -31,7 +31,7 @@ export function Trust({ block }: { block: BlockOf<"trust"> }) {
                   <Icon className="size-6" />
                 </span>
                 <h3 className="text-lg font-bold">{item.title}</h3>
-                <p className="text-[0.9375rem] text-paper-dim">{item.body}</p>
+                <p className="text-sm/6 text-paper-dim">{item.body}</p>
               </li>
             );
           })}

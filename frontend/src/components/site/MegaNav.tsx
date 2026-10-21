@@ -291,7 +291,7 @@ export function MegaNav({
                   {activeService.included.map((item) => (
                     <li
                       key={item}
-                      className="relative pl-6 text-[0.9375rem] before:absolute before:top-[0.55em] before:left-0 before:size-2 before:rounded-sm before:bg-accent before:content-['']"
+                      className="relative pl-6 text-sm before:absolute before:top-[0.55em] before:left-0 before:size-2 before:rounded-sm before:bg-accent before:content-['']"
                     >
                       {item}
                     </li>
@@ -615,7 +615,7 @@ export function MegaNav({
             {facts.length > 0 ? (
               <div className={promo}>
                 <p className="font-display text-xl font-bold">Check us before you call</p>
-                <ul className="grid list-none gap-2 font-mono text-[0.8125rem] text-paper-dim">
+                <ul className="grid list-none gap-2 font-mono text-sm text-paper-dim">
                   {facts.map((fact) => (
                     <li
                       key={fact}

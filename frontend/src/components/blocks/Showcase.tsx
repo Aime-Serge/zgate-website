@@ -39,7 +39,7 @@ function Console({ division }: { division: Division }) {
           {division.included.map((entry) => (
             <li
               key={entry.id ?? entry.item}
-              className="flex gap-3 rounded-xl border border-line bg-ink p-4 text-[0.9375rem]"
+              className="flex gap-3 rounded-xl border border-line bg-ink p-4 text-sm/6"
             >
               <span className="mt-0.5 inline-flex size-6 shrink-0 items-center justify-center rounded-full bg-glow-strong text-accent">
                 <Check className="size-4" />
@@ -97,7 +97,7 @@ export function Showcase({
                   <span className="inline-flex size-7 shrink-0 items-center justify-center rounded-full border border-gate-2/50 font-mono text-xs text-gate-2">
                     {index + 1}
                   </span>
-                  <span className="pt-0.5 text-[0.9375rem]">{step}</span>
+                  <span className="pt-0.5 text-base">{step}</span>
                 </li>
               ))}
             </ol>
