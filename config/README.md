@@ -1,17 +1,13 @@
 # @zgate/config
 
-Shared presets so every Z-GATE package formats, type-checks and lints the same way.
+Shared presets so this repository's TypeScript packages format, type-check and lint the same way. The frontend keeps its own Next.js config (`frontend/eslint.config.mjs`, `frontend/tsconfig.json`).
 
-| Preset                  | Use it from a package                                                                                                             |
-| ----------------------- | --------------------------------------------------------------------------------------------------------------------------------- |
-| `prettier.json`         | Already active repo-wide: the root `.prettierrc.json` points here.                                                                |
-| `tsconfig/base.json`    | Strict compiler settings every package shares.                                                                                    |
-| `tsconfig/library.json` | `"extends": "@zgate/config/tsconfig/library.json"` (shared packages, Node services).                                              |
-| `tsconfig/nextjs.json`  | `"extends": "@zgate/config/tsconfig/nextjs.json"` (Next.js apps).                                                                 |
-| `eslint/library.js`     | `export default library(import.meta.dirname)`                                                                                     |
-| `eslint/next.js`        | `export { default } from "@zgate/config/eslint/next"`                                                                             |
-| `src/schemaCompat.ts`   | `import { compareSnapshots } from "@zgate/config/schema-compat"`: the Zod/JSON Schema compatibility check for published contracts |
+| Preset                  | Used by                                                                                                   |
+| ----------------------- | --------------------------------------------------------------------------------------------------------- |
+| `prettier.json`         | The whole repository: the root `.prettierrc.json` points here                                             |
+| `tsconfig/base.json`    | Strict compiler settings, extended by `tsconfig/library.json`                                             |
+| `tsconfig/library.json` | `packages/*`: `"extends": "@zgate/config/tsconfig/library.json"`                                          |
+| `eslint/library.js`     | `packages/*`: `export default library(import.meta.dirname)`                                               |
+| `src/schemaCompat.ts`   | `@zgate/config/schema-compat`: fails a published contract's tests when a change would break its consumers |
 
 Path options (`outDir`, `rootDir`, `paths`, `include`) stay in each package's own tsconfig, because TypeScript resolves them relative to the file that declares them.
-
-The presets mirror the settings the existing apps (`frontend`, `backend`) already use. Those apps keep their own config files for now, so adopting the presets there is a separate, reviewable change rather than a side effect of this package.

@@ -6,6 +6,7 @@ describe("leadFormSchema", () => {
     kind: "contact",
     name: "  Solange  ",
     contact: "+250 788 000 000",
+    serviceInterests: ["advisory"],
     message: "",
     consentContact: "on",
   };
@@ -14,6 +15,7 @@ describe("leadFormSchema", () => {
     const result = leadFormSchema.safeParse(base);
     expect(result.success).toBe(true);
     expect(result.data?.name).toBe("Solange");
+    expect(result.data?.preferredChannel).toBe("provided-contact");
     expect(result.data?.consentMarketing).toBe(false);
   });
 
@@ -24,19 +26,53 @@ describe("leadFormSchema", () => {
   });
 
   it("requires a course on the waitlist form", () => {
-    expect(leadFormSchema.safeParse({ ...base, kind: "waitlist" }).success).toBe(false);
-    expect(leadFormSchema.safeParse({ ...base, kind: "waitlist", courseId: "3" }).success).toBe(
-      true,
-    );
+    const waitlist = { ...base, kind: "waitlist", serviceInterests: [] };
+    expect(leadFormSchema.safeParse(waitlist).success).toBe(false);
+    expect(leadFormSchema.safeParse({ ...waitlist, courseId: "3" }).success).toBe(true);
+  });
+
+  it("routes waitlist submissions through Academy rather than service selections", () => {
+    expect(
+      leadFormSchema.safeParse({
+        ...base,
+        kind: "waitlist",
+        courseId: "3",
+        serviceInterests: ["advisory"],
+      }).success,
+    ).toBe(false);
   });
 
   it("rejects oversized input", () => {
     expect(leadFormSchema.safeParse({ ...base, name: "x".repeat(201) }).success).toBe(false);
   });
 
-  it("ignores an unknown interest instead of failing the form", () => {
+  it("allows more than one service area", () => {
     expect(
-      leadFormSchema.safeParse({ ...base, interest: "hacking" }).data?.interest,
-    ).toBeUndefined();
+      leadFormSchema.safeParse({ ...base, serviceInterests: ["advisory", "data"] }).success,
+    ).toBe(true);
+  });
+
+  it("requires a service area for a contact enquiry", () => {
+    const result = leadFormSchema.safeParse({ ...base, serviceInterests: [] });
+    expect(result.success).toBe(false);
+    expect(result.error?.issues.some((issue) => issue.path[0] === "serviceInterests")).toBe(true);
+  });
+
+  it("keeps Not sure yet exclusive", () => {
+    expect(
+      leadFormSchema.safeParse({ ...base, serviceInterests: ["not-sure", "tech"] }).success,
+    ).toBe(false);
+    expect(leadFormSchema.safeParse({ ...base, serviceInterests: ["not-sure"] }).success).toBe(
+      true,
+    );
+  });
+
+  it("rejects unknown service areas and duplicate choices", () => {
+    expect(
+      leadFormSchema.safeParse({ ...base, serviceInterests: ["advisory", "hacking"] }).success,
+    ).toBe(false);
+    expect(
+      leadFormSchema.safeParse({ ...base, serviceInterests: ["advisory", "advisory"] }).success,
+    ).toBe(false);
   });
 });

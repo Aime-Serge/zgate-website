@@ -1,0 +1,89 @@
+# Z-GATE website CMS (backend/) - staging or production, on its OWN host.
+# The public site runs on another host (frontend/deploy/); the two talk
+# over HTTPS only. Runbook: docs/DEPLOYMENT.md (part B).
+#
+# On the CMS host, from a checkout of this folder (or a copy of it):
+#   cp edge.env.example       /etc/zgate/edge.env              # fill in
+#   cp backend.env.example    /etc/zgate/website-backend.env   # fill in
+#   cp migrate.env.example    /etc/zgate/website-migrate.env   # fill in
+#   export BACKEND_TAG=<git sha>
+#   C="docker compose -f compose.yml --env-file /etc/zgate/edge.env"
+#   $C run --rm website-migrate
+#   $C up -d --wait
+#
+# PostgreSQL is NOT in this file: it runs on a separate data host (or a
+# managed in-country service, ADR-004) with its own backups.
+
+name: zgate-website-backend
+
+x-hardening: &hardening
+  restart: unless-stopped
+  security_opt:
+    - no-new-privileges:true
+  cap_drop:
+    - ALL
+  logging:
+    driver: json-file
+    options:
+      max-size: "20m"
+      max-file: "5"
+
+x-image: &image
+  image: ghcr.io/aime-serge/z-gate-website-backend:${BACKEND_TAG:?set BACKEND_TAG to a git SHA}
+
+services:
+  caddy:
+    <<: *hardening
+    # Pinned by release age (>= 14 days, docs/SECURITY.md).
+    image: caddy:2.11.4-alpine
+    cap_add:
+      - NET_BIND_SERVICE
+    ports:
+      - "80:80"
+      - "443:443"
+      - "443:443/udp"
+    environment:
+      CMS_HOST: ${CMS_HOST:?set CMS_HOST}
+      ADMIN_ALLOWED_IPS: ${ADMIN_ALLOWED_IPS:?set ADMIN_ALLOWED_IPS}
+      API_ALLOWED_IPS: ${API_ALLOWED_IPS:-0.0.0.0/0 ::/0}
+      ACME_EMAIL: ${ACME_EMAIL:?set ACME_EMAIL}
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    depends_on:
+      website-backend:
+        condition: service_healthy
+    mem_limit: 256m
+
+  # The CMS: admin, the content API the public site reads, lead intake.
+  # Only Caddy reaches it; no host port is published.
+  website-backend:
+    <<: [*hardening, *image]
+    env_file: /etc/zgate/website-backend.env
+    expose:
+      - "3004"
+    volumes:
+      - website_media:/data/media
+    mem_limit: 768m
+
+  # One-off, before each rollout: `$C run --rm website-migrate`. Same image
+  # and settings as the CMS, but connected as the database owner role
+  # (website-migrate.env overrides DATABASE_URL; backend/database/README.md).
+  website-migrate:
+    <<: *image
+    profiles: ["migrate"]
+    command: ["python", "manage.py", "migrate", "--noinput"]
+    env_file:
+      - path: /etc/zgate/website-backend.env
+      - path: /etc/zgate/website-migrate.env
+        required: false
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+
+volumes:
+  caddy_data:
+  caddy_config:
+  website_media:

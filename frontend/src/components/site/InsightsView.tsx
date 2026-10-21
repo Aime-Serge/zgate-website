@@ -1,6 +1,17 @@
-import { RichText } from "@payloadcms/richtext-lexical/react";
+import { RichText } from "./RichText";
 import Link from "next/link";
 import type { Article } from "@zgate/cms-contracts";
+import {
+  container,
+  cx,
+  eyebrow,
+  hero,
+  heroHeading,
+  prose,
+  roomHeading,
+  section,
+  sectionRule,
+} from "@/components/ui/styles";
 
 const dayFormat = new Intl.DateTimeFormat("en-GB", {
   day: "numeric",
@@ -13,28 +24,35 @@ export const articlePath = (article: Pick<Article, "slug">) => `/insights/${arti
 export function InsightsView({ articles }: { articles: Article[] }) {
   return (
     <>
-      <section className="max block block--hero">
-        <h1>Insights</h1>
+      <section className={hero}>
+        <div className={container}>
+          <p className={eyebrow}>Plain-language explainers</p>
+          <h1 className={heroHeading}>Insights</h1>
+        </div>
       </section>
-      <section className="max block">
-        <ul className="article-list">
-          {articles.map((article) => (
-            <li key={article.id}>
-              <article>
-                <h2>
-                  <Link href={articlePath(article)}>{article.title}</Link>
-                </h2>
-                <p className="muted">
-                  <time dateTime={article.publishedOn}>
-                    {dayFormat.format(new Date(article.publishedOn))}
-                  </time>{" "}
-                  · {article.authorName}
-                </p>
-                <p>{article.excerpt}</p>
-              </article>
-            </li>
-          ))}
-        </ul>
+      <section className={cx(section, sectionRule)}>
+        <div className={container}>
+          <ul className="grid list-none gap-8">
+            {articles.map((article) => (
+              <li key={article.id}>
+                <article>
+                  <h2 className="text-2xl">
+                    <Link href={articlePath(article)} className="underline underline-offset-4">
+                      {article.title}
+                    </Link>
+                  </h2>
+                  <p className="mt-1 text-paper-dim">
+                    <time dateTime={article.publishedOn}>
+                      {dayFormat.format(new Date(article.publishedOn))}
+                    </time>{" "}
+                    · {article.authorName}
+                  </p>
+                  <p className="mt-2">{article.excerpt}</p>
+                </article>
+              </li>
+            ))}
+          </ul>
+        </div>
       </section>
     </>
   );
@@ -42,18 +60,22 @@ export function InsightsView({ articles }: { articles: Article[] }) {
 
 export function ArticleView({ article }: { article: Article }) {
   return (
-    <article className="max block prose">
-      <p className="eyebrow">
-        <Link href="/insights">Insights</Link>
+    <article className={cx(container, section)}>
+      <p className={eyebrow}>
+        <Link href="/insights" className="underline underline-offset-2">
+          Insights
+        </Link>
       </p>
-      <h1>{article.title}</h1>
-      <p className="muted">
+      <h1 className={roomHeading}>{article.title}</h1>
+      <p className="mb-8 text-paper-dim">
         <time dateTime={article.publishedOn}>
           {dayFormat.format(new Date(article.publishedOn))}
         </time>{" "}
         · {article.authorName}
       </p>
-      <RichText data={article.body} />
+      <div className={prose}>
+        <RichText html={article.body} />
+      </div>
     </article>
   );
 }

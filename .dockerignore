@@ -1,7 +1,10 @@
-# Build context is the repository root for every image (pnpm workspace).
-# Keep it small and free of secrets.
+# Build context of the frontend image (frontend/Dockerfile) and the local
+# dev image is the repository root: the pnpm workspace's lockfile and
+# packages/ live here. Keep it small and free of secrets.
+# The CMS image builds from backend/ alone, with backend/.dockerignore.
 .git
 .github
+.trunk
 **/node_modules
 **/.next
 **/dist
@@ -14,3 +17,9 @@ docs
 **/.eslintcache
 *.log
 *.tgz
+**/test-results
+**/playwright-report
+# Not part of the public site: changing them must not rebuild its image.
+backend
+frontend/deploy
+compose.yml

@@ -1,0 +1,64 @@
+# Edge proxy of the public site's host (frontend/deploy/compose.yml,
+# docs/DEPLOYMENT.md).
+#
+#   SITE_HOST   the public site, e.g. www.example.rw
+#   APEX_HOST   the bare domain, redirected to SITE_HOST
+#
+# The CMS has its own host and edge (backend/deploy/Caddyfile); the
+# e-learning platform's learn. host another, in its own repository
+# (ADR-010). Caddy obtains and renews TLS certificates itself (ACME_EMAIL).
+#
+# X-Forwarded-For: Caddy doesn't trust client-supplied forwarding headers
+# (no trusted_proxies configured), so the app receives exactly one entry -
+# the visitor's real address. That matches TRUSTED_PROXIES=1 in
+# website-frontend.env. If a CDN is ever put in front of Caddy, add it to
+# trusted_proxies below AND set TRUSTED_PROXIES=2.
+
+{
+	email {$ACME_EMAIL}
+}
+
+{$SITE_HOST} {
+	encode zstd gzip
+	header {
+		# Browsers must only ever use HTTPS for these hosts. Add "preload"
+		# only once the production domain is final (decision D4).
+		Strict-Transport-Security "max-age=31536000; includeSubDomains"
+		-Server
+	}
+
+	# Next.js build assets are content-hashed: safe to cache for a year.
+	@immutable path /_next/static/*
+	header @immutable Cache-Control "public, max-age=31536000, immutable"
+
+	# The CMS's "content changed" webhook comes from the CMS host over the
+	# internet. It is HMAC-signed and replay-limited (the signature is the
+	# control); REVALIDATE_ALLOWED_IPS can also narrow it to the CMS host's
+	# outbound address.
+	@revalidate path /api/revalidate
+	handle @revalidate {
+		@revalidate_allowed remote_ip {$REVALIDATE_ALLOWED_IPS}
+		handle @revalidate_allowed {
+			request_body {
+				max_size 4KB
+			}
+			reverse_proxy website-frontend:3002
+		}
+		handle {
+			respond "Not found" 404
+		}
+	}
+
+	handle {
+		# Form posts are small; nothing on the public site takes uploads.
+		request_body {
+			max_size 256KB
+		}
+		reverse_proxy website-frontend:3002
+	}
+}
+
+# Bare domain -> canonical public host.
+{$APEX_HOST} {
+	redir https://{$SITE_HOST}{uri} permanent
+}

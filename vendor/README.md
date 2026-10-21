@@ -1,6 +1,6 @@
 # vendor/
 
-A snapshot of the contract package the **e-learning repository** owns and this repository is checked against (README.md, "Contracts"):
+A snapshot of the contract package the **e-learning repository** owns and this repository is checked against (docs/DEVELOPER_GUIDE.md, "Contracts"):
 
 | Folder                 | Package                      | Used by                                |
 | ---------------------- | ---------------------------- | -------------------------------------- |

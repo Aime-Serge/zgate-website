@@ -1,125 +1,146 @@
-# Z-GATE Website — Developer Guide
+# Developer Guide
 
-**Orientation for a new engineer's first day.** Architecture and plans for the current re-platform live in `docs/platform-v2/`; read its `README.md` first. The product split is recorded in `docs/architecture/ADR/ADR-007-separate-product-backends.md`, the self-contained products in `ADR-008-self-contained-products.md`, the independent workspaces in `ADR-009-independent-workspaces.md`, and this repository's split from the e-learning platform in `ADR-010-separate-repositories.md`. On an 8 GB machine, read `docs/DEVELOPMENT_LOW_MEMORY.md` too.
+Your first day on the website's code. What the site must do for visitors: [WEBSITE.md](WEBSITE.md). Why it's built this way: [adr/](adr/).
 
-## Repository layout (one pnpm workspace)
+## Layout
 
 ```text
-package.json, pnpm-workspace.yaml, pnpm-lock.yaml, .npmrc, .dependency-cruiser.cjs
-frontend/              Next.js public site: reads content from the CMS over REST, no database
-backend/               Payload CMS (headless): admin, REST API, lead intake; migrations in src/migrations
-packages/              website-contracts (lead webhook schemas), brand-ui (tokens), cms-contracts (website-only)
-config/                TypeScript/ESLint/Prettier presets + schema-compatibility check
-tests/contracts/       proves the website works with e-learning's contract
-vendor/                checksummed snapshot of that contract (scripts/sync-contracts.mjs; never edited by hand)
-database/              roles SQL, Postgres configs (prod + small dev), backup.sh / restore.sh
-deploy/                compose.yml (dev: Postgres; apps under --profile full), compose.prod.yml, edge/ (Caddy), env/
-docs/                  scope, deploy runbook, guides, ADRs, platform-v2 plan, marketing, design, business, product, UX
-scripts/               dev/migrate helpers, contract snapshot sync, dev image
-.github/workflows/     website.yml (verify, browser checks, images), repository.yml (secrets scan)
+frontend/            public site: Next.js 16 + Tailwind CSS v4 (www., port 3002). No database
+  deploy/            its host: compose.yml, Caddyfile, env templates
+backend/             CMS: Django 5.2 + Wagtail 8, headless (cms., port 3004). See backend/README.md
+  deploy/            its host: compose.yml, Caddyfile, env templates
+  database/          Postgres roles, configs, backup.sh / restore.sh
+packages/
+  cms-contracts/     what the frontend may use from the CMS: content types, slugs, webhook signing
+  website-contracts/ the lead form and lead intake schemas; also a contract the e-learning platform relies on
+config/              Prettier, TypeScript and ESLint presets; schema-compatibility check
+tests/contracts/     proves the website works with the e-learning platform's contract
+vendor/              checksummed snapshot of that contract (never edited by hand)
+compose.yml          local development only (Postgres; --profile full for everything)
+scripts/             dev, migrate, contract-sync helpers; the local dev image
+docs/                this guide, WEBSITE, CONTENT_GUIDE, SECURITY, DEPLOYMENT, adr/
 ```
 
-The e-learning platform (API, LMS frontend, worker, the frozen v1 ops portal, the customer-journey tests and the v1 platform documentation) is a **separate repository**.
+The e-learning platform (courses, enrollment, certificates) is a **separate repository** ([ADR-010](adr/ADR-010-separate-repositories.md)). This repository only links to it.
 
-Documents written before 2026-10-19 use the monorepo's paths: read `website/X` as `X` here, and `elearning/X` or `legacy/ops` as the e-learning repository (ADR-010 §7). Older documents use older paths still: `backend/` and `frontend/` (v1), then `apps/website` (briefly `website/app`), which became `frontend/` + `backend/` here; `shared/ui` became `packages/brand-ui`, `platform/edge` became `deploy/edge`, `platform/scripts` became `scripts/`. The monorepo's last state is its tag `monorepo-final`.
-
-## Boundaries (enforced)
-
-- `frontend/` never imports `backend/`; it uses `@zgate/cms-contracts` instead of the CMS's source and never loads Payload at runtime. `backend/` never imports `frontend/`. `packages/*` and `config/` never import an app; `@zgate/website-contracts` imports no other workspace package.
-- The e-learning platform is used **only** by `tests/contracts`, and only through `@zgate/elearning-contracts` (the snapshot in `vendor/`).
-
-`pnpm lint:boundaries` (dependency-cruiser, `.dependency-cruiser.cjs`) checks this, and CI runs it.
+**Boundaries, checked by `pnpm lint:boundaries` in CI:** `frontend/` never imports `backend/` (it's Python, reached over HTTP); `packages/*` and `config/` never import an app; `@zgate/website-contracts` imports no other workspace package; only `tests/contracts` touches the e-learning contract.
 
 ## Get running
 
-**Requirements:** Node.js 22.12 or later and corepack (bundled with Node). pnpm itself is pinned by `package.json` (`packageManager`), so don't install it globally. Run `corepack enable` once, or prefix commands with `corepack pnpm`.
-
-**Hybrid mode (the default, and the one for small machines):** Postgres runs in Docker; the apps run natively.
+Needs Node.js ≥ 22.12 (pnpm comes from `packageManager` through corepack: run `corepack enable` once), Python 3.14 and Docker.
 
 ```bash
 pnpm install
-docker compose -f deploy/compose.yml up -d          # Postgres on localhost:5432
-cp deploy/env/dev.env.example backend/.env
-cp deploy/env/dev.env.example frontend/.env
-pnpm db:migrate                    # as the owner role (DATABASE_MIGRATION_URL)
-pnpm --filter @zgate/website-backend seed   # once: the approved copy
-pnpm dev                           # CMS http://localhost:3004/admin, site http://localhost:3002
+python -m venv backend/.venv
+backend/.venv/Scripts/python -m pip install -r backend/requirements/development.txt   # bin/python on Linux/macOS
+docker compose up -d                                # Postgres only, on 127.0.0.1:5432
+cp backend/.env.example backend/.env                # set DJANGO_SECRET_KEY
+cp frontend/.env.example frontend/.env
+pnpm db:migrate                                     # as the database owner role
+(cd backend && .venv/Scripts/python manage.py seed_content)      # the approved copy, once
+(cd backend && .venv/Scripts/python manage.py createsuperuser)   # your admin login
+pnpm dev                                            # CMS http://localhost:3004/admin, site http://localhost:3002
 ```
 
-- The apps connect as the database's least-privilege app role; `pnpm db:migrate` swaps in the owner role from `DATABASE_MIGRATION_URL` (`scripts/migrate.mjs`). Roles, configs and backups: `database/README.md`.
-- **Everything in containers (heavier):** `docker compose -f deploy/compose.yml --profile full up`. Containers have memory caps (Postgres 256m, Node services 512m, Next.js apps 1g).
-- The e-learning platform's Postgres uses port 5433, so both products can run on one machine; on 8 GB, run one at a time.
+- The apps connect as the least-privilege app role; `pnpm db:migrate` swaps in the owner role from `DATABASE_MIGRATION_URL`.
+- Everything in containers instead (heavier): `docker compose --profile full up`.
+- The three shared secrets (`CMS_API_TOKEN`, `LEAD_INTAKE_TOKEN`, `REVALIDATE_SECRET`) must match in both `.env` files. A `.env` made before 2026-10-21 has no `CMS_API_TOKEN`: add it to both, or to neither (the CMS then serves its API without one).
+- First page after a cold start may return a 500 while the CMS warms up. Reload once http://localhost:3004/api/ready answers.
 
-## The website (`frontend/` + `backend/`)
+## How the two apps work together
 
-Two apps (ADR-007, second amendment): the **public site** (`frontend/`, `@zgate/website-frontend`, port 3002) and the **CMS** (`backend/`, `@zgate/website-backend`, Payload, port 3004). Only the CMS touches the database. Copy `deploy/env/dev.env.example` to both `backend/.env` and `frontend/.env`; each app reads only its own variables, and the two shared secrets must match.
+Server to server only; the browser never calls the CMS. In production the two apps run on separate hosts and these calls go over HTTPS ([ADR-013](adr/ADR-013-independent-hosting.md)), so **a change to one side must keep working with the other side's current release**: the order rules are in [DEPLOYMENT.md](DEPLOYMENT.md) §4.
 
-| Task | Command (`pnpm --filter @zgate/website-backend …`) |
-|---|---|
-| Apply migrations | `migrate` |
-| Load the approved copy (only creates missing items, never overwrites CMS edits) | `seed` |
-| After changing a collection, block or global | `generate:types`, then `migrate:create <name>`, then commit the new files in `src/migrations/` |
-| After adding a custom admin component | `generate:importmap` |
+| Flow    | How                                                                                                                                                                                                                                        |
+| ------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Content | The frontend reads **published** content from the CMS's JSON API (`frontend/src/lib/cms.ts` → `backend/content/views.py`) with the read token `CMS_API_TOKEN`. It holds no CMS login or database credentials                               |
+| Forms   | One server action (`frontend/src/app/(site)/actions.ts`) checks the honeypot, rate limits and schema, then posts to `POST /api/lead-intake` with `LEAD_INTAKE_TOKEN` (`backend/leads/views.py`), which validates again and stores the lead |
+| Cache   | Pages render on first visit and stay cached. On publish, the CMS sends an HMAC-signed webhook (`REVALIDATE_SECRET`) to `/api/revalidate`, which marks every page stale                                                                     |
+| Types   | `@zgate/cms-contracts` mirrors the API's JSON shapes. Rename a field in `backend/content/serializers.py` and in `packages/cms-contracts/src/content-types.ts` together; the frontend typecheck shows every use                             |
 
-- **The schema never auto-syncs** (`push: false`). Every change goes through a reviewed migration file, so dev and production can't drift.
-- **Roles:** `editor` saves drafts only; `publisher` can publish and work leads; `admin` has everything plus users and the audit log. The first account is created at `/admin`.
-- **How the apps talk** (server to server; the browser never calls the CMS):
-  - Content: the frontend reads published documents anonymously over the CMS's REST API (`frontend/src/lib/cms.ts`). It holds no CMS or database credentials.
-  - Forms: the frontend posts submissions to `POST /api/lead-intake` with `LEAD_INTAKE_TOKEN` (`backend/src/endpoints/leadIntake.ts`).
-  - Cache: on publish the CMS sends an HMAC-signed webhook (`REVALIDATE_SECRET`) to `frontend/src/app/api/revalidate` (`backend/src/hooks/revalidate.ts`).
-  - Shared types and schemas live in `packages/cms-contracts` (content types, webhook signing) and `packages/website-contracts` (lead form and webhook); the frontend never imports the CMS itself.
-- **Rendering:** no public page is built at `next build`, so neither image needs the CMS or a database at build time. Pages render on first visit, stay cached, and refresh automatically when content is published (the webhook above).
-- **Leads** can't be created over the REST API (only through token-guarded lead intake), and every staff read is audit-logged.
-- **Forms (contact, course waitlist)** submit through one server action (`frontend/src/app/(site)/actions.ts`) and work without JavaScript. **They don't appear until a privacy notice page (slug `privacy`) is published.** Until then, pages show phone, WhatsApp and email instead, so no personal data is collected without a notice.
-- **Form rate limiting** trusts `X-Forwarded-For` only as far as `TRUSTED_PROXIES` allows (default 1, meaning behind Caddy). Set it to match the real proxy chain, or visitors can spoof their address.
-- **Two hostnames in production, one per app.** The public site (`SITE_URL`, e.g. `www.`) has no `/admin` or CMS API at all. The CMS (`ADMIN_URL`, e.g. `cms.`) serves only `/admin`, `/api` and its own `robots.txt` (`backend/src/lib/hosts.ts`). This keeps the CMS login cookie away from the public pages' origin.
-- **Browser checks** (`pnpm --filter @zgate/website-frontend e2e`, Playwright) cover WCAG A/AA via axe, CSP and public/CMS separation, the forms through lead intake, and a JavaScript weight budget. They need both production builds running (`build`, then `start`, in each package) plus `DATABASE_URL`, and `E2E_ADMIN_URL=http://localhost:3004`. Run `pnpm --filter @zgate/website-frontend exec playwright install chromium` once beforehand.
-- **Deploying:** see `docs/WEBSITE_DEPLOY.md`.
-- **All public URLs go through `frontend/src/app/(site)/[[...slug]]`** (router: `frontend/src/lib/routes.ts`). Don't add plain routes such as `app/(site)/foo/page.tsx` for CMS content: Next would prerender them at build time, and the build would need the CMS.
+**Every public URL goes through `frontend/src/app/(site)/[[...slug]]`** (router: `frontend/src/lib/routes.ts`). Besides pages, divisions, courses and articles, it routes `/solutions/<slug>` (pages of type "solution", which have no other address) and `/search`. A new top-level route needs its slug added to `RESERVED_PAGE_SLUGS` in `backend/content/validators.py`, so no CMS page can take it. Don't add plain routes like `app/(site)/foo/page.tsx` for content: Next.js would prerender them at build time, and the build would then need the CMS.
+
+**Forms appear only once a privacy notice (page slug `privacy`) is published.** Until then visitors see WhatsApp, phone and email.
+
+## Changing things
+
+| Task                  | Where                                                                                                                                                                                                                                                              |
+| --------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| A page's text         | The CMS, not code ([CONTENT_GUIDE.md](CONTENT_GUIDE.md)). `backend/content/seed/` only fills an empty CMS                                                                                                                                                          |
+| A new content block   | `backend/content/blocks.py` (+ `PAGE_BLOCKS`), its serializer, its type in `content-types.ts`, its renderer in `frontend/src/components/blocks/RenderBlocks.tsx`                                                                                                   |
+| A model               | `backend/<app>/models.py`, then `python manage.py makemigrations` and commit the migration. CI fails on a model change without one                                                                                                                                 |
+| Lead form fields      | `packages/website-contracts/src/leads/schema.ts` **and** `backend/leads/forms.py` (same rules, same messages). A new field fixed at submission also goes in `IMMUTABLE_FIELDS` and the trigger (`backend/database/README.md`, "What the database itself enforces") |
+| A rule data must keep | Validate it in the form or `clean()` for the message, **and** as a `Meta.constraints` entry so the database keeps it whatever writes. Add a test that writes around the model                                                                                      |
+| Security headers      | `frontend/src/lib/security.ts` (CSP), `frontend/next.config.ts` (the rest), `backend/config/middleware.py` (CMS)                                                                                                                                                   |
+
+## Styling (Tailwind CSS v4)
+
+The public site is styled only with Tailwind utility classes; there is no component CSS.
+
+- **Tokens:** `frontend/src/app/(site)/globals.css` holds the brand tokens in `@theme` (colours, radii, the `xs` 480 / `nav` 900 / `wide` 1080 breakpoints), which become utilities such as `bg-ink`, `text-paper-dim`, `border-line`. The base layer only sets heading type, the focus ring and reduced motion.
+- **Shared class strings:** `frontend/src/components/ui/styles.ts`, joined with `cx()`.
+- **Division colour:** `tone("advisory")` (`components/ui/tone.ts`) on a wrapper sets `--accent` / `--glow`; inside it, use `text-accent`, `bg-accent`, `border-accent`.
+- **Rules:** write every class in full (never `` `text-${x}` ``, which Tailwind can't find); never put two utilities for the same property on one element (CSS order wins, not class order: add a complete variant to `styles.ts`, or write the string out in full); avoid arbitrary `min-[…px]:` breakpoints.
+- **Design language:** pill buttons, `rounded-2xl` cards (`card`, `cardLink`), mono chips, an indigo band (`band`, `bg-ink-3`) for figures and pillars, and inline SVG icons from `components/ui/icons.tsx` (no icon font or library).
+
+## Interactive components
+
+Each one works without JavaScript and needs no extra request:
+
+| Component                                       | Where                                                                                                                                     | Without JavaScript                                                                  |
+| ----------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------- |
+| `MegaNav` (`components/site/MegaNav.tsx`)       | Header: Services, Solutions, Academy and Company panels, the search panel; the phone drawer                                               | Triggers are plain links (`data-no-js-only`); the phone menu stays open             |
+| `Tabs` (`components/ui/Tabs.tsx`)               | Services console, "who we work with"                                                                                                      | Every panel shows under its own label                                               |
+| `Marquee` (`components/ui/Marquee.tsx`)         | "Situations we handle": a looping row with no scrollbar or controls that pauses on hover; pure CSS (`globals.css`), no JavaScript         | Moves the same (CSS only). With reduced motion: all cards, still, wrapped into rows |
+| `SiteSearch` (`components/site/SiteSearch.tsx`) | `/search`: filters the index (`lib/search.ts`) as the visitor types                                                                       | The form submits; the page lists everything on the site                             |
+| `Assistant` (`components/site/Assistant.tsx`)   | The round button and chat panel; asks `POST /api/assistant` (guided answers, or Claude when `ANTHROPIC_API_KEY` is set: docs/SECURITY.md) | Hidden (it needs a script); the contact pills and bottom bar remain                 |
+
+An inline script in `app/(site)/layout.tsx` sets `class="js"` on `<html>` before first paint. The fallbacks in `globals.css` key off it, so the scripted layout never jumps on hydration. Homepage sections live one per file in `components/blocks/`; `RenderBlocks.tsx` dispatches to them.
+
+**Keep pages cached:** don't read `searchParams` or headers in a page; it makes every visit render on the server. Read the address in the browser instead, as `LeadForm` does for `?service=` and `SiteSearch` for `?q=`.
+
+**Structured data** comes from `lib/structuredData.ts` through `components/site/JsonLd.tsx` (which escapes `<`). Use only facts Site settings already publish: no ratings, reviews or opening hours.
+
+## Checks
+
+| Command                                                     | What it does                                                                                                                                                                                                                                                                                |
+| ----------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `pnpm lint` · `pnpm typecheck` · `pnpm test` · `pnpm build` | Each task in every package, one at a time                                                                                                                                                                                                                                                   |
+| `pnpm lint:boundaries`                                      | The import boundaries above                                                                                                                                                                                                                                                                 |
+| `pnpm format` / `pnpm format:write`                         | Prettier check / fix (the CMS uses ruff instead)                                                                                                                                                                                                                                            |
+| `cd backend && pytest`                                      | CMS tests: in-memory SQLite locally, Postgres in CI                                                                                                                                                                                                                                         |
+| `cd backend && ruff check . && ruff format --check .`       | CMS lint and format                                                                                                                                                                                                                                                                         |
+| `pnpm --filter @zgate/website-frontend e2e`                 | Browser checks: accessibility (axe), headers and CSP, the forms end to end, the JavaScript budget. Needs both apps' production builds running, `DATABASE_URL` and `E2E_ADMIN_URL=http://localhost:3004`. First run `pnpm --filter @zgate/website-frontend exec playwright install chromium` |
+
+**Run lint, typecheck, test and build before every commit.** CI runs exactly these, plus the browser checks and image scans.
 
 ## Contracts with the e-learning platform
 
-- **What the website owns:** `@zgate/website-contracts` (lead form, lead intake, lead/waitlist webhook) and `@zgate/brand-ui`. Additive changes only; `packages/website-contracts/compat/` fails on a removed or renamed field or a narrowed type. After a change merges, open a pull request in the e-learning repository that runs `node scripts/sync-contracts.mjs --from <website checkout>` there, so its contract tests check the new version.
-- **What the website consumes:** `@zgate/elearning-contracts` (catalog API, enroll links), from `vendor/elearning-contracts`. To update it: `node scripts/sync-contracts.mjs --from <e-learning checkout>`, `pnpm install`, `pnpm --filter @zgate/website-contract-tests test`, then commit `vendor/` in one pull request.
-- `node scripts/sync-contracts.mjs --check` (run by CI) fails if `vendor/` was edited by hand.
+- **We provide** `@zgate/website-contracts`. Additive changes only: `packages/website-contracts/compat/` fails on a removed or renamed field or a narrowed type. After a change merges, the e-learning repository syncs its snapshot (`node scripts/sync-contracts.mjs --from <website checkout>`) so its tests run against it.
+- **We consume** `@zgate/elearning-contracts` (catalog API, enroll links) from `vendor/`. Update it with `node scripts/sync-contracts.mjs --from <e-learning checkout>`, then `pnpm install` and `pnpm --filter @zgate/website-contract-tests test`, in one pull request. CI's `--check` fails on a hand-edited `vendor/`.
 
-## Commands
+## Dependencies
 
-| Command | What it does |
-|---|---|
-| `pnpm lint` / `pnpm typecheck` / `pnpm test` / `pnpm build` | Runs the task in every package, one at a time |
-| `pnpm lint:boundaries` | Checks the import boundaries above |
-| `pnpm dev` | Starts the CMS and the public site |
-| `pnpm db:migrate` | Migrates the database as its owner role (local) |
-| `pnpm --filter <pkg> <script>` | Runs one package's script |
-| `pnpm format` / `pnpm format:write` | Prettier check / fix (rules: `config/prettier.json`) |
-| `node scripts/sync-contracts.mjs --check` / `--from <path>` | Verifies / updates the e-learning contract snapshot |
+No version younger than 14 days is ever installed (pnpm `minimumReleaseAge`; pip `--uploaded-prior-to=P14D` in `backend/scripts/lock.sh`). Forced transitive fixes (`overrides`) and accepted advisories (`auditConfig.ignoreGhsas`) each carry a reason and a removal condition. Details: [SECURITY.md](SECURITY.md).
 
-**Run lint, typecheck, test and build before every commit.** CI runs exactly these.
+## Conventions
 
-## Dependencies and supply chain
+- **No fabrication, anywhere:** no invented metric, testimonial or claim in content, code comments or commit messages.
+- **Comments explain why, not what.**
+- **Never show a visitor a stack trace or database error.** Log it on the server; show a plain message and the phone number.
+- **Every staff read or change of a lead is audit-logged** (`backend/audit/`). Keep it that way when adding admin screens.
+- **One focused commit per concern.**
 
-- `pnpm-workspace.yaml` refuses any package version published less than **14 days** ago (`minimumReleaseAge`). Security fixes may be exempted (`minimumReleaseAgeExclude`), each with a dated comment and removed once the version is old enough.
-- Transitive security fixes the direct dependency hasn't picked up go in `overrides`, each with its reason and removal condition.
-- Install scripts only run for packages listed in `onlyBuiltDependencies`.
-- Unfixable advisories are accepted explicitly under `auditConfig.ignoreGhsas`, with a reason. CI fails on any other high or critical advisory.
+## Low-memory machines (8 GB)
 
-## Conventions that actually matter here
+The repository is already tuned for small laptops: Postgres-only Docker by default (hybrid mode), a 1.5 GB Node heap ceiling (`.npmrc`, local only), two test workers (`vitest.config.ts`, local only), one package at a time in workspace scripts, ESLint and TypeScript caches, memory caps in Compose (`--profile full`), and VS Code watcher exclusions (`.vscode/settings.json`). On top of that, if you can:
 
-- **One focused commit per concern.** A security fix, a doc and a refactor touching the same area still get separate commits.
-- **No fabrication, anywhere.** No invented metric, testimonial or claim, and no silent "TODO". If something can't be done or verified, say so in the code comment or commit message.
-- **Comments explain *why*, not *what*.**
-- **Never a raw stack trace or database error to a visitor.** Log it server-side; show a plain message.
-- **Every staff read or write of Confidential data is audit-logged** (`backend/src/hooks/audit.ts`; classification in `docs/architecture/DATA_ARCHITECTURE.md`).
+- **Keep the repository out of OneDrive** (e.g. `C:\dev\z-gate\website`): syncing `node_modules` and `.next` costs CPU and locks files mid-build.
+- **Cap Docker's WSL 2 VM** in `%UserProfile%\.wslconfig` (`[wsl2]`, `memory=2560MB`, `processors=2`, `swap=2GB`), then `wsl --shutdown`.
+- **Exclude the project folder (only) from Microsoft Defender** if IT allows it.
+- **Work on one product at a time.** The e-learning repository's Postgres uses port 5433, so both can run, but rarely need to.
+- **Leftover processes on Windows:** stop dev servers with `Ctrl+C` in their terminal. Otherwise free a port with `netstat -ano | findstr :3002`, then `taskkill /PID <pid> /T /F`.
 
-## Testing
+## Containers and deploying
 
-Vitest everywhere. The CMS's integration tests need `DATABASE_URL` and `PAYLOAD_SECRET`: they skip locally without a database and run for real in CI against Postgres. On a cold or busy machine, running every package's tests in parallel can hit Vitest's 5 s timeout; the workspace scripts already run one package at a time, and CI is the authoritative signal.
-
-## Containers
-
-Production Dockerfiles build with **the repository root as the context**: `docker build -f frontend/Dockerfile .`, `docker build -f backend/Dockerfile --target prod .` (and `--target migrate` for the migration image). Neither takes build arguments: they read everything at runtime. CI builds and Trivy-scans every image on every pull request, and pushes `ghcr.io/<owner>/z-gate-website-*` only from `main`.
-
-## Before you touch production-adjacent code
-
-Read `docs/SECURITY_GUIDE.md` and `docs/platform-v2/05-SECURITY-COMPLIANCE.md` for what is still open.
+Images take no build arguments. The frontend builds from the repository root (it uses the workspace's packages): `docker build -f frontend/Dockerfile .`. The CMS builds from its own folder: `docker build --target prod backend`. CI has one workflow per app (`.github/workflows/frontend.yml` and `backend.yml`, path-filtered, both calling `e2e.yml`); each scans its image and pushes `ghcr.io/<owner>/z-gate-website-<app>` from `main` only. Deploying and operating: [DEPLOYMENT.md](DEPLOYMENT.md).

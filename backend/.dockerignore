@@ -1,0 +1,16 @@
+# Build context of the CMS image is backend/ (Dockerfile). Keep it small
+# and free of secrets: only the Django project and its lock go in.
+.env
+.env.*
+.venv
+media
+staticfiles
+**/__pycache__
+**/.pytest_cache
+**/.ruff_cache
+*.log
+# Hosting files and database scripts are used on the server, not in the image.
+deploy
+database
+Dockerfile
+.dockerignore

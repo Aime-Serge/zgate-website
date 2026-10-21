@@ -1,0 +1,7 @@
+# Local development and CI: the runtime lock plus test and lint tools.
+# Never installed in images (they install base.txt only).
+-r base.txt
+pytest==9.1.1
+pytest-django==4.14.0
+ruff==0.16.10
+pip-audit==2.10.1

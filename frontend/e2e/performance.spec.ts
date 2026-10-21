@@ -1,6 +1,6 @@
 /**
  * JavaScript weight budget - the main cost on slow mobile connections
- * (docs/04-WEBSITE.md §8). Measured as compressed bytes on the
+ * (docs/WEBSITE.md, Performance budget). Measured as compressed bytes on the
  * wire, on a cold load.
  *
  * Budgets are set from measurement, with headroom, so growth is a
@@ -38,6 +38,9 @@ async function scriptKb(page: Page, path: string): Promise<number> {
 for (const [path, kind] of [
   ["/", "content"],
   ["/advisory", "content"],
+  ["/solutions/traders-and-shops", "content"],
+  // The search page's own component, on top of every page's menu.
+  ["/search", "content"],
   ["/contact", "form"],
   ["/academy/courses/tax-bookkeeping-fundamentals", "form"],
 ] as const) {

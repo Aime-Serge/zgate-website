@@ -1,7 +1,7 @@
 {
   "name": "@zgate/website-workspace",
   "private": true,
-  "description": "Z-GATE corporate website workspace: public site (frontend/), Payload CMS (backend/) and the packages it owns (packages/)",
+  "description": "Z-GATE corporate website workspace: public site (frontend/, Next.js), its CMS (backend/, Django + Wagtail) and the packages it owns (packages/)",
   "packageManager": "pnpm@10.34.6",
   "engines": {
     "node": ">=22.12"
@@ -15,7 +15,7 @@
     "test": "pnpm -r --workspace-concurrency=1 run test",
     "format": "prettier --check --end-of-line auto .",
     "format:write": "prettier --write .",
-    "lint:boundaries": "depcruise frontend backend packages config tests --config .dependency-cruiser.cjs --output-type err-long"
+    "lint:boundaries": "depcruise frontend packages config tests --config .dependency-cruiser.cjs --output-type err-long"
   },
   "devDependencies": {
     "@zgate/config": "workspace:*",

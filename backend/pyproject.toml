@@ -1,0 +1,30 @@
+# Tool configuration for the website CMS. Dependencies are pinned in
+# requirements/ (see scripts/lock.sh), not here.
+[project]
+name = "zgate-website-cms"
+version = "0.1.0"
+description = "Z-GATE website CMS: Django + Wagtail, headless, read by the Next.js public site (frontend/)"
+requires-python = ">=3.13"
+
+[tool.pytest.ini_options]
+DJANGO_SETTINGS_MODULE = "config.settings.test"
+# Each app keeps its tests in <app>/tests/; shared fixtures are in conftest.py.
+testpaths = ["accounts", "audit", "config", "content", "leads"]
+addopts = "--strict-markers -p no:cacheprovider"
+
+[tool.ruff]
+line-length = 100
+target-version = "py313"
+extend-exclude = ["*/migrations/*"]
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "B", "UP", "S", "DJ", "SIM", "RUF"]
+ignore = [
+  "RUF012", # Django/Wagtail class attributes (panels, Meta) are plain lists by convention
+]
+
+[tool.ruff.lint.per-file-ignores]
+"*/tests/*" = ["S101", "S105", "S106"] # asserts and fixture secrets are fine in tests
+"conftest.py" = ["S106"]
+# Each environment validates config/env.py first, then imports base.py.
+"config/settings/*" = ["E402", "F403", "F405"]

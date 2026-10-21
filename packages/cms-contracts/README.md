@@ -1,7 +1,12 @@
 # @zgate/cms-contracts
 
-What the public site (`frontend/`) may use from the CMS (`backend/`): content types generated from the Payload collections (`src/payload-types.ts`), division slugs, the signed cache-clearing webhook, and the lead-intake contract (re-exported from `@zgate/website-contracts`).
+What the public site (`frontend/`) may use from the CMS (`backend/`, Django + Wagtail):
 
-Internal to the website: **no other product uses it**. The frontend imports this package instead of the CMS's source, and `pnpm lint:boundaries` keeps both this package and the frontend free of Payload's runtime (type-only imports are allowed).
+| Module                    | What it is                                                                                                                                                                                       |
+| ------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `content-types.ts`        | Types for the CMS's JSON API (pages and their blocks, divisions, courses, articles, redirects, site settings). Written by hand to match `backend/content/serializers.py`: rename a field in both |
+| `divisions.ts`, `slug.ts` | The four division slugs and the slug rule the CMS enforces                                                                                                                                       |
+| `webhook.ts`              | Signing and verifying the CMS's "content changed" webhook                                                                                                                                        |
+| (re-exported)             | The lead form and lead intake from `@zgate/website-contracts`                                                                                                                                    |
 
-`src/payload-types.ts` is generated: after changing a collection, run `pnpm --filter @zgate/website-backend generate:types` (the CMS's `payload.config.ts` writes it here).
+Internal to the website: no other product uses it. The frontend imports this package, never the CMS (a Python app it reaches over HTTP).

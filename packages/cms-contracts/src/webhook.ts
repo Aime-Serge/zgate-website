@@ -1,6 +1,6 @@
 /**
  * The "content changed" webhook the CMS sends the website frontend so it
- * clears its page cache (src/hooks/revalidate.ts -> the frontend's
+ * clears its page cache (backend/content/revalidate.py -> the frontend's
  * src/app/api/revalidate/route.ts).
  *
  * HMAC-SHA256 over `<unix seconds>.<body>`, in the same shape as common

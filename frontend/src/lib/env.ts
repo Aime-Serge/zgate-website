@@ -1,7 +1,7 @@
 /**
  * Runtime configuration for the public website, validated once per process.
  *
- * The same image runs in every environment (docs/platform-v2/
+ * The same image runs in every environment (docs/DEPLOYMENT.md
  * 02-TARGET-ARCHITECTURE.md §1), so nothing here may be baked in at build
  * time. `next build` never calls the CMS (pages render on first request,
  * see src/app/(site)/[[...slug]]/page.tsx), so during the build phase only
@@ -28,10 +28,13 @@ const schema = z
     // Public origin of this site, e.g. https://www.example.rw - canonical
     // URLs, sitemap, robots.
     SITE_URL: origin("SITE_URL must be an absolute URL"),
-    // How this server reaches the CMS - an internal address in production
-    // (e.g. http://website-backend:3004), never through the public proxy.
-    // Visitors' browsers never talk to the CMS.
+    // How this server reaches the CMS: its own host when the two apps are
+    // hosted apart (e.g. https://cms.example.rw), or a private address
+    // when they share a network. Visitors' browsers never talk to the CMS.
     CMS_URL: origin("CMS_URL must be an absolute URL").default("http://localhost:3004"),
+    // Presented on every content API read (src/lib/cms.ts); the CMS
+    // refuses reads without it once it has one set.
+    CMS_API_TOKEN: sharedSecret("CMS_API_TOKEN"),
     // Presented to the CMS's lead intake; unset = forms fail with a
     // "reach us directly" message.
     LEAD_INTAKE_TOKEN: sharedSecret("LEAD_INTAKE_TOKEN"),
@@ -41,10 +44,19 @@ const schema = z
     // which X-Forwarded-For entry is the real visitor - see
     // src/lib/leads/clientIp.ts. 0 = header ignored entirely.
     TRUSTED_PROXIES: z.coerce.number().int().min(0).max(5).default(1),
+    // The website assistant's AI mode (src/app/api/assistant). Unset = the
+    // assistant answers from the site's own pages only and nothing leaves
+    // this server. Set it only once the privacy notice covers sending
+    // visitors' questions to the AI provider (outside Rwanda; docs/SECURITY.md).
+    ANTHROPIC_API_KEY: z.preprocess(
+      (value) => (value === "" ? undefined : value),
+      z.string().min(20, "ANTHROPIC_API_KEY looks too short").optional(),
+    ),
+    ASSISTANT_MODEL: z.string().min(1).default("claude-opus-5-5"),
   })
   .superRefine((value, ctx) => {
     if (value.NODE_ENV !== "production") return;
-    for (const name of ["LEAD_INTAKE_TOKEN", "REVALIDATE_SECRET"] as const) {
+    for (const name of ["CMS_API_TOKEN", "LEAD_INTAKE_TOKEN", "REVALIDATE_SECRET"] as const) {
       if (!value[name]) {
         ctx.addIssue({
           code: "custom",

@@ -18,6 +18,9 @@ import type { Article, Course, Division, Page } from "@zgate/cms-contracts";
 
 export type Route =
   | { kind: "page"; page: Page }
+  | { kind: "solution"; page: Page }
+  | { kind: "search" }
+  | { kind: "demos" }
   | { kind: "division"; division: Division }
   | { kind: "courses"; courses: Course[] }
   | { kind: "course"; course: Course }
@@ -39,6 +42,15 @@ export async function resolveRoute(slug: string[] | undefined): Promise<Route | 
     return course ? { kind: "course", course } : null;
   }
 
+  if (first === "solutions" && second && !third) {
+    const page = await getPageBySlug(second);
+    return page?.pageType === "solution" ? { kind: "solution", page } : null;
+  }
+
+  // Reserved in the CMS (RESERVED_PAGE_SLUGS), so no page can shadow them.
+  if (first === "search" && !second) return { kind: "search" };
+  if (first === "demos" && !second) return { kind: "demos" };
+
   if (first === "insights" && !third) {
     if (!second) {
       // The section only exists once something is published.
@@ -51,7 +63,8 @@ export async function resolveRoute(slug: string[] | undefined): Promise<Route | 
 
   if (second) return null;
   const page = await getPageBySlug(first);
-  if (page) return { kind: "page", page };
+  // A solution page has one address, under /solutions.
+  if (page) return page.pageType === "solution" ? null : { kind: "page", page };
   const division = await getDivisionBySlug(first);
   return division ? { kind: "division", division } : null;
 }

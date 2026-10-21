@@ -1,8 +1,7 @@
 // @ts-check
 /**
- * ESLint preset for TypeScript libraries and Node services (the rules the
- * e-learning API was first linted with). Call with the package's own directory so
- * type-aware linting finds its tsconfig:
+ * ESLint preset for the TypeScript packages (packages/*). Call it with the
+ * package's own directory so type-aware linting finds its tsconfig:
  *
  *   import { library } from "@zgate/config/eslint/library";
  *   export default library(import.meta.dirname);

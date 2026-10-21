@@ -1,11 +1,10 @@
 /**
- * Read-side data access for public pages, over the CMS's REST API
- * (backend, reached at CMS_URL on the internal network).
+ * Read-side data access for public pages, over the CMS's JSON API
+ * (backend/content/views.py - Django + Wagtail, reached at CMS_URL).
  *
- * Every request is anonymous and asks for the published version
- * (`draft=false`), so the collections' own read rules - published
- * documents only - decide what the public site can show. A draft can't
- * leak through a missed filter, and this server holds no CMS credentials.
+ * The API serves published content only: a draft can't leak through a
+ * missed filter. The only credential this server presents is the API read
+ * token (CMS_API_TOKEN), which can read nothing that isn't already public.
  *
  * Each function is wrapped in React's `cache`, so a page and its metadata
  * share one request per render.
@@ -14,6 +13,7 @@ import { cache } from "react";
 import {
   type Article,
   type Course,
+  type Demo,
   type Division,
   isDivisionSlug,
   type Page,
@@ -21,23 +21,6 @@ import {
   type SiteSetting,
 } from "@zgate/cms-contracts";
 import { env } from "@/lib/env";
-
-type Query = Record<string, unknown>;
-
-/** Payload's REST query format: nested objects in bracket notation. */
-export function toQueryString(query: Query): string {
-  const params = new URLSearchParams();
-  const add = (prefix: string, value: unknown) => {
-    if (value === undefined) return;
-    if (value !== null && typeof value === "object") {
-      for (const [key, nested] of Object.entries(value)) add(`${prefix}[${key}]`, nested);
-    } else {
-      params.append(prefix, String(value));
-    }
-  };
-  for (const [key, value] of Object.entries(query)) add(key, value);
-  return params.toString();
-}
 
 export class CmsError extends Error {
   constructor(
@@ -48,64 +31,69 @@ export class CmsError extends Error {
   }
 }
 
-async function get<T>(path: string, query: Query = {}): Promise<T> {
-  const url = `${env().CMS_URL}${path}?${toQueryString({ draft: false, ...query })}`;
-  const response = await fetch(url, {
-    headers: { Accept: "application/json" },
+async function request(path: string): Promise<Response> {
+  const { CMS_URL, CMS_API_TOKEN } = env();
+  return fetch(`${CMS_URL}${path}`, {
+    headers: {
+      Accept: "application/json",
+      ...(CMS_API_TOKEN ? { Authorization: `Bearer ${CMS_API_TOKEN}` } : {}),
+    },
     signal: AbortSignal.timeout(10_000),
   });
+}
+
+async function get<T>(path: string): Promise<T> {
+  const response = await request(path);
   if (!response.ok) throw new CmsError(path, response.status);
   return (await response.json()) as T;
 }
 
-const find = async <T>(collection: string, query: Query): Promise<T[]> =>
-  (await get<{ docs: T[] }>(`/api/${collection}`, query)).docs;
+/** One document, or null when the CMS has no published one (HTTP 404). */
+async function getOne<T>(path: string): Promise<T | null> {
+  const response = await request(path);
+  if (response.status === 404) return null;
+  if (!response.ok) throw new CmsError(path, response.status);
+  return (await response.json()) as T;
+}
+
+const list = async <T>(path: string): Promise<T[]> => (await get<{ docs: T[] }>(path)).docs;
+
+const segment = (value: string) => encodeURIComponent(value);
 
 export const getSiteSettings = cache((): Promise<SiteSetting> =>
-  get<SiteSetting>("/api/globals/site-settings"),
+  get<SiteSetting>("/api/site-settings"),
 );
 
-export const getPageBySlug = cache(
-  async (slug: string): Promise<Page | null> =>
-    (await find<Page>("pages", { where: { slug: { equals: slug } }, limit: 1, depth: 1 }))[0] ??
-    null,
+export const getPageBySlug = cache((slug: string): Promise<Page | null> =>
+  getOne<Page>(`/api/pages/${segment(slug)}`),
 );
 
 export const getDivisionBySlug = cache(async (slug: string): Promise<Division | null> => {
-  // Unknown values would hit the enum column and fail (22P02) instead of
-  // simply not matching - the website's version of finding N-7.
+  // Only the four division slugs are ever asked for.
   if (!isDivisionSlug(slug)) return null;
-  return (
-    (await find<Division>("divisions", { where: { slug: { equals: slug } }, limit: 1 }))[0] ?? null
-  );
+  return getOne<Division>(`/api/divisions/${slug}`);
 });
 
-export const listDivisions = cache((): Promise<Division[]> =>
-  find<Division>("divisions", { sort: "order", limit: 10 }),
-);
+export const listDivisions = cache((): Promise<Division[]> => list<Division>("/api/divisions"));
 
-export const listCourses = cache((): Promise<Course[]> =>
-  find<Course>("courses", { sort: "title", limit: 50 }),
-);
+/** Oldest first: courses are added in cohort order (Cohort 1 before 2). */
+export const listCourses = cache((): Promise<Course[]> => list<Course>("/api/courses"));
 
-export const getCourseBySlug = cache(
-  async (slug: string): Promise<Course | null> =>
-    (await find<Course>("courses", { where: { slug: { equals: slug } }, limit: 1 }))[0] ?? null,
+export const getCourseBySlug = cache((slug: string): Promise<Course | null> =>
+  getOne<Course>(`/api/courses/${segment(slug)}`),
 );
 
 export const listArticles = cache((limit: number = 50): Promise<Article[]> =>
-  find<Article>("articles", { sort: "-publishedOn", limit }),
+  list<Article>(`/api/articles?limit=${limit}`),
 );
 
-export const getArticleBySlug = cache(
-  async (slug: string): Promise<Article | null> =>
-    (await find<Article>("articles", { where: { slug: { equals: slug } }, limit: 1 }))[0] ?? null,
+export const getArticleBySlug = cache((slug: string): Promise<Article | null> =>
+  getOne<Article>(`/api/articles/${segment(slug)}`),
 );
 
 /** CMS-managed redirect for a path, if any (checked before returning 404). */
-export const findRedirect = cache(
-  async (path: string): Promise<Redirect | null> =>
-    (await find<Redirect>("redirects", { where: { from: { equals: path } }, limit: 1 }))[0] ?? null,
+export const findRedirect = cache((path: string): Promise<Redirect | null> =>
+  getOne<Redirect>(`/api/redirects?from=${encodeURIComponent(path)}`),
 );
 
 /** Forms only collect personal data once a privacy notice is live. */
@@ -113,6 +101,13 @@ export async function isPrivacyNoticeLive(): Promise<boolean> {
   return (await getPageBySlug("privacy")) !== null;
 }
 
-export const listPages = cache((): Promise<Page[]> =>
-  find<Page>("pages", { limit: 200, depth: 0 }),
+/** Every published page (without its blocks), for the sitemap. */
+export const listPages = cache((): Promise<Page[]> => list<Page>("/api/pages"));
+
+/** Solution pages (one per kind of business), in the CMS's page order. */
+export const listSolutions = cache(async (): Promise<Page[]> =>
+  (await listPages()).filter((page) => page.pageType === "solution"),
 );
+
+/** The Demo Library, newest first (placeholders included). */
+export const listDemos = cache((): Promise<Demo[]> => list<Demo>("/api/demos"));

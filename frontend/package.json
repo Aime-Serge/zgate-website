@@ -2,7 +2,7 @@
   "name": "@zgate/website-frontend",
   "version": "0.1.0",
   "private": true,
-  "description": "Z-GATE corporate website - the public Next.js site; reads content from the website CMS over its REST API (types: @zgate/cms-contracts) and needs no database (docs/architecture/ADR/ADR-007-separate-product-backends.md)",
+  "description": "Z-GATE corporate website - the public Next.js site; reads content from the website CMS (backend/, Django + Wagtail) over its JSON API (types: @zgate/cms-contracts) and needs no database (docs/adr/ADR-007-separate-product-backends.md)",
   "type": "module",
   "scripts": {
     "dev": "next dev -p 3002",
@@ -17,7 +17,7 @@
     "e2e": "playwright test"
   },
   "dependencies": {
-    "@payloadcms/richtext-lexical": "3.90.2",
+    "@anthropic-ai/sdk": "0.131.0",
     "@zgate/cms-contracts": "workspace:*",
     "@zgate/website-contracts": "workspace:*",
     "next": "16.3.8",
@@ -28,6 +28,7 @@
   "devDependencies": {
     "@axe-core/playwright": "4.13.0",
     "@playwright/test": "1.63.0",
+    "@tailwindcss/postcss": "4.3.3",
     "@types/node": "^22",
     "@types/pg": "^8.23.1",
     "@types/react": "^19",
@@ -36,6 +37,7 @@
     "eslint-config-next": "16.3.8",
     "pg": "8.20.0",
     "prettier": "^3.9.6",
+    "tailwindcss": "4.3.3",
     "typescript": "^5",
     "vitest": "^5.0.0"
   }
