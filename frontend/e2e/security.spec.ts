@@ -71,7 +71,8 @@ test.describe("public host", () => {
 test.describe("admin host", () => {
   test("serves the CMS with noindex, and blocks crawlers entirely", async ({ request }) => {
     const response = await request.get(`${adminUrl}/admin`, { maxRedirects: 0 });
-    expect([200, 307, 308]).toContain(response.status());
+    // Django answers /admin with a permanent redirect to /admin/ (APPEND_SLASH).
+    expect([200, 301, 302, 307, 308]).toContain(response.status());
     expect(response.headers()["x-robots-tag"]).toBe("noindex, nofollow");
     expect(await (await request.get(`${adminUrl}/robots.txt`)).text()).toContain("Disallow: /\n");
   });

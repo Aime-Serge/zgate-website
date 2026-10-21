@@ -6,7 +6,7 @@
  * database, mirroring production's public/CMS split:
  *   E2E_SITE_URL  = http://localhost:3002   (frontend, public)
  *   E2E_ADMIN_URL = http://localhost:3004   (backend, CMS)
- * CI starts both itself (.github/workflows/website.yml); locally, build
+ * CI starts both itself (.github/workflows/e2e.yml); locally, build
  * and `start` both packages first, then `pnpm e2e` here with DATABASE_URL.
  */
 import { defineConfig, devices } from "@playwright/test";
