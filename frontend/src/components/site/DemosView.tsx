@@ -52,7 +52,7 @@ export function DemosView({ demos, settings }: { demos: Demo[]; settings: SiteSe
       <section className="pb-16 lg:pb-28">
         <div className={container}>
           <div className="grid gap-8 rounded-2xl border border-line bg-ink-2 bg-[radial-gradient(ellipse_70%_120%_at_0%_100%,rgb(52_224_201/0.14),transparent_60%)] p-6 sm:p-10 nav:grid-cols-[1fr_1.3fr] nav:items-center lg:p-14">
-            <h2 className="text-[clamp(2rem,4.2vw,3rem)] leading-[1.08] font-bold tracking-[-0.025em] text-balance">
+            <h2 className="text-title font-bold text-balance">
               See how it would work for your business
             </h2>
             <ul className="grid list-none divide-y divide-line">

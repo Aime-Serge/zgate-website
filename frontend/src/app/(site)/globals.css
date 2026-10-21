@@ -57,6 +57,46 @@
   --radius-2xl: 20px;
 }
 
+/* The type scale. Body copy and controls use Tailwind's standard steps
+   (text-xs 12px, sm 14, base 16, lg 18, xl 20, 2xl 24): 16px body, 14px
+   supporting copy, 12px for mono labels and nothing smaller. Headings and
+   figures use the fluid steps below, so every page shares one hierarchy
+   instead of each heading inventing its own size.
+
+   Each step grows linearly from a 360px phone to a 1280px desktop and
+   stays put outside that range. rem + vw (never vw alone), so text still
+   follows the reader's browser zoom and font-size setting (WCAG 1.4.4).
+   Line height and tracking come with the step; an explicit leading-* or
+   tracking-* on an element still wins. */
+@theme {
+  /* The page's h1 in a hero: 36px -> 56px. */
+  --text-display: clamp(2.25rem, 1.761rem + 2.174vw, 3.5rem);
+  --text-display--line-height: 1.1;
+  --text-display--letter-spacing: -0.025em;
+  /* A division or course h1, a closing call to action: 32px -> 48px. */
+  --text-headline: clamp(2rem, 1.609rem + 1.739vw, 3rem);
+  --text-headline--line-height: 1.1;
+  --text-headline--letter-spacing: -0.025em;
+  /* A section's h2: 28px -> 40px. */
+  --text-title: clamp(1.75rem, 1.457rem + 1.304vw, 2.5rem);
+  --text-title--line-height: 1.15;
+  --text-title--letter-spacing: -0.02em;
+  /* A large h3 or a display-face statement: 22px -> 28px. */
+  --text-subtitle: clamp(1.375rem, 1.228rem + 0.6522vw, 1.75rem);
+  --text-subtitle--line-height: 1.25;
+  --text-subtitle--letter-spacing: -0.015em;
+  /* Big figures (commitments, facts): 40px -> 56px and 48px -> 72px. */
+  --text-figure: clamp(2.5rem, 2.109rem + 1.739vw, 3.5rem);
+  --text-figure--line-height: 1;
+  --text-figure--letter-spacing: -0.03em;
+  --text-figure-lg: clamp(3rem, 2.413rem + 2.609vw, 4.5rem);
+  --text-figure-lg--line-height: 1;
+  --text-figure-lg--letter-spacing: -0.03em;
+  /* The paragraph under a headline: 18px -> 20px. */
+  --text-lede: clamp(1.125rem, 1.076rem + 0.2174vw, 1.25rem);
+  --text-lede--line-height: 1.6;
+}
+
 @keyframes marquee {
   to {
     translate: -50% 0;
@@ -68,9 +108,16 @@
    classes in src/components/ui/tone.ts. "inline" makes the utilities read
    those variables where they're used. */
 @theme inline {
-  --font-display: var(--font-space-grotesk), sans-serif;
-  --font-body: var(--font-inter), sans-serif;
-  --font-mono: var(--font-ibm-plex-mono), monospace;
+  /* Each web font, then the platform's own UI face while it loads (or if
+     it can't), then the generic family. next/font's metric-matched
+     fallback is already inside each variable, so the swap doesn't shift
+     the layout. */
+  --font-display:
+    var(--font-space-grotesk), ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto,
+    sans-serif;
+  --font-body:
+    var(--font-inter), ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --font-mono: var(--font-ibm-plex-mono), ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
   --color-accent: var(--accent);
   --color-glow: var(--glow);
   --color-glow-strong: var(--glow-strong);

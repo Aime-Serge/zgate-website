@@ -13,15 +13,13 @@ import type { BlockContext, BlockOf } from "./types";
 
 // Each layout's own sizes, written out in full rather than layered on
 // heroHeading / lede: two utilities for one property would conflict.
-// text-balance evens out the headline's lines (no orphaned last word);
-// 1.05 leading keeps Space Grotesk's descenders (the g in "juggling")
-// clear of the next line's capitals.
-const splitHeading =
-  "max-w-[17ch] text-balance text-[clamp(2.5rem,5.4vw,4.5rem)] leading-[1.05] font-bold tracking-[-0.03em]";
-const splitLede = "max-w-[36rem] text-pretty text-lg text-paper nav:text-xl";
-const centeredHeading =
-  "max-w-[18ch] text-balance text-[clamp(2.5rem,6.2vw,4.5rem)] leading-[1.05] font-bold tracking-[-0.03em]";
-const centeredLede = "mt-6 max-w-[40rem] text-pretty text-lg text-paper nav:text-xl";
+// text-balance evens out the headline's lines (no orphaned last word).
+// Sizes are the type scale's (globals.css): its 1.1 leading keeps Space
+// Grotesk's descenders (the g in "juggling") clear of the next line.
+const splitHeading = "max-w-[17ch] text-balance text-display font-bold";
+const splitLede = "max-w-[36rem] text-pretty text-lede text-paper";
+const centeredHeading = "max-w-[18ch] text-balance text-display font-bold";
+const centeredLede = "mt-6 max-w-[40rem] text-pretty text-lede text-paper";
 
 /**
  * The page's opening. Three layouts:

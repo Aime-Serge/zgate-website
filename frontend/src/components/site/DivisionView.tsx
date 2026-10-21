@@ -55,7 +55,7 @@ function SectionBar({
             <li key={item.href} className="shrink-0">
               <a
                 href={item.href}
-                className="inline-flex min-h-11 items-center rounded-full px-3 text-[0.9375rem] font-semibold text-paper-dim no-underline transition-colors hover:bg-paper/8 hover:text-paper"
+                className="inline-flex min-h-11 items-center rounded-full px-3 text-sm font-semibold text-paper-dim no-underline transition-colors hover:bg-paper/8 hover:text-paper"
               >
                 {item.label}
               </a>
@@ -136,7 +136,7 @@ export function DivisionView({
               />
               <div className="relative">
                 <p className={eyebrow}>A commitment in writing</p>
-                <p className="font-display text-[clamp(2.5rem,6vw,4rem)] leading-none font-semibold tracking-[-0.03em] text-accent">
+                <p className="font-display text-figure font-semibold text-accent">
                   {featuredCommitment.figure}
                 </p>
                 <p className="mt-4 text-paper">{featuredCommitment.label}</p>
@@ -167,7 +167,7 @@ export function DivisionView({
         <div className={cx(container, split)}>
           <div>
             <p className={eyebrow}>Who it&rsquo;s for</p>
-            <p className="font-display text-[clamp(1.25rem,2.4vw,1.625rem)] leading-[1.35]">
+            <p className="font-display text-subtitle leading-[1.35]">
               {division.audience || division.mission}
             </p>
           </div>

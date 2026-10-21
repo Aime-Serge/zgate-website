@@ -89,7 +89,7 @@ const initialState: LeadFormState = { status: "idle" };
 const result = "rounded-md border-l-4 p-4";
 const fieldBox =
   "grid gap-2 [&_label]:font-semibold [&_:is(input[type=text],select,textarea)]:min-h-11 [&_:is(input[type=text],select,textarea)]:w-full [&_:is(input[type=text],select,textarea)]:rounded-md [&_:is(input[type=text],select,textarea)]:border [&_:is(input[type=text],select,textarea)]:border-paper-dim [&_:is(input[type=text],select,textarea)]:bg-ink-2 [&_:is(input[type=text],select,textarea)]:p-3 [&_:is(input[type=text],select,textarea)]:text-paper [&_[aria-invalid=true]]:border-error";
-const hint = "text-[0.95rem] text-paper-dim";
+const hint = "text-sm text-paper-dim";
 const checkboxBox =
   "grid grid-cols-[auto_1fr] items-start gap-x-3 gap-y-2 [&_input]:mt-0.5 [&_input]:size-6 [&_input]:accent-gate-1 [&_label]:font-normal [&_label_a]:underline [&_label_a]:underline-offset-2 [&>p]:col-start-2";
 
@@ -177,7 +177,7 @@ export function LeadForm({
       {heading ? <h2 className={sectionHeading}>{heading}</h2> : null}
       {intro ? <p className="text-paper-dim">{intro}</p> : null}
 
-      <div className="grid gap-2 rounded-md border border-line bg-ink-2 p-4 text-[0.9375rem] text-paper-dim">
+      <div className="grid gap-2 rounded-md border border-line bg-ink-2 p-4 text-sm/6 text-paper-dim">
         {responseTimeCommitment ? (
           <p>
             Current reply target: <strong className="text-paper">{responseTimeCommitment}</strong>.

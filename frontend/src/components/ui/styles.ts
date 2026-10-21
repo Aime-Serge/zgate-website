@@ -38,9 +38,9 @@ export const button = `${buttonShape} min-h-12 justify-center px-6 py-3 ${primar
 export const buttonSecondary = `${buttonShape} min-h-12 justify-center px-6 py-3 ${secondary}`;
 
 /** Header-sized primary button: still a 44px touch target. */
-export const buttonSmall = `${buttonShape} min-h-11 justify-center px-4 py-2 text-[0.9375rem] ${primary}`;
+export const buttonSmall = `${buttonShape} min-h-11 justify-center px-4 py-2 text-sm ${primary}`;
 /** Its outline partner (a course card's "Details" beside its enroll action). */
-export const buttonSmallSecondary = `${buttonShape} min-h-11 justify-center px-4 py-2 text-[0.9375rem] ${secondary}`;
+export const buttonSmallSecondary = `${buttonShape} min-h-11 justify-center px-4 py-2 text-sm ${secondary}`;
 
 /** Contact channel buttons: full width, label left and number or address right. */
 export const channelButton = `${buttonShape} min-h-12 w-full flex-wrap justify-between gap-2 px-6 py-3 ${primary}`;
@@ -49,16 +49,19 @@ export const channelButtonSecondary = `${buttonShape} min-h-12 w-full flex-wrap 
 /** A row of actions: full-width stacked on phones, side by side from 480px. */
 export const ctaRow = "mt-8 flex flex-wrap gap-3 *:flex-[1_1_100%] xs:*:flex-none";
 
-/** The brand guide's eyebrow: mono, uppercase, a leading hairline, in the tone's accent. */
+/**
+ * The brand guide's eyebrow: mono, uppercase, a leading hairline, in the tone's accent.
+ * Tighter tracking on phones keeps a full line ("Where business meets
+ * technology") on one row instead of stranding the hairline beside two.
+ */
 export const eyebrow =
-  "mb-4 flex items-center gap-2.5 font-mono text-xs tracking-[0.18em] text-accent uppercase before:inline-block before:h-px before:w-[22px] before:bg-current before:content-['']";
+  "mb-4 flex items-center gap-2.5 font-mono text-xs tracking-[0.1em] text-accent uppercase sm:tracking-[0.18em] before:inline-block before:h-px before:w-[22px] before:bg-current before:content-['']";
 
 /** Mono, uppercase metadata labels (facts, footer headings, figure notes). */
 export const label = "font-mono text-xs tracking-[0.08em] text-paper-dim uppercase";
 
 /** A section's h2. */
-export const sectionHeading =
-  "text-balance text-[clamp(2rem,4.2vw,3rem)] leading-[1.08] font-bold tracking-[-0.025em]";
+export const sectionHeading = "text-balance text-title font-bold";
 
 /** A large card: the page's main building surface. */
 export const card = "rounded-2xl border border-line bg-ink-2";
@@ -69,14 +72,14 @@ export const cardLink =
 
 /** Small mono chip (status, category) in the tone's accent. */
 export const chip =
-  "inline-flex items-center rounded-full border border-accent/40 bg-glow px-3 py-1 font-mono text-[0.6875rem] tracking-[0.1em] text-accent uppercase";
+  "inline-flex items-center rounded-full border border-accent/40 bg-glow px-3 py-1 font-mono text-xs tracking-[0.1em] text-accent uppercase";
 
 /** Arrow link at the foot of a card or row: label, then an arrow that moves on hover. */
 export const arrowLink =
   "inline-flex items-center gap-2 font-semibold text-paper no-underline [&>svg]:transition-transform [&>svg]:duration-150 group-hover:[&>svg]:translate-x-1 hover:[&>svg]:translate-x-1";
 
 /** Lead paragraph under a page headline. */
-export const lede = "max-w-[62ch] text-lg text-paper-dim nav:text-xl";
+export const lede = "max-w-[62ch] text-lede text-paper-dim";
 
 /** Small square bullet in the tone's accent, for checklists. */
 export const checkItem =
@@ -86,7 +89,7 @@ export const checkItem =
 export const hairlineGrid = "grid gap-px overflow-hidden rounded-2xl border border-line bg-line";
 
 /** Mono "Go" link text at the bottom of a card. */
-export const goLink = "mt-auto font-mono text-[0.8125rem] tracking-[0.06em] text-accent uppercase";
+export const goLink = "mt-auto font-mono text-xs tracking-[0.06em] text-accent uppercase";
 
 /**
  * Page hero: the brand guide's cover glow, indigo top-left and cyan
@@ -98,11 +101,9 @@ export const heroRoom =
   "relative bg-[radial-gradient(ellipse_900px_520px_at_8%_0%,var(--glow-strong),transparent_62%),radial-gradient(ellipse_700px_480px_at_95%_100%,var(--glow),transparent_60%)] pt-12 pb-16 lg:py-24";
 
 /** The page's h1 in a hero. */
-export const heroHeading =
-  "mb-6 max-w-[20ch] text-balance text-[clamp(2.5rem,6.2vw,4.5rem)] leading-[1.05] font-bold tracking-[-0.03em]";
+export const heroHeading = "mb-6 max-w-[20ch] text-balance text-display font-bold";
 /** A division or course h1: longer lines, a step smaller. */
-export const roomHeading =
-  "mb-6 max-w-[24ch] text-balance text-[clamp(2.25rem,5vw,3.75rem)] leading-[1.05] font-bold tracking-[-0.03em]";
+export const roomHeading = "mb-6 max-w-[24ch] text-balance text-headline font-bold";
 
 /** Lockup row above a room's headline: the lockup, then a mono subtitle. */
 export const heroLockup = "mb-6 flex flex-wrap items-center gap-x-4 gap-y-2";
@@ -124,7 +125,7 @@ export const ctaBandRoom =
 
 /** Rich text from the CMS (Lexical output has no classes of its own). */
 export const prose =
-  "[&_:is(p,h2,h3)]:max-w-[70ch] [&_a]:underline [&_a]:underline-offset-2 [&_h2]:mt-8 [&_h2]:mb-4 [&_h2]:text-2xl [&_h3]:mt-6 [&_h3]:mb-2 [&_h3]:text-xl [&_li]:mt-2 [&_ol]:list-decimal [&_ol]:pl-6 [&_p]:text-[1.0625rem] [&_p]:text-paper-dim [&_p+p]:mt-4 [&_ul]:list-disc [&_ul]:pl-6";
+  "[&_:is(p,h2,h3)]:max-w-[70ch] [&_a]:underline [&_a]:underline-offset-2 [&_h2]:mt-8 [&_h2]:mb-4 [&_h2]:text-2xl [&_h3]:mt-6 [&_h3]:mb-2 [&_h3]:text-xl [&_:is(p,li)]:text-lg [&_li]:mt-2 [&_ol]:list-decimal [&_ol]:pl-6 [&_p]:text-paper-dim [&_p+p]:mt-4 [&_ul]:list-disc [&_ul]:pl-6";
 
 /** Two columns from 900px: copy beside a panel, or a form beside channels. */
 export const split = "grid items-start gap-12 nav:grid-cols-2";

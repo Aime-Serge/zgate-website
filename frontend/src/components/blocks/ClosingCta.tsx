@@ -58,9 +58,7 @@ export function ClosingCta({
         <div className="grid gap-10 rounded-2xl border border-gate-1/35 bg-ink-2 bg-[radial-gradient(ellipse_70%_120%_at_0%_100%,rgb(52_224_201/0.18),transparent_60%),radial-gradient(ellipse_70%_120%_at_100%_0%,rgb(91_107_250/0.24),transparent_60%)] p-6 sm:p-10 lg:grid-cols-[1fr_1.1fr] lg:gap-16 lg:p-14">
           <div className="self-center">
             <Eyebrow>{block.eyebrow}</Eyebrow>
-            <h2 className="text-[clamp(2.25rem,5vw,3.5rem)] leading-[1.05] font-bold tracking-[-0.03em]">
-              {block.heading}
-            </h2>
+            <h2 className="text-headline font-bold">{block.heading}</h2>
             {block.body ? <p className="mt-4 text-lg text-paper-dim">{block.body}</p> : null}
           </div>
           <ul className="list-none">

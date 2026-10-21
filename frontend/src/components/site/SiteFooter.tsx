@@ -124,7 +124,7 @@ export function SiteFooter({
                   >
                     {division.name}
                     {division.subtitle ? (
-                      <span className="col-start-2 text-[0.8125rem] text-paper-dim">
+                      <span className="col-start-2 text-sm text-paper-dim">
                         {division.subtitle}
                       </span>
                     ) : null}

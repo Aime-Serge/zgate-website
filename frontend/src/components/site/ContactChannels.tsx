@@ -22,7 +22,7 @@ export const whatsappGreeting = (topic?: string | null) =>
 
 const whatsappNumber = (settings: SiteSetting) => settings.whatsapp || settings.phone;
 
-const detail = "font-mono text-[0.9rem] font-normal [overflow-wrap:anywhere]";
+const detail = "font-mono text-sm font-normal [overflow-wrap:anywhere]";
 
 /**
  * Secondary action beside "Start Now": WhatsApp is the primary
