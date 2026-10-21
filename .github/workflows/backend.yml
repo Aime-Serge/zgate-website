@@ -105,8 +105,13 @@ jobs:
       - name: Tests
         run: pytest -q
 
+      # Reviewed exceptions, each with a reason and a removal condition,
+      # live in requirements/accepted-advisories.txt (one ID per line).
       - name: Dependency vulnerability scan
-        run: pip-audit -r requirements/base.txt --progress-spinner off
+        run: |
+          ignores=$(sed -e 's/#.*//' -e '/^[[:space:]]*$/d' -e 's/^[[:space:]]*/--ignore-vuln /' requirements/accepted-advisories.txt)
+          # shellcheck disable=SC2086 # one word per flag and ID, by design
+          pip-audit -r requirements/base.txt --progress-spinner off $ignores
 
   e2e:
     name: Browser checks

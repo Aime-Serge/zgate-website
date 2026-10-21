@@ -21,6 +21,11 @@ overrides:
   # bypass in BalancedPool). 7.29.1 (2026-09-04) is a patch release on the
   # same line. Remove once nothing in the lockfile resolves undici < 7.29.1.
   undici: 7.29.1
+  # vitest pulls in vite. 8.3.0-8.3.2 are affected by GHSA-587h-7wmj-h5pm
+  # (launch-editor existence check bypass on Windows, dev server only).
+  # 8.3.3 (2026-10-06) is the patch release on the same line. Remove once
+  # nothing in the lockfile resolves vite < 8.3.3.
+  vite: 8.3.3
 
 # Advisories with no patched release usable here, reviewed and accepted.
 # Re-check on every dependency update; delete the entry the moment a fix
