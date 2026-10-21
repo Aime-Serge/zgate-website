@@ -3,10 +3,9 @@
  *
  *   frontend/   -X->  backend/        the public site talks to the CMS over HTTP;
  *   frontend/   -->   packages/*      it imports @zgate/cms-contracts instead
- *   backend/    -X->  frontend/       the CMS never depends on the public site
+ *                                     (the CMS itself is Python - ADR-012)
  *   packages/*  -X->  frontend/, backend/, tests/   packages never import apps
  *   website-contracts -X-> other workspace packages  (other products use it: self-contained)
- *   frontend, packages  -X->  Payload at runtime     (type-only imports allowed)
  *
  *   anything    -X->  vendor/, @zgate/elearning-*   the e-learning platform
  *                                     is another product (another repository);
@@ -45,17 +44,10 @@ module.exports = {
     {
       name: "frontend-must-not-import-backend",
       comment:
-        "The public site talks to the CMS over HTTP. Import @zgate/cms-contracts (types, schemas, webhook signing), never backend/ source.",
+        "The public site talks to the CMS (a Python app) over HTTP. Import @zgate/cms-contracts (types, schemas, webhook signing), never backend/ files.",
       severity: "error",
       from: { path: "^frontend/" },
       to: { path: "^backend/" },
-    },
-    {
-      name: "backend-must-not-import-frontend",
-      comment: "The CMS never depends on the public site.",
-      severity: "error",
-      from: { path: "^backend/" },
-      to: { path: "^frontend/" },
     },
     {
       name: "packages-must-not-import-apps",
@@ -72,19 +64,6 @@ module.exports = {
       severity: "error",
       from: { path: "^packages/website-contracts/src/" },
       to: { path: "^(packages/(?!website-contracts/)|config/)" },
-    },
-    {
-      name: "no-payload-runtime-in-frontend-or-packages",
-      comment:
-        "Only the CMS runs Payload. The frontend may use @payloadcms/richtext-lexical (its React renderer imports only react) and nothing else from Payload; packages may use Payload's types only.",
-      severity: "error",
-      from: { path: "^(frontend|packages)/" },
-      to: {
-        dependencyTypesNot: ["type-only"],
-        // Installed (resolved into node_modules) or not (a bare name).
-        path: "(^|/node_modules/)(payload|@payloadcms/[^/]+)(/|$)",
-        pathNot: "@payloadcms/richtext-lexical(/|$)",
-      },
     },
   ],
   options: {

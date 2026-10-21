@@ -2,7 +2,7 @@
   "name": "@zgate/website-frontend",
   "version": "0.1.0",
   "private": true,
-  "description": "Z-GATE corporate website - the public Next.js site; reads content from the website CMS over its REST API (types: @zgate/cms-contracts) and needs no database (docs/architecture/ADR/ADR-007-separate-product-backends.md)",
+  "description": "Z-GATE corporate website - the public Next.js site; reads content from the website CMS (backend/, Django + Wagtail) over its JSON API (types: @zgate/cms-contracts) and needs no database (docs/adr/ADR-007-separate-product-backends.md)",
   "type": "module",
   "scripts": {
     "dev": "next dev -p 3002",
@@ -17,7 +17,7 @@
     "e2e": "playwright test"
   },
   "dependencies": {
-    "@payloadcms/richtext-lexical": "3.90.2",
+    "@anthropic-ai/sdk": "0.131.0",
     "@zgate/cms-contracts": "workspace:*",
     "@zgate/website-contracts": "workspace:*",
     "next": "16.3.8",
