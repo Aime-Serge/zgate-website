@@ -6,7 +6,7 @@
  */
 import { courseSlugSchema } from "@zgate/elearning-contracts";
 import { describe, expect, it, test } from "vitest";
-import { validateSlug } from "../../../backend/src/fields/common.ts";
+import { isValidSlug } from "@zgate/cms-contracts";
 
 const samples = [
   "tax-bookkeeping-fundamentals",
@@ -23,9 +23,9 @@ const samples = [
   "",
 ];
 
-// validateSlug is a Payload field validator: true, or an error message.
-const cmsAccepts = (slug: string) =>
-  (validateSlug as unknown as (value: string) => true | string)(slug) === true;
+// The CMS (backend/content/validators.py) enforces the same pattern;
+// backend/content/tests/test_validators.py runs these samples against it.
+const cmsAccepts = isValidSlug;
 
 describe("course slugs: website CMS == e-learning contract", () => {
   for (const slug of samples) {

@@ -3,10 +3,7 @@
   "compilerOptions": {
     "noEmit": true,
     "allowImportingTsExtensions": true,
-    // payload-types.ts augments 'payload' (declare module) but never imports
-    // it; listing it here loads Payload's types so the augmentation resolves.
-    // Types only - nothing from Payload runs in this package.
-    "types": ["node", "payload"]
+    "types": ["node"]
   },
   "include": ["src"]
 }

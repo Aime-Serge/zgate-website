@@ -2,11 +2,10 @@
   "name": "@zgate/cms-contracts",
   "version": "0.1.0",
   "private": true,
-  "description": "What the website frontend may use from the CMS: content types, division slugs, the cache-clearing webhook and lead intake. Internal to this repository, never published",
+  "description": "What the website frontend may use from the CMS (backend/, Django + Wagtail): content types, division slugs, the slug rule, the cache-clearing webhook and lead intake. Internal to this repository, never published",
   "type": "module",
   "exports": {
-    ".": "./src/index.ts",
-    "./payload-types": "./src/payload-types.ts"
+    ".": "./src/index.ts"
   },
   "scripts": {
     "lint": "eslint --cache .",
@@ -20,7 +19,6 @@
     "@types/node": "^22.20.2",
     "@zgate/config": "workspace:*",
     "eslint": "^9.39.5",
-    "payload": "3.90.2",
     "typescript": "^5.9.3",
     "vitest": "^5.0.0"
   }
