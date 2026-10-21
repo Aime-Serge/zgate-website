@@ -1,4 +1,9 @@
-# Uploaded media (local dev); never committed.
+# Uploaded media and collected static files (local dev); never committed.
 /media/
-# Next.js generated type reference
-next-env.d.ts
+/staticfiles/
+# Python
+.venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.ruff_cache/
