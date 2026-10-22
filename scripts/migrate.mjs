@@ -10,6 +10,9 @@
  * role. This sets DATABASE_URL to it for the migration command only. CI
  * and production pass the owner URL directly instead.
  *
+ * With a local SQLite database (DATABASE_URL=sqlite://...) there are no
+ * roles: the migrations run against DATABASE_URL itself.
+ *
  * Node built-ins only.
  */
 import { spawnSync } from "node:child_process";
@@ -20,9 +23,15 @@ import { backendDir, backendPython } from "./python.mjs";
 
 const envFile = path.join(backendDir, ".env");
 const fromFile = existsSync(envFile) ? parseEnv(readFileSync(envFile, "utf8")) : {};
-const migrationUrl = process.env["DATABASE_MIGRATION_URL"] ?? fromFile["DATABASE_MIGRATION_URL"];
+const setting = (name) => process.env[name] ?? fromFile[name];
+const databaseUrl = setting("DATABASE_URL");
+const migrationUrl = databaseUrl?.startsWith("sqlite://")
+  ? databaseUrl
+  : setting("DATABASE_MIGRATION_URL");
 if (!migrationUrl) {
-  console.error("DATABASE_MIGRATION_URL is not set (environment or backend/.env).");
+  console.error(
+    "DATABASE_MIGRATION_URL is not set (environment or backend/.env). It is only optional with a sqlite:// DATABASE_URL.",
+  );
   process.exit(1);
 }
 

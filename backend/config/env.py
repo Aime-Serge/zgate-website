@@ -99,7 +99,7 @@ def load(source: Mapping[str, str], *, environment: str) -> Config:
 
     database_url = _value(env, "DATABASE_URL") or ""
     if not database_url.startswith(("postgres://", "postgresql://", "sqlite://")):
-        problems.append("DATABASE_URL: must be a postgres:// URL")
+        problems.append("DATABASE_URL: must be a postgres:// or sqlite:// URL")
 
     admin_url = (_value(env, "ADMIN_URL") or "http://localhost:3004").rstrip("/")
     admin = urlparse(admin_url)
@@ -154,6 +154,10 @@ def load(source: Mapping[str, str], *, environment: str) -> Config:
                 problems.append(f"{name}: required in production")
         if not admin_url.startswith("https://"):
             problems.append("ADMIN_URL: must be https:// in production")
+        # SQLite is for local development only: no roles, no audit triggers
+        # owned by another role, and one file inside the container.
+        if not database_url.startswith(("postgres://", "postgresql://")):
+            problems.append("DATABASE_URL: must be a postgres:// URL in production")
 
     smtp_port_raw = _value(env, "SMTP_PORT") or "587"
     try:
