@@ -73,6 +73,27 @@ def test_accepts_a_complete_production_environment() -> None:
     assert "cms.example.rw" in config.allowed_hosts
 
 
+def test_development_may_use_a_local_sqlite_file() -> None:
+    config = load({**BASE, "DATABASE_URL": "sqlite:///db.sqlite3"}, environment="development")
+    assert config.database_url == "sqlite:///db.sqlite3"
+
+
+def test_production_refuses_sqlite() -> None:
+    with pytest.raises(ConfigError, match="DATABASE_URL: must be a postgres:// URL in production"):
+        load(
+            {
+                **BASE,
+                "DATABASE_URL": "sqlite:///db.sqlite3",
+                "ADMIN_URL": "https://cms.example.rw",
+                "CMS_API_TOKEN": "a" * 32,
+                "LEAD_INTAKE_TOKEN": "l" * 32,
+                "REVALIDATE_URL": "https://www.example.rw/api/revalidate",
+                "REVALIDATE_SECRET": "r" * 32,
+            },
+            environment="production",
+        )
+
+
 def test_revalidate_url_needs_its_secret() -> None:
     with pytest.raises(ConfigError, match="REVALIDATE_SECRET"):
         load(

@@ -27,23 +27,35 @@ The e-learning platform (courses, enrollment, certificates) is a **separate repo
 
 ## Get running
 
-Needs Node.js ≥ 22.12 (pnpm comes from `packageManager` through corepack: run `corepack enable` once), Python 3.14 and Docker.
+Needs Node.js ≥ 22.12 (pnpm comes from `packageManager` through corepack: run `corepack enable` once) and Python 3.14. Postgres (Docker or a local install) only if you choose it below.
 
 ```bash
 pnpm install
 python -m venv backend/.venv
 backend/.venv/Scripts/python -m pip install -r backend/requirements/development.txt   # bin/python on Linux/macOS
-docker compose up -d                                # Postgres only, on 127.0.0.1:5432
-cp backend/.env.example backend/.env                # set DJANGO_SECRET_KEY
+cp backend/.env.example backend/.env                # set DJANGO_SECRET_KEY; SQLite by default
 cp frontend/.env.example frontend/.env
-pnpm db:migrate                                     # as the database owner role
+pnpm db:migrate                                     # creates backend/db.sqlite3 (or migrates Postgres as its owner role)
 (cd backend && .venv/Scripts/python manage.py seed_content)      # the approved copy, once
 (cd backend && .venv/Scripts/python manage.py createsuperuser)   # your admin login
 pnpm dev                                            # CMS http://localhost:3004/admin, site http://localhost:3002
 ```
 
-- The apps connect as the least-privilege app role; `pnpm db:migrate` swaps in the owner role from `DATABASE_MIGRATION_URL`.
 - Everything in containers instead (heavier): `docker compose --profile full up`.
+
+### Local database
+
+`DATABASE_URL` in `backend/.env` picks it; switching is one line, and each database keeps its own content and admin logins (seed and `createsuperuser` once per database).
+
+|                 | SQLite (default)                                                                        | Postgres                                                                                                                                               |
+| --------------- | --------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `DATABASE_URL`  | `sqlite:///db.sqlite3` (the file `backend/db.sqlite3`, git-ignored)                     | `postgres://zgate_website_app:…@localhost:5432/zgate_website`, plus `DATABASE_MIGRATION_URL` for the owner role                                        |
+| Runs            | Nothing to start: a file, a few MB, no server memory                                    | `docker compose up -d` (Postgres on 127.0.0.1:5432), or a local install with `backend/database/postgresql.dev.conf` included                           |
+| Use it for      | Everyday CMS and site work on a small machine                                           | Anything Postgres-specific: the browser checks (`e2e` writes to it directly), the least-privilege roles, the database triggers as production runs them |
+| Differs from CI | Yes: CI, staging and production run Postgres, so a Postgres-only problem shows up in CI | No                                                                                                                                                     |
+
+Production refuses a `sqlite://` URL (`config/env.py`). With Postgres, the apps connect as the least-privilege app role; `pnpm db:migrate` swaps in the owner role from `DATABASE_MIGRATION_URL`.
+
 - The three shared secrets (`CMS_API_TOKEN`, `LEAD_INTAKE_TOKEN`, `REVALIDATE_SECRET`) must match in both `.env` files. A `.env` made before 2026-10-21 has no `CMS_API_TOKEN`: add it to both, or to neither (the CMS then serves its API without one).
 - First page after a cold start may return a 500 while the CMS warms up. Reload once http://localhost:3004/api/ready answers.
 
@@ -104,14 +116,14 @@ An inline script in `app/(site)/layout.tsx` sets `class="js"` on `<html>` before
 
 ## Checks
 
-| Command                                                     | What it does                                                                                                                                                                                                                                                                                |
-| ----------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `pnpm lint` · `pnpm typecheck` · `pnpm test` · `pnpm build` | Each task in every package, one at a time                                                                                                                                                                                                                                                   |
-| `pnpm lint:boundaries`                                      | The import boundaries above                                                                                                                                                                                                                                                                 |
-| `pnpm format` / `pnpm format:write`                         | Prettier check / fix (the CMS uses ruff instead)                                                                                                                                                                                                                                            |
-| `cd backend && pytest`                                      | CMS tests: in-memory SQLite locally, Postgres in CI                                                                                                                                                                                                                                         |
-| `cd backend && ruff check . && ruff format --check .`       | CMS lint and format                                                                                                                                                                                                                                                                         |
-| `pnpm --filter @zgate/website-frontend e2e`                 | Browser checks: accessibility (axe), headers and CSP, the forms end to end, the JavaScript budget. Needs both apps' production builds running, `DATABASE_URL` and `E2E_ADMIN_URL=http://localhost:3004`. First run `pnpm --filter @zgate/website-frontend exec playwright install chromium` |
+| Command                                                     | What it does                                                                                                                                                                                                                                                                                                |
+| ----------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `pnpm lint` · `pnpm typecheck` · `pnpm test` · `pnpm build` | Each task in every package, one at a time                                                                                                                                                                                                                                                                   |
+| `pnpm lint:boundaries`                                      | The import boundaries above                                                                                                                                                                                                                                                                                 |
+| `pnpm format` / `pnpm format:write`                         | Prettier check / fix (the CMS uses ruff instead)                                                                                                                                                                                                                                                            |
+| `cd backend && pytest`                                      | CMS tests: in-memory SQLite locally, Postgres in CI                                                                                                                                                                                                                                                         |
+| `cd backend && ruff check . && ruff format --check .`       | CMS lint and format                                                                                                                                                                                                                                                                                         |
+| `pnpm --filter @zgate/website-frontend e2e`                 | Browser checks: accessibility (axe), headers and CSP, the forms end to end, the JavaScript budget. Needs both apps' production builds running on Postgres, its `DATABASE_URL` and `E2E_ADMIN_URL=http://localhost:3004`. First run `pnpm --filter @zgate/website-frontend exec playwright install chromium` |
 
 **Run lint, typecheck, test and build before every commit.** CI runs exactly these, plus the browser checks and image scans.
 
@@ -134,7 +146,7 @@ No version younger than 14 days is ever installed (pnpm `minimumReleaseAge`; pip
 
 ## Low-memory machines (8 GB)
 
-The repository is already tuned for small laptops: Postgres-only Docker by default (hybrid mode), a 1.5 GB Node heap ceiling (`.npmrc`, local only), two test workers (`vitest.config.ts`, local only), one package at a time in workspace scripts, ESLint and TypeScript caches, memory caps in Compose (`--profile full`), and VS Code watcher exclusions (`.vscode/settings.json`). On top of that, if you can:
+The repository is already tuned for small laptops: SQLite by default, so no database server or Docker at all ([Local database](#local-database)), a 1.5 GB Node heap ceiling (`.npmrc`, local only), two test workers (`vitest.config.ts`, local only), one package at a time in workspace scripts, ESLint and TypeScript caches, memory caps in Compose (`--profile full`), and VS Code watcher exclusions (`.vscode/settings.json`). On top of that, if you can:
 
 - **Keep the repository out of OneDrive** (e.g. `C:\dev\z-gate\website`): syncing `node_modules` and `.next` costs CPU and locks files mid-build.
 - **Cap Docker's WSL 2 VM** in `%UserProfile%\.wslconfig` (`[wsl2]`, `memory=2560MB`, `processors=2`, `swap=2GB`), then `wsl --shutdown`.

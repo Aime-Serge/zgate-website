@@ -1,6 +1,9 @@
 # Uploaded media and collected static files (local dev); never committed.
 /media/
 /staticfiles/
+# The local SQLite database (DATABASE_URL=sqlite:///db.sqlite3) and its WAL files.
+/db.sqlite3
+/db.sqlite3-*
 # Python
 .venv/
 __pycache__/
