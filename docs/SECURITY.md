@@ -49,7 +49,7 @@ Personal data is stored in Rwanda by default (Law N° 058/2021). The hosting reg
 
 - **14-day rule:** no package version younger than 14 days is ever installed: `minimumReleaseAge` in `pnpm-workspace.yaml`, and `--uploaded-prior-to=P14D` when locking Python (`backend/scripts/lock.sh`). Most malicious releases are caught and pulled within that window.
 - Exact pins and full lockfiles on both sides; the CMS image installs its lock with `--no-deps`.
-- CI fails on any high or critical advisory (`pnpm audit`, `pip-audit`). Forced fixes (`overrides`) and accepted advisories (`auditConfig.ignoreGhsas`, `backend/requirements/accepted-advisories.txt`, `.trivyignore`) each carry a reason and a removal condition. A fix younger than 14 days is not installed early: its advisory is accepted until the fix can be locked.
+- CI fails on any high or critical advisory (`pnpm audit`, `pip-audit`). Forced fixes (`overrides`) and accepted advisories (`auditConfig.ignoreGhsas`, `backend/requirements/accepted-advisories.txt`, `.trivyignore`) each carry a reason and a removal condition. A fix younger than 14 days is normally not installed early: its advisory is accepted until the fix can be locked. The exception is a security fix approved for early locking, listed with its reason and removal date in `backend/requirements/age-exceptions.txt` (`scripts/lock.sh` installs it after resolving within the rule).
 
 ## The website assistant
 
