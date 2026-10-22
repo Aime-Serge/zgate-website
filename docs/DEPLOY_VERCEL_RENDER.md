@@ -1,7 +1,8 @@
 # Deploying on Vercel (public site) and Render (CMS)
 
 **Audience:** whoever deploys the website. Follow the steps in order; each ends with a check.
-**Files:** `frontend/vercel.json` (Vercel), `render.yaml` (Render Blueprint). The self-hosted alternative (your own servers with Docker and Caddy) is [DEPLOYMENT.md](DEPLOYMENT.md); its sections on releases, backups and operating notes apply here too.
+**Only trying it out, at no cost?** Use [Free demo](#free-demo-no-cost) at the end instead of steps 0-7.
+**Files:** `frontend/vercel.json` (Vercel), `render.yaml` (Render Blueprint; `render.free.yaml` for the free demo). The self-hosted alternative (your own servers with Docker and Caddy) is [DEPLOYMENT.md](DEPLOYMENT.md); its sections on releases, backups and operating notes apply here too.
 
 ```text
  visitors ──▶ Vercel  www.<domain>      (frontend/, Next.js, region fra1)
@@ -156,6 +157,40 @@ Put a login in front of the admin with **Cloudflare Access** (Zero Trust, free f
 7. **Uptime checks** on `https://www.<domain>/api/ready` and `https://cms.<domain>/api/health` (Render and Vercel both alert on failures; an external checker also catches DNS and certificate problems).
 8. **Object storage** (an S3-compatible bucket) before editors start uploading images or PDFs in the admin.
 9. **A staging pair** (a second Vercel environment and a second Render Blueprint with its own database and secrets), so the release gate in [ADR-011](adr/ADR-011-website-release-gate.md) has somewhere to run.
+
+## Free demo (no cost)
+
+To see the site online before anyone pays: Vercel's free Hobby plan for the site, Render's free tier for the CMS and its database (`render.free.yaml`). **A demo, not staging:** test data only, never real leads.
+
+| Free-tier limit                                                                 | What it means here                                                                                                                           |
+| ------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------- |
+| The CMS sleeps after 15 minutes without traffic, and takes ~1 min to wake       | The first uncached page after a quiet spell shows an error once (the site waits 10 s for the CMS); reload a minute later. Optional fix below |
+| The database is **deleted 30 days after creation** (14 days' grace), no backups | Everything entered in the CMS is lost then. Recreate the Blueprint to start over                                                             |
+| No pre-deploy command, no shell                                                 | The start command migrates, seeds the approved copy and creates the first admin itself (`backend/scripts/start-free-tier.sh`)                |
+| Outgoing SMTP ports are blocked                                                 | No lead notification emails                                                                                                                  |
+| Vercel Hobby is for non-commercial use                                          | Fine for a private demo; the company's live site needs Vercel Pro (step 0)                                                                   |
+
+1. **Secrets.** Generate the three shared values (step 1). On Windows, in PowerShell:
+   ```powershell
+   foreach ($n in "CMS_API_TOKEN","LEAD_INTAKE_TOKEN","REVALIDATE_SECRET") { $b = New-Object byte[] 48; [Security.Cryptography.RandomNumberGenerator]::Create().GetBytes($b); "$n=" + [Convert]::ToBase64String($b) }
+   ```
+2. **Render → New → Blueprint**, connect the repository, branch `main`, **Blueprint Path: `render.free.yaml`**. Fill in:
+
+   | Variable                                                  | Value                                                                                                                       |
+   | --------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------- |
+   | `ADMIN_URL`                                               | `https://zgate-website-cms-demo.onrender.com`. If Render gives the service another address, correct it once it's created    |
+   | `CMS_API_TOKEN`, `LEAD_INTAKE_TOKEN`, `REVALIDATE_SECRET` | From step 1                                                                                                                 |
+   | `REVALIDATE_URL`                                          | `https://<vercel-project>.vercel.app/api/revalidate`                                                                        |
+   | `DJANGO_SUPERUSER_EMAIL`, `DJANGO_SUPERUSER_PASSWORD`     | Your admin login: 12+ characters, not a common password. Created on first start; **delete both variables after signing in** |
+
+   **Apply.** The first start takes several minutes on the free CPU (build, then every migration).
+
+3. **Check:** `https://zgate-website-cms-demo.onrender.com/api/health` answers `{"status":"ok"}`, and `/admin/` lets you sign in. If the deploy fails, the service's **Logs** say why (a weak admin password is refused there by name).
+4. **Vercel → your project → Settings → Environment Variables** (Production): `SITE_URL` (your `.vercel.app` address), `CMS_URL=https://zgate-website-cms-demo.onrender.com`, the three secrets (same values, **Sensitive**), `TRUSTED_PROXIES=1`, `ENABLE_EXPERIMENTAL_COREPACK=1`. Then **Deployments → ⋯ → Redeploy**.
+5. **Check:** `https://<vercel-project>.vercel.app/api/ready` answers `{"status":"ready",…}`, then open the home page.
+6. **Optional: keep the CMS awake** so visitors never meet a sleeping CMS. A free uptime monitor (UptimeRobot, Better Stack, cron-job.org) requesting `https://zgate-website-cms-demo.onrender.com/api/health` every 10 minutes does it. One always-awake service uses at most 744 of the workspace's 750 free hours a month, so don't run a second free service beside it.
+
+Moving on to real staging: create a new Blueprint from `render.yaml` (paid plans) and follow steps 0-7. The demo's database can't be upgraded in place before it expires; content entered there would have to be re-entered.
 
 ## Troubleshooting
 
