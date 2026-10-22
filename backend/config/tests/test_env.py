@@ -18,6 +18,14 @@ def test_accepts_a_minimal_development_environment() -> None:
     assert "website-backend" in config.allowed_hosts
 
 
+def test_allows_the_platform_address_render_sets() -> None:
+    config = load(
+        {**BASE, "RENDER_EXTERNAL_HOSTNAME": "zgate-website-cms.onrender.com"},
+        environment="development",
+    )
+    assert "zgate-website-cms.onrender.com" in config.allowed_hosts
+
+
 def test_treats_blank_values_as_unset() -> None:
     config = load({**BASE, "SMTP_HOST": "", "LEAD_INTAKE_TOKEN": ""}, environment="development")
     assert config.smtp_host is None
