@@ -296,7 +296,7 @@ Nothing on the frontend host needs a backup: it is rebuilt from its image and it
 
 ## 7. Hosting on a platform instead of a VM
 
-Both images are standard containers, so a container platform can run them instead of parts B and C. **Read this whole section first**: several protections live in this repository's Caddy files and in-process code, and a platform changes them.
+Both images are standard containers, so a container platform can run them instead of parts B and C. **Read this whole section first**: several protections live in this repository's Caddy files and in-process code, and a platform changes them. For Vercel and Render specifically, follow [DEPLOY_VERCEL_RENDER.md](DEPLOY_VERCEL_RENDER.md): it applies everything below, with `frontend/vercel.json` and `render.yaml`.
 
 ### The public site on a platform
 
