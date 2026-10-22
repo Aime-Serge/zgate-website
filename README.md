@@ -37,14 +37,15 @@ Everything else (checks, styling, contracts, small machines): [docs/DEVELOPER_GU
 
 ## Documentation
 
-| Read                                          | When                                                 |
-| --------------------------------------------- | ---------------------------------------------------- |
-| [WEBSITE.md](docs/WEBSITE.md)                 | What the site does for visitors, its pages and rules |
-| [CONTENT_GUIDE.md](docs/CONTENT_GUIDE.md)     | Writing and editing content; the CMS for staff       |
-| [DEVELOPER_GUIDE.md](docs/DEVELOPER_GUIDE.md) | Changing the code                                    |
-| [DEPLOYMENT.md](docs/DEPLOYMENT.md)           | Deploying, operating, incidents                      |
-| [SECURITY.md](docs/SECURITY.md)               | Security, personal data, launch gates                |
-| [adr/](docs/adr/README.md)                    | Why it's built this way                              |
+| Read                                                    | When                                                      |
+| ------------------------------------------------------- | --------------------------------------------------------- |
+| [WEBSITE.md](docs/WEBSITE.md)                           | What the site does for visitors, its pages and rules      |
+| [CONTENT_GUIDE.md](docs/CONTENT_GUIDE.md)               | Writing and editing content; the CMS for staff            |
+| [DEVELOPER_GUIDE.md](docs/DEVELOPER_GUIDE.md)           | Changing the code                                         |
+| [DEPLOYMENT.md](docs/DEPLOYMENT.md)                     | Deploying, operating, incidents                           |
+| [DEPLOY_VERCEL_RENDER.md](docs/DEPLOY_VERCEL_RENDER.md) | Deploying on Vercel (site) and Render (CMS), step by step |
+| [SECURITY.md](docs/SECURITY.md)                         | Security, personal data, launch gates                     |
+| [adr/](docs/adr/README.md)                              | Why it's built this way                                   |
 
 ## Releasing
 

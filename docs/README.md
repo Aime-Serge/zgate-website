@@ -6,6 +6,7 @@
 | write or edit content, or run marketing                                    | [CONTENT_GUIDE.md](CONTENT_GUIDE.md)                                           |
 | change the code                                                            | [DEVELOPER_GUIDE.md](DEVELOPER_GUIDE.md), then `backend/README.md` for the CMS |
 | deploy, operate or respond to an incident                                  | [DEPLOYMENT.md](DEPLOYMENT.md)                                                 |
+| deploy on Vercel (site) and Render (CMS)                                   | [DEPLOY_VERCEL_RENDER.md](DEPLOY_VERCEL_RENDER.md)                             |
 | handle security or personal data                                           | [SECURITY.md](SECURITY.md)                                                     |
 | want to know why something is built the way it is                          | [adr/](adr/)                                                                   |
 

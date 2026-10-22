@@ -76,6 +76,10 @@ class Config:
     def https(self) -> bool:
         return self.admin_url.startswith("https://")
 
+    @property
+    def admin_host(self) -> str:
+        return urlparse(self.admin_url).hostname or ""
+
 
 def _value(source: Mapping[str, str], name: str) -> str | None:
     # `SMTP_HOST=` in an env file means "not set", not "an empty host".
@@ -108,9 +112,14 @@ def load(source: Mapping[str, str], *, environment: str) -> Config:
 
     # The CMS's own host (which is also how a separately hosted frontend
     # reaches it, CMS_URL=https://cms.<domain>), plus the Compose service
-    # name for local containers. More names, e.g. a platform's health-check
-    # host: DJANGO_ALLOWED_HOSTS.
-    extra_hosts = [h.strip() for h in (_value(env, "DJANGO_ALLOWED_HOSTS") or "").split(",")]
+    # name for local containers, and the platform address Render sets
+    # (RENDER_EXTERNAL_HOSTNAME, <service>.onrender.com): its health checks
+    # use it until a custom domain is verified. Any other name:
+    # DJANGO_ALLOWED_HOSTS.
+    extra_hosts = [
+        *(h.strip() for h in (_value(env, "DJANGO_ALLOWED_HOSTS") or "").split(",")),
+        _value(env, "RENDER_EXTERNAL_HOSTNAME") or "",
+    ]
     allowed_hosts = tuple(
         dict.fromkeys(
             h
