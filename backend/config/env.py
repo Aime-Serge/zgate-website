@@ -76,6 +76,10 @@ class Config:
     def https(self) -> bool:
         return self.admin_url.startswith("https://")
 
+    @property
+    def admin_host(self) -> str:
+        return urlparse(self.admin_url).hostname or ""
+
 
 def _value(source: Mapping[str, str], name: str) -> str | None:
     # `SMTP_HOST=` in an env file means "not set", not "an empty host".
