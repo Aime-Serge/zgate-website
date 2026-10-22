@@ -1,0 +1,14 @@
+# Security fixes locked before they are 14 days old: the only exceptions to
+# the 14-day rule (docs/SECURITY.md, Dependencies). scripts/lock.sh installs
+# these exact pins after resolving base.in within the rule. Each entry has
+# a reason and a removal condition; delete it once the rule allows that
+# version, then relock.
+
+# pillow 13.0.0 (2026-10-16) fixes 24+ advisories against 12.3.0 (crafted
+# TIFF, GIF, APNG, EPS, PDF, MSP... images: memory-safety bugs and DoS),
+# and new ones kept being published daily. A security release from a
+# long-established project; approved 2026-10-22 over carrying a growing
+# list of accepted advisories. Wagtail 8.0 allows it (Pillow>=9.1.0),
+# pillow_heif 1.8.0 too (>=11.1.0). Remove on or after 2026-10-30, when
+# the rule itself resolves pillow 13.
+pillow==13.0.0

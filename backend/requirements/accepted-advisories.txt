@@ -5,38 +5,6 @@
 # can be locked (docs/SECURITY.md, Dependencies). The matching image-scan
 # entries are in .trivyignore at the repository root.
 
-# pillow 12.3.0: memory-safety and denial-of-service bugs when Pillow
-# opens or saves a crafted image (TIFF, GIF, APNG, EPS, PDF, PPM, XBM,
-# MIC, MSP...). New advisories for this release keep being published:
-# add each one here (and to .trivyignore) while this exception lasts.
-# Fixed in 13.0.0 (2026-10-16), younger than the 14-day rule allows.
-# Exposure: only signed-in staff upload images, from the admin behind
-# ADMIN_ALLOWED_IPS; visitors can't upload files. Accepted 2026-10-21.
-# Remove when base.txt locks pillow >= 13.0.0 (lockable from 2026-10-30;
-# Wagtail 8.0 allows it: Pillow>=9.1.0).
-CVE-2026-112895
-CVE-2026-112400
-CVE-2026-112397
-CVE-2026-112896
-CVE-2026-112897
-CVE-2026-112395
-CVE-2026-112404
-CVE-2026-112899
-CVE-2026-112402
-CVE-2026-112900
-CVE-2026-112893
-CVE-2026-112392
-CVE-2026-112891
-CVE-2026-112405
-CVE-2026-112390
-CVE-2026-112401
-CVE-2026-112901
-CVE-2026-112391
-CVE-2026-112894
-CVE-2026-112406
-CVE-2026-112399
-CVE-2026-112892
-
 # certifi 2026.7.22 still trusts the emSign ECC Root CA - G3, whose
 # intermediates' keys were compromised. Fixed in 2026.10.18/2026.10.19
 # (2026-10-18/20), younger than the 14-day rule allows. Exposure: only
